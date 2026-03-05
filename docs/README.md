@@ -4,7 +4,7 @@
 ![Status](https://img.shields.io/badge/status-active-brightgreen?style=flat-square)
 ![Stack](https://img.shields.io/badge/stack-Next.js%20%7C%20Elysia%20%7C%20MariaDB-blue?style=flat-square)
 ![Deploy](https://img.shields.io/badge/deploy-Podman_Pod-orange?style=flat-square)
-![Docs](https://img.shields.io/badge/docs-17_pages-informational?style=flat-square)
+![Docs](https://img.shields.io/badge/docs-20_pages-informational?style=flat-square)
 
 > A database-driven household preparedness platform — from 72-hour readiness to 90-day self-sufficiency.
 
@@ -41,24 +41,28 @@
 
 Source of truth note: for persisted enums, field names, and API payload semantics, treat [Data Model](./09-data-model.md) and [API Contract](./10-api-contract.md) as canonical. Narrative docs explain behavior and examples, but should defer to those two specs when wording differs.
 
-| #   | File                                                                                                        | Purpose                                                             |
-| --- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| 01  | [Theory and Figures](./01-theory-and-figures.md)                                                            | Planning assumptions, default values, and the reasoning behind them |
-| 02  | [Usage Guide](./02-usage-guide.md)                                                                          | Daily, weekly, and monthly operational workflows                    |
-| 03  | [Ticksheets and Progression](./03-ticksheets-and-progression.md)                                            | Level model, task types, dependency logic, and scoring              |
-| 04  | [Settings and Overrides](./04-settings-and-overrides.md)                                                    | Household policy system, profiles, and scenario binding             |
-| 05  | [Inventory, Replacement, Expiry](./05-inventory-replacement-expiry.md)                                      | Stock management, rotation, and lifecycle rules                     |
-| 06  | [Maintenance Management](./06-maintenance-management.md)                                                    | Equipment and battery maintenance scheduling                        |
-| 07  | [Alerting and Prioritization](./07-alerting-and-prioritization.md)                                          | Alert severity model and triage logic                               |
-| 08  | [Architecture](./08-architecture.md)                                                                        | Full system topology and data flow                                  |
-| 09  | [Data Model](./09-data-model.md)                                                                            | Entity definitions and relationships                                |
-| 10  | [API Contract](./10-api-contract.md)                                                                        | Endpoint groups and payload shapes                                  |
-| 11  | [Operations — Podman](./11-operations-podman.md)                                                            | Pod deployment, startup, and maintenance                            |
-| 12  | [Governance and License](./12-governance-license.md)                                                        | CC BY-NC-SA rules, contribution standards                           |
-| 13  | [Quickstart Operator Checklist](./13-quickstart-operator-checklist.md)                                      | One-page printable runbook                                          |
-| 14  | [Project Review and Remediation Backlog](./14-project-review-and-remediation-backlog.md)                    | Prioritized findings checklist for deep-dive follow-up              |
-| 15  | [Deep Dive: Auth and Session Architecture](./15-deep-dive-auth-session-architecture.md)                     | Detailed auth flow, trust boundaries, and hardening posture         |
-| 16  | [Deep Dive: API Authorization and Household Scoping](./16-deep-dive-api-authorization-household-scoping.md) | Guard coverage, scope boundaries, and authorization behavior        |
+| #   | File                                                                                                            | Purpose                                                             |
+| --- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| 01  | [Theory and Figures](./01-theory-and-figures.md)                                                                | Planning assumptions, default values, and the reasoning behind them |
+| 02  | [Usage Guide](./02-usage-guide.md)                                                                              | Daily, weekly, and monthly operational workflows                    |
+| 03  | [Ticksheets and Progression](./03-ticksheets-and-progression.md)                                                | Level model, task types, dependency logic, and scoring              |
+| 04  | [Settings and Overrides](./04-settings-and-overrides.md)                                                        | Household policy system, profiles, and scenario binding             |
+| 05  | [Inventory, Replacement, Expiry](./05-inventory-replacement-expiry.md)                                          | Stock management, rotation, and lifecycle rules                     |
+| 06  | [Maintenance Management](./06-maintenance-management.md)                                                        | Equipment and battery maintenance scheduling                        |
+| 07  | [Alerting and Prioritization](./07-alerting-and-prioritization.md)                                              | Alert severity model and triage logic                               |
+| 08  | [Architecture](./08-architecture.md)                                                                            | Full system topology and data flow                                  |
+| 09  | [Data Model](./09-data-model.md)                                                                                | Entity definitions and relationships                                |
+| 10  | [API Contract](./10-api-contract.md)                                                                            | Endpoint groups and payload shapes                                  |
+| 11  | [Operations — Podman](./11-operations-podman.md)                                                                | Pod deployment, startup, and maintenance                            |
+| 12  | [Governance and License](./12-governance-license.md)                                                            | CC BY-NC-SA rules, contribution standards                           |
+| 13  | [Quickstart Operator Checklist](./13-quickstart-operator-checklist.md)                                          | One-page printable runbook                                          |
+| 14  | [Project Review and Remediation Backlog](./14-project-review-and-remediation-backlog.md)                        | Prioritized findings checklist for deep-dive follow-up              |
+| 15  | [Deep Dive: Auth and Session Architecture](./15-deep-dive-auth-session-architecture.md)                         | Detailed auth flow, trust boundaries, and hardening posture         |
+| 16  | [Deep Dive: API Authorization and Household Scoping](./16-deep-dive-api-authorization-household-scoping.md)     | Guard coverage, scope boundaries, and authorization behavior        |
+| 17  | [Deep Dive: Alert Generation and Escalation](./17-deep-dive-alert-generation-escalation.md)                     | Worker alert correctness, escalation, and lifecycle behavior        |
+| 18  | [Deep Dive: Data Model Constraints, Indexes, and FK Strategy](./18-deep-dive-data-model-indexes-fk-strategy.md) | Schema integrity posture and scale-oriented DB strategy             |
+| 19  | [Deep Dive: Frontend Maintainability Refactor Plan](./19-deep-dive-frontend-maintainability-plan.md)            | Incremental roadmap for frontend maintainability and testability    |
+| 20  | [Deep Dive: Deployment Hardening (Podman/Quadlet)](./20-deep-dive-deployment-hardening-podman-quadlet.md)       | Operations hardening posture and deployment resilience plan         |
 
 [↑ Go to TOC](#table-of-contents)
 
