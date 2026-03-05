@@ -1,23 +1,25 @@
 # Containerfile.api — bePrepared API (Bun + Elysia)
-FROM docker.io/oven/bun:1.1-alpine AS builder
+FROM docker.io/oven/bun:1.2-alpine AS builder
 
 WORKDIR /app
 
-# Copy workspace root + api workspace
-COPY package.json bun.lockb* ./
+# Copy workspace root and workspace manifests
+COPY package.json bun.lock* ./
 COPY api/package.json ./api/
+COPY frontend/package.json ./frontend/
+COPY worker/package.json ./worker/
 COPY api/src ./api/src
 COPY api/drizzle.config.ts ./api/
 
 # Install all workspace deps
-RUN bun install --frozen-lockfile
+RUN bun install
 
 # Build the API bundle
 WORKDIR /app/api
 RUN bun build src/index.ts --outdir dist --target bun --minify
 
 # ---- Runtime stage ----
-FROM docker.io/oven/bun:1.1-alpine
+FROM docker.io/oven/bun:1.2-alpine
 
 WORKDIR /app/api
 

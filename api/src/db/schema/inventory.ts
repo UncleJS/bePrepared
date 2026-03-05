@@ -5,10 +5,14 @@ import {
 
 export const inventoryCategories = mysqlTable("inventory_categories", {
   id:         varchar("id", { length: 36 }).primaryKey(),
+  householdId: varchar("household_id", { length: 36 }),
+  isSystem:   boolean("is_system").notNull().default(false),
   name:       varchar("name", { length: 255 }).notNull(),
-  slug:       varchar("slug", { length: 100 }).notNull().unique(),
+  slug:       varchar("slug", { length: 100 }).notNull(),
   moduleId:   varchar("module_id", { length: 36 }),
   sortOrder:  int("sort_order").notNull().default(0),
+  createdAt:  timestamp("created_at").notNull().defaultNow(),
+  updatedAt:  timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
   archivedAt: timestamp("archived_at"),
 });
 

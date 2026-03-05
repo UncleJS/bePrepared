@@ -11,6 +11,7 @@ Pod=beprepared.pod
 ContainerName=beprepared-frontend
 
 EnvironmentFile=%h/bePrepared/deploy/.env
+Environment=PORT=9999
 
 [Service]
 Restart=on-failure

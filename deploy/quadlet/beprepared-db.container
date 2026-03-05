@@ -11,10 +11,6 @@ Pod=beprepared.pod
 ContainerName=beprepared-db
 
 EnvironmentFile=%h/bePrepared/deploy/.env
-Environment=MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
-Environment=MARIADB_DATABASE=${DB_NAME}
-Environment=MARIADB_USER=${DB_USER}
-Environment=MARIADB_PASSWORD=${DB_PASSWORD}
 
 Volume=%h/bePrepared/data/mariadb:/var/lib/mysql:Z
 

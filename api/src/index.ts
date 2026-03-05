@@ -1,6 +1,7 @@
 import { Elysia } from "elysia";
 import { swagger } from "@elysiajs/swagger";
 import { cors } from "@elysiajs/cors";
+import { bearerFromHeader, verifyApiToken } from "./lib/authToken";
 
 import { authRoute }         from "./routes/auth";
 import { householdsRoute }   from "./routes/households";
@@ -14,9 +15,43 @@ import { settingsRoute }     from "./routes/settings";
 import { planningRoute }     from "./routes/planning";
 
 const PORT = Number(process.env.PORT ?? 3001);
+const AUTH_ENABLED = (process.env.AUTH_ENABLED ?? "true") === "true";
+const API_AUTH_SECRET = process.env.API_AUTH_SECRET ?? process.env.AUTH_SECRET;
+const CORS_ORIGINS = (process.env.CORS_ORIGINS ?? "http://localhost:9999")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+if (AUTH_ENABLED && !API_AUTH_SECRET) {
+  throw new Error("API auth is enabled but API_AUTH_SECRET/AUTH_SECRET is not set.");
+}
+
+function isPublicPath(pathname: string): boolean {
+  return (
+    pathname === "/" ||
+    pathname === "/health" ||
+    pathname === "/auth/login" ||
+    pathname.startsWith("/docs")
+  );
+}
 
 const app = new Elysia()
-  .use(cors())
+  .derive(({ request }) => {
+    if (!AUTH_ENABLED || !API_AUTH_SECRET) return { auth: null };
+    const token = bearerFromHeader(request.headers.get("authorization"));
+    if (!token) return { auth: null };
+    return { auth: verifyApiToken(token, API_AUTH_SECRET) };
+  })
+  .onBeforeHandle(({ request, set, auth }) => {
+    if (!AUTH_ENABLED) return;
+    const pathname = new URL(request.url).pathname;
+    if (isPublicPath(pathname)) return;
+    if (!auth) {
+      set.status = 401;
+      return { error: "Unauthorized" };
+    }
+  })
+  .use(cors({ origin: CORS_ORIGINS, credentials: true }))
   .use(
     swagger({
       documentation: {

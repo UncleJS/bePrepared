@@ -1,6 +1,6 @@
 // schema/households.ts
 import {
-  mysqlTable, varchar, int, timestamp, text, boolean, mysqlEnum
+  mysqlTable, varchar, int, timestamp, text, boolean, mysqlEnum, uniqueIndex
 } from "drizzle-orm/mysql-core";
 
 export const households = mysqlTable("households", {
@@ -27,4 +27,6 @@ export const householdPeopleProfiles = mysqlTable("household_people_profiles", {
   createdAt:      timestamp("created_at").notNull().defaultNow(),
   updatedAt:      timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
   archivedAt:     timestamp("archived_at"),
-});
+}, (table) => ({
+  householdNameUnique: uniqueIndex("household_people_profiles_household_name_unique").on(table.householdId, table.name),
+}));

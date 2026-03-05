@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
 import {
   LayoutDashboard,
   BookOpen,
@@ -25,18 +24,13 @@ const publicNavItems = [
   { href: "/maintenance", label: "Maintenance",  icon: Wrench },
   { href: "/planning",    label: "Planning",     icon: Calculator },
   { href: "/alerts",      label: "Alerts",       icon: Bell },
-];
-
-const authNavItems = [
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/settings",    label: "Settings",     icon: Settings },
 ];
 
 export function SideNav() {
-  const pathname   = usePathname();
-  const { status } = useSession();
-  const isAuthed   = status === "authenticated";
+  const pathname = usePathname();
 
-  const navItems = isAuthed ? [...publicNavItems, ...authNavItems] : publicNavItems;
+  const navItems = publicNavItems;
 
   return (
     <nav className="w-56 shrink-0 border-r border-border bg-card flex flex-col py-4">

@@ -1,6 +1,7 @@
 import { db } from "../client";
 import { tasks } from "../schema";
 import { randomUUID } from "crypto";
+import { and, eq, isNull } from "drizzle-orm";
 
 // Tasks organized by module, level, class
 const TASKS = [
@@ -95,18 +96,41 @@ export async function seedTasksAndDependencies() {
       console.warn(`  ⚠ Module slug not found: ${task.moduleSlug}`);
       continue;
     }
+    const existing = await db.query.tasks.findFirst({
+      where: and(
+        eq(tasks.moduleId, moduleId),
+        eq(tasks.title, task.title),
+        isNull(tasks.archivedAt)
+      ),
+    });
+
+    if (existing) {
+      await db.update(tasks)
+        .set({
+          taskClass: task.taskClass as "acquire" | "prepare" | "test" | "maintain" | "document",
+          readinessLevel: task.readinessLevel as "l1_72h" | "l2_14d" | "l3_30d" | "l4_90d",
+          scenario: task.scenario as "both" | "shelter_in_place" | "evacuation",
+          isRecurring: task.isRecurring ?? false,
+          recurDays: task.recurDays,
+          sortOrder: i,
+          evidencePrompt: task.evidencePrompt,
+        })
+        .where(eq(tasks.id, existing.id));
+      continue;
+    }
+
     await db.insert(tasks).values({
       id:             randomUUID(),
       moduleId,
       title:          task.title,
-      taskClass:      task.taskClass as any,
-      readinessLevel: task.readinessLevel as any,
-      scenario:       task.scenario as any,
+      taskClass:      task.taskClass as "acquire" | "prepare" | "test" | "maintain" | "document",
+      readinessLevel: task.readinessLevel as "l1_72h" | "l2_14d" | "l3_30d" | "l4_90d",
+      scenario:       task.scenario as "both" | "shelter_in_place" | "evacuation",
       isRecurring:    task.isRecurring ?? false,
       recurDays:      task.recurDays,
       sortOrder:      i,
       evidencePrompt: task.evidencePrompt,
-    }).onDuplicateKeyUpdate({ set: { title: task.title } });
+    });
   }
   console.log(`  ✓ ${TASKS.length} tasks seeded`);
 }

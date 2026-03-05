@@ -29,7 +29,14 @@ export async function seedUsers() {
     email:        "admin@localhost",
     passwordHash,
     isAdmin:      true,
-  }).onDuplicateKeyUpdate({ set: { email: "admin@localhost", isAdmin: true } });
+  }).onDuplicateKeyUpdate({
+    set: {
+      email: "admin@localhost",
+      isAdmin: true,
+      passwordHash,
+      householdId,
+    },
+  });
 
   console.log(`  ✓ Admin user '${username}' (password: ${rawPassword === "changeme" ? "changeme — CHANGE THIS" : "***"})`);
 }

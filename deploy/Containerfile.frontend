@@ -1,45 +1,35 @@
-# Containerfile.frontend — bePrepared Next.js frontend
-FROM docker.io/oven/bun:1.1-alpine AS deps
+# Containerfile.frontend — bePrepared Next.js frontend (Node runtime)
+FROM docker.io/library/node:20-alpine AS builder
 
-WORKDIR /app
+WORKDIR /app/frontend
 
-COPY package.json bun.lockb* ./
-COPY frontend/package.json ./frontend/
-
-RUN bun install --frozen-lockfile
-
-# ---- Build stage ----
-FROM docker.io/oven/bun:1.1-alpine AS builder
-
-WORKDIR /app
-
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/frontend/node_modules ./frontend/node_modules 2>/dev/null || true
-
-COPY frontend ./frontend
-COPY package.json ./
+COPY frontend/package.json ./
+RUN npm install
+COPY frontend/next.config.ts ./next.config.ts
+COPY frontend/postcss.config.mjs ./postcss.config.mjs
+COPY frontend/tailwind.config.ts ./tailwind.config.ts
+COPY frontend/tsconfig.json ./tsconfig.json
+COPY frontend/src ./src
 
 ARG NEXT_PUBLIC_API_URL=http://localhost:3001
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
-WORKDIR /app/frontend
-RUN bun run build
+RUN npm run build
 
 # ---- Runtime stage ----
-FROM docker.io/oven/bun:1.1-alpine
+FROM docker.io/library/node:20-alpine
 
 WORKDIR /app/frontend
 
 COPY --from=builder /app/frontend/.next/standalone ./
 COPY --from=builder /app/frontend/.next/static ./.next/static
-COPY --from=builder /app/frontend/public ./public
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV PORT=3000
+ENV PORT=9999
 
-EXPOSE 3000
+EXPOSE 9999
 
-CMD ["bun", "run", "server.js"]
+CMD ["node", "server.js"]

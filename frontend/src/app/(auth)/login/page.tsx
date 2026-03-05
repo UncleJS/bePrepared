@@ -40,8 +40,8 @@ function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-1">
-        <label htmlFor="username" className="block text-sm font-medium text-muted-foreground">
-          Username
+        <label htmlFor="username" className="block text-xs font-bold uppercase tracking-wide text-primary">
+          Account Username
         </label>
         <input
           id="username"
@@ -56,8 +56,8 @@ function LoginForm() {
       </div>
 
       <div className="space-y-1">
-        <label htmlFor="password" className="block text-sm font-medium text-muted-foreground">
-          Password
+        <label htmlFor="password" className="block text-xs font-bold uppercase tracking-wide text-primary">
+          Account Password
         </label>
         <input
           id="password"

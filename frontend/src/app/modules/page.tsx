@@ -4,16 +4,20 @@ import Link from "next/link";
 
 type Module = { id: string; slug: string; title: string; description?: string };
 
-async function getModules(): Promise<Module[]> {
+async function getModules(): Promise<{ modules: Module[]; error: string | null }> {
   try {
-    return await apiFetch<Module[]>("/modules");
-  } catch {
-    return [];
+    const modules = await apiFetch<Module[]>("/modules");
+    return { modules, error: null };
+  } catch (error) {
+    return {
+      modules: [],
+      error: error instanceof Error ? error.message : "Failed to load modules",
+    };
   }
 }
 
 export default async function ModulesPage() {
-  const modules = await getModules();
+  const { modules, error } = await getModules();
 
   return (
     <div className="space-y-6">
@@ -41,7 +45,12 @@ export default async function ModulesPage() {
             <ChevronRight size={16} className="text-muted-foreground mt-0.5 shrink-0" />
           </Link>
         ))}
-        {modules.length === 0 && (
+
+        {error && (
+          <p className="text-destructive text-sm col-span-2">Unable to load modules: {error}</p>
+        )}
+
+        {!error && modules.length === 0 && (
           <p className="text-muted-foreground text-sm col-span-2">
             No modules found. Run <code className="bg-muted px-1 rounded">bun run db:seed</code> to populate seed data.
           </p>

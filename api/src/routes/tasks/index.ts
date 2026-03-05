@@ -3,6 +3,7 @@ import { db } from "../../db/client";
 import { tasks, taskDependencies, taskProgress } from "../../db/schema";
 import { eq, isNull, and } from "drizzle-orm";
 import { randomUUID } from "crypto";
+import { requireAdmin, requireHouseholdScope } from "../../lib/routeAuth";
 
 type TaskClass = "acquire" | "prepare" | "test" | "maintain" | "document";
 type ReadinessLevel = "l1_72h" | "l2_14d" | "l3_30d" | "l4_90d";
@@ -12,21 +13,41 @@ type TaskStatus = "pending" | "in_progress" | "completed" | "overdue";
 export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
 
   .get("/", async ({ query }) => {
-    return db.query.tasks.findMany({
+    const rows = await db.query.tasks.findMany({
       where: isNull(tasks.archivedAt),
       orderBy: tasks.sortOrder,
     });
+
+    const deduped = new Map<string, (typeof rows)[number]>();
+    for (const row of rows) {
+      const key = [
+        row.moduleId,
+        row.readinessLevel,
+        row.scenario,
+        row.taskClass,
+        row.title.trim().toLowerCase(),
+      ].join(":");
+      if (!deduped.has(key)) deduped.set(key, row);
+    }
+
+    return Array.from(deduped.values());
   }, { detail: { summary: "List all tasks" } })
 
-  .get("/:id", async ({ params }) => {
+  .get("/by-id/:id", async ({ params, set }) => {
     const row = await db.query.tasks.findFirst({
       where: and(eq(tasks.id, params.id), isNull(tasks.archivedAt)),
     });
-    if (!row) throw new Error("Task not found");
+    if (!row) {
+      set.status = 404;
+      return { error: "Task not found" };
+    }
     return row;
   }, { detail: { summary: "Get a task by ID" } })
 
-  .post("/", async ({ body }) => {
+  .post("/", async ({ request, set, body }) => {
+    const claims = requireAdmin(request, set);
+    if (!claims) return { error: "Admin access required" };
+
     const id = randomUUID();
     await db.insert(tasks).values({
       id,
@@ -61,7 +82,10 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
   })
 
   // Task progress (ticksheet)
-  .get("/progress/:householdId", async ({ params }) => {
+  .get("/:householdId/progress", async ({ request, set, params }) => {
+    const claims = requireHouseholdScope(request, set, params.householdId);
+    if (!claims) return { error: "Forbidden" };
+
     return db.query.taskProgress.findMany({
       where: and(
         eq(taskProgress.householdId, params.householdId),
@@ -70,11 +94,52 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
     });
   }, { detail: { summary: "Get all task progress for a household" } })
 
-  .post("/progress", async ({ body }) => {
+  .post("/:householdId/progress", async ({ request, set, params, body }) => {
+    const claims = requireHouseholdScope(request, set, params.householdId);
+    if (!claims) return { error: "Forbidden" };
+
+    const existing = await db.query.taskProgress.findFirst({
+      where: and(
+        eq(taskProgress.householdId, params.householdId),
+        eq(taskProgress.taskId, body.taskId),
+        isNull(taskProgress.archivedAt)
+      ),
+    });
+
+    if (existing) {
+      const nextStatus = body.status ? (body.status as TaskStatus) : existing.status;
+      const now = new Date();
+      const nextCompletedAt = body.completedAt
+        ? new Date(body.completedAt)
+        : nextStatus === "completed"
+          ? (existing.completedAt ?? now)
+          : null;
+
+      await db.update(taskProgress).set({
+        status: nextStatus,
+        completedAt: nextCompletedAt,
+        nextDueAt: body.nextDueAt ? new Date(body.nextDueAt) : existing.nextDueAt,
+        evidenceNote: body.evidenceNote ?? existing.evidenceNote,
+        completedBy: body.completedBy ?? existing.completedBy,
+      }).where(and(
+        eq(taskProgress.id, existing.id),
+        eq(taskProgress.householdId, params.householdId),
+        isNull(taskProgress.archivedAt)
+      ));
+
+      return db.query.taskProgress.findFirst({
+        where: and(
+          eq(taskProgress.id, existing.id),
+          eq(taskProgress.householdId, params.householdId),
+          isNull(taskProgress.archivedAt)
+        ),
+      });
+    }
+
     const id = randomUUID();
     await db.insert(taskProgress).values({
       id,
-      householdId:  body.householdId,
+      householdId:  params.householdId,
       taskId:       body.taskId,
       status:       body.status      ? (body.status as TaskStatus) : undefined,
       completedAt:  body.completedAt ? new Date(body.completedAt)  : undefined,
@@ -85,7 +150,6 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
     return db.query.taskProgress.findFirst({ where: eq(taskProgress.id, id) });
   }, {
     body: t.Object({
-      householdId:  t.String(),
       taskId:       t.String(),
       status:       t.Optional(t.String()),
       completedAt:  t.Optional(t.String()),
@@ -96,7 +160,10 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
     detail: { summary: "Create or update task progress entry" },
   })
 
-  .patch("/progress/:id", async ({ params, body }) => {
+  .patch("/:householdId/progress/:id", async ({ request, set, params, body }) => {
+    const claims = requireHouseholdScope(request, set, params.householdId);
+    if (!claims) return { error: "Forbidden" };
+
     const now = new Date();
     await db.update(taskProgress).set({
       status:       body.status      ? (body.status as TaskStatus) : undefined,
@@ -105,8 +172,18 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
       nextDueAt:    body.nextDueAt   ? new Date(body.nextDueAt)   : undefined,
       evidenceNote: body.evidenceNote,
       completedBy:  body.completedBy,
-    }).where(eq(taskProgress.id, params.id));
-    return db.query.taskProgress.findFirst({ where: eq(taskProgress.id, params.id) });
+    }).where(and(
+      eq(taskProgress.id, params.id),
+      eq(taskProgress.householdId, params.householdId),
+      isNull(taskProgress.archivedAt)
+    ));
+    return db.query.taskProgress.findFirst({
+      where: and(
+        eq(taskProgress.id, params.id),
+        eq(taskProgress.householdId, params.householdId),
+        isNull(taskProgress.archivedAt)
+      ),
+    });
   }, {
     body: t.Partial(t.Object({
       status:       t.String(),

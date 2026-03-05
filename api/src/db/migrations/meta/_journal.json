@@ -15,6 +15,27 @@
       "when": 1772697220568,
       "tag": "0001_overjoyed_morph",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1772699000000,
+      "tag": "0002_hushed_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1772709000000,
+      "tag": "0003_hybrid_categories_fk",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1772711000000,
+      "tag": "0004_task_progress_active_unique",
+      "breakpoints": true
     }
   ]
 }

@@ -1,59 +1,70 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiFetch, fmtTs, HOUSEHOLD_ID } from "@/lib/api";
-import { Bell, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
+import { apiFetch, fmtTs } from "@/lib/api";
+import { useActiveHouseholdId } from "@/lib/useActiveHouseholdId";
+import { CheckCircle2, AlertTriangle } from "lucide-react";
 
 type Alert = {
   id: string;
-  alertType: string;
-  severity: "info" | "warning" | "critical";
+  severity: "upcoming" | "due" | "overdue";
+  category: string;
   title: string;
-  body?: string;
-  dueDate?: string;
-  status: "active" | "read" | "resolved" | "snoozed";
+  detail?: string | null;
+  dueAt?: string | null;
+  isRead: boolean;
+  isResolved: boolean;
   createdAt: string;
 };
 
 const SEVERITY_ICON: Record<string, React.ReactNode> = {
-  critical: <AlertTriangle size={15} className="text-destructive shrink-0 mt-0.5" />,
-  warning:  <AlertTriangle size={15} className="text-yellow-400 shrink-0 mt-0.5" />,
-  info:     <Bell size={15} className="text-blue-400 shrink-0 mt-0.5" />,
+  overdue: <AlertTriangle size={15} className="text-destructive shrink-0 mt-0.5" />,
+  due:     <AlertTriangle size={15} className="text-yellow-400 shrink-0 mt-0.5" />,
+  upcoming:<AlertTriangle size={15} className="text-blue-400 shrink-0 mt-0.5" />,
 };
 
 const SEVERITY_BORDER: Record<string, string> = {
-  critical: "border-destructive/40 bg-destructive/10",
-  warning:  "border-yellow-600/40 bg-yellow-900/15",
-  info:     "border-border bg-card",
+  overdue: "border-destructive/40 bg-destructive/10",
+  due:  "border-yellow-600/40 bg-yellow-900/15",
+  upcoming: "border-border bg-card",
 };
 
 export default function AlertsPage() {
+  const { householdId, status } = useActiveHouseholdId();
+
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = () => {
-    apiFetch<Alert[]>(`/alerts/${HOUSEHOLD_ID}`)
+    if (!householdId) return;
+    apiFetch<Alert[]>(`/alerts/${householdId}`)
       .then(setAlerts)
       .catch(console.error)
       .finally(() => setLoading(false));
   };
 
-  useEffect(load, []);
+  useEffect(() => {
+    load();
+  }, [householdId]);
 
   async function markRead(id: string) {
-    await apiFetch(`/alerts/${HOUSEHOLD_ID}/${id}/read`, { method: "PATCH" });
+    if (!householdId) return;
+    await apiFetch(`/alerts/${householdId}/${id}/read`, { method: "PATCH" });
     load();
   }
 
   async function resolve(id: string) {
-    await apiFetch(`/alerts/${HOUSEHOLD_ID}/${id}/resolve`, { method: "PATCH" });
+    if (!householdId) return;
+    await apiFetch(`/alerts/${householdId}/${id}/resolve`, { method: "PATCH" });
     load();
   }
 
+  if (status === "loading") return <p className="text-muted-foreground text-sm">Loading session…</p>;
+  if (!householdId) return <p className="text-muted-foreground text-sm">No household in session.</p>;
   if (loading) return <p className="text-muted-foreground text-sm">Loading alerts…</p>;
 
-  const active   = alerts.filter((a) => a.status === "active");
-  const resolved = alerts.filter((a) => a.status === "resolved");
+  const active   = alerts.filter((a) => !a.isResolved);
+  const resolved = alerts.filter((a) => a.isResolved);
 
   return (
     <div className="space-y-6">
@@ -81,10 +92,10 @@ export default function AlertsPage() {
             {SEVERITY_ICON[a.severity]}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium">{a.title}</p>
-              {a.body && <p className="text-xs text-muted-foreground mt-0.5">{a.body}</p>}
+              {a.detail && <p className="text-xs text-muted-foreground mt-0.5">{a.detail}</p>}
               <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
-                <span>{a.alertType.replace("_", " ")}</span>
-                {a.dueDate && <span>Due: {a.dueDate}</span>}
+                <span>{a.category.replace("_", " ")}</span>
+                {a.dueAt && <span>Due: {a.dueAt.slice(0, 10)}</span>}
                 <span>{fmtTs(a.createdAt)}</span>
               </div>
             </div>

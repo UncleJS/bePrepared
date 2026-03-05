@@ -1,13 +1,19 @@
 import { Elysia, t } from "elysia";
 import { resolvePlanningTotals } from "../../lib/policyEngine";
+import { requireHouseholdScope } from "../../lib/routeAuth";
+
+type Scenario = "shelter_in_place" | "evacuation";
 
 export const planningRoute = new Elysia({ prefix: "/planning", tags: ["planning"] })
 
-  .get("/:householdId/:scenario", async ({ params, query }) => {
+  .get("/:householdId/:scenario", async ({ request, set, params, query }) => {
+    const claims = requireHouseholdScope(request, set, params.householdId);
+    if (!claims) return { error: "Forbidden" };
+
     const manualPeople = query.people ? Number(query.people) : undefined;
     return resolvePlanningTotals(
       params.householdId,
-      params.scenario as any,
+      params.scenario as Scenario,
       manualPeople
     );
   }, {

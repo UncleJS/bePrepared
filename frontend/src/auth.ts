@@ -3,7 +3,7 @@
  *
  * Strategy: CredentialsProvider → POST /auth/login on the API.
  * The API holds the DB and does the bcrypt comparison.
- * We store { id, username, email, householdId, isAdmin } in the JWT token.
+ * We store { id, username, email, householdId, isAdmin, apiToken } in the JWT token.
  */
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
@@ -11,6 +11,8 @@ import Credentials from "next-auth/providers/credentials";
 const API_BASE = process.env.NEXTAUTH_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  trustHost: true,
+  basePath: "/api/auth",
   providers: [
     Credentials({
       name: "credentials",
@@ -34,6 +36,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           if (!res.ok) return null;
 
           const user = await res.json() as {
+            token: string;
             id: string;
             username: string;
             email: string | null;
@@ -47,6 +50,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             email:       user.email ?? undefined,
             householdId: user.householdId,
             isAdmin:     user.isAdmin,
+            apiToken:    user.token,
           };
         } catch {
           return null;
@@ -61,6 +65,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.householdId = (user as { householdId?: string }).householdId;
         token.isAdmin     = (user as { isAdmin?: boolean }).isAdmin;
+        token.apiToken    = (user as { apiToken?: string }).apiToken;
       }
       return token;
     },
@@ -69,6 +74,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user) {
         (session.user as { householdId?: string }).householdId = token.householdId as string;
         (session.user as { isAdmin?: boolean }).isAdmin = token.isAdmin as boolean;
+        (session.user as { apiToken?: string }).apiToken = token.apiToken as string;
       }
       return session;
     },
@@ -76,6 +82,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
   pages: {
     signIn: "/login",
+    error: "/login",
   },
 
   session: {

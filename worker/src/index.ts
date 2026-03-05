@@ -20,6 +20,7 @@ import { randomUUID } from "crypto";
 const {
   inventoryLots,
   inventoryItems,
+  equipmentItems,
   maintenanceSchedules,
   taskProgress,
   alerts,
@@ -204,16 +205,25 @@ async function processMaintenanceSchedules() {
     upcoming.setDate(upcoming.getDate() + upcomingDays);
     const upcomingStr = upcoming.toISOString().slice(0, 10);
 
-    const schedules = await db.query.maintenanceSchedules.findMany({
-      where: and(
-        isNull(maintenanceSchedules.archivedAt),
-        eq(maintenanceSchedules.isActive, true),
-        isNotNull(maintenanceSchedules.nextDueAt),
-        lte(maintenanceSchedules.nextDueAt, upcoming)
-      ),
-    });
+    const scheduleRows = await db
+      .select({
+        schedule: maintenanceSchedules,
+        equipment: equipmentItems,
+      })
+      .from(maintenanceSchedules)
+      .innerJoin(equipmentItems, eq(maintenanceSchedules.equipmentItemId, equipmentItems.id))
+      .where(
+        and(
+          eq(equipmentItems.householdId, hh.id),
+          isNull(equipmentItems.archivedAt),
+          isNull(maintenanceSchedules.archivedAt),
+          eq(maintenanceSchedules.isActive, true),
+          isNotNull(maintenanceSchedules.nextDueAt),
+          lte(maintenanceSchedules.nextDueAt, upcoming)
+        )
+      );
 
-    for (const sched of schedules) {
+    for (const { schedule: sched } of scheduleRows) {
       if (!sched.nextDueAt) continue;
       const dueStr   = sched.nextDueAt.toString().slice(0, 10);
       const severity = dueStr < todayStr ? "overdue"

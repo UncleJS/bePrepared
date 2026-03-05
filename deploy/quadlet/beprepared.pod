@@ -5,7 +5,7 @@
 PodName=beprepared
 # Publish frontend and phpMyAdmin ports to the host
 PublishPort=9999:9999
-PublishPort=9998:9998
+PublishPort=9998:80
 
 [Install]
 WantedBy=default.target

@@ -1,47 +1,98 @@
 import { Elysia, t } from "elysia";
 import { db } from "../../db/client";
 import { modules, sections, guidanceDocs } from "../../db/schema";
-import { eq, isNull, and } from "drizzle-orm";
+import { eq, isNull, and, inArray } from "drizzle-orm";
 import { randomUUID } from "crypto";
+import { requireAdmin, requireAuth } from "../../lib/routeAuth";
 
 type ModuleCategory = "water" | "food" | "shelter" | "medical" | "security" | "comms" | "sanitation" | "power" | "mobility" | "general";
 
 export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] })
 
-  .get("/", async () => {
-    return db.query.modules.findMany({
-      where: isNull(modules.archivedAt),
-      orderBy: modules.sortOrder,
-      with: {
-        sections: {
-          where: isNull(sections.archivedAt),
-          orderBy: sections.sortOrder,
-        },
-      },
-    });
+  .get("/", async ({ request, set }) => {
+    const claims = requireAuth(request, set);
+    if (!claims) return { error: "Unauthorized" };
+
+    const moduleRows = await db
+      .select()
+      .from(modules)
+      .where(isNull(modules.archivedAt))
+      .orderBy(modules.sortOrder);
+
+    if (moduleRows.length === 0) return [];
+
+    const moduleIds = moduleRows.map((m) => m.id);
+
+    const sectionRows = await db
+      .select()
+      .from(sections)
+      .where(and(isNull(sections.archivedAt), inArray(sections.moduleId, moduleIds)))
+      .orderBy(sections.sortOrder);
+
+    const sectionsByModule = new Map<string, typeof sectionRows>();
+    for (const s of sectionRows) {
+      const list = sectionsByModule.get(s.moduleId) ?? [];
+      list.push(s);
+      sectionsByModule.set(s.moduleId, list);
+    }
+
+    return moduleRows.map((m) => ({
+      ...m,
+      sections: sectionsByModule.get(m.id) ?? [],
+    }));
   }, { detail: { summary: "List all modules with sections" } })
 
-  .get("/:slug", async ({ params }) => {
-    const row = await db.query.modules.findFirst({
-      where: and(eq(modules.slug, params.slug), isNull(modules.archivedAt)),
-      with: {
-        sections: {
-          where: isNull(sections.archivedAt),
-          orderBy: sections.sortOrder,
-          with: {
-            guidanceDocs: {
-              where: isNull(guidanceDocs.archivedAt),
-              orderBy: guidanceDocs.sortOrder,
-            },
-          },
-        },
-      },
-    });
-    if (!row) throw new Error("Module not found");
-    return row;
+  .get("/:slug", async ({ request, set, params }) => {
+    const claims = requireAuth(request, set);
+    if (!claims) return { error: "Unauthorized" };
+
+    const moduleRows = await db
+      .select()
+      .from(modules)
+      .where(and(eq(modules.slug, params.slug), isNull(modules.archivedAt)))
+      .limit(1);
+
+    const row = moduleRows[0];
+    if (!row) {
+      set.status = 404;
+      return { error: "Module not found" };
+    }
+
+    const sectionRows = await db
+      .select()
+      .from(sections)
+      .where(and(eq(sections.moduleId, row.id), isNull(sections.archivedAt)))
+      .orderBy(sections.sortOrder);
+
+    const sectionIds = sectionRows.map((s) => s.id);
+    const docRows = sectionIds.length
+      ? await db
+          .select()
+          .from(guidanceDocs)
+          .where(and(isNull(guidanceDocs.archivedAt), inArray(guidanceDocs.sectionId, sectionIds)))
+          .orderBy(guidanceDocs.sortOrder)
+      : [];
+
+    const docsBySection = new Map<string, typeof docRows>();
+    for (const d of docRows) {
+      const list = docsBySection.get(d.sectionId) ?? [];
+      list.push(d);
+      docsBySection.set(d.sectionId, list);
+    }
+
+    return {
+      ...row,
+      sections: sectionRows.map((s) => ({
+        ...s,
+        guidanceDocs: docsBySection.get(s.id) ?? [],
+      })),
+    };
   }, { detail: { summary: "Get a module with all sections and docs by slug" } })
 
-  .post("/", async ({ body }) => {
+  .post("/", async ({ request, set, body }) => {
+    const claims = requireAdmin(request, set);
+    if (!claims) return { error: "Admin access required" };
+
     const id = randomUUID();
     await db.insert(modules).values({
       id,
@@ -66,7 +117,10 @@ export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] }
   })
 
   // Sections
-  .post("/:moduleId/sections", async ({ params, body }) => {
+  .post("/:moduleId/sections", async ({ request, set, params, body }) => {
+    const claims = requireAdmin(request, set);
+    if (!claims) return { error: "Admin access required" };
+
     const id = randomUUID();
     await db.insert(sections).values({ id, moduleId: params.moduleId, ...body });
     return db.query.sections.findFirst({ where: eq(sections.id, id) });
@@ -80,7 +134,10 @@ export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] }
   })
 
   // Guidance docs
-  .post("/:moduleId/sections/:sectionId/docs", async ({ params, body }) => {
+  .post("/:moduleId/sections/:sectionId/docs", async ({ request, set, params, body }) => {
+    const claims = requireAdmin(request, set);
+    if (!claims) return { error: "Admin access required" };
+
     const id = randomUUID();
     await db.insert(guidanceDocs).values({ id, sectionId: params.sectionId, ...body });
     return db.query.guidanceDocs.findFirst({ where: eq(guidanceDocs.id, id) });
@@ -94,7 +151,10 @@ export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] }
     detail: { summary: "Create a guidance doc within a section" },
   })
 
-  .patch("/:moduleId/sections/:sectionId/docs/:docId", async ({ params, body }) => {
+  .patch("/:moduleId/sections/:sectionId/docs/:docId", async ({ request, set, params, body }) => {
+    const claims = requireAdmin(request, set);
+    if (!claims) return { error: "Admin access required" };
+
     await db.update(guidanceDocs).set(body).where(eq(guidanceDocs.id, params.docId));
     return db.query.guidanceDocs.findFirst({ where: eq(guidanceDocs.id, params.docId) });
   }, {

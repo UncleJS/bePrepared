@@ -3,17 +3,25 @@ import { db } from "../../db/client";
 import { households, householdPeopleProfiles } from "../../db/schema";
 import { eq, isNull, and } from "drizzle-orm";
 import { randomUUID } from "crypto";
+import { requireAdmin, requireAuth, requireHouseholdScope } from "../../lib/routeAuth";
 
 export const householdsRoute = new Elysia({ prefix: "/households", tags: ["households"] })
 
-  .get("/", async () => {
+  .get("/", async ({ request, set }) => {
+    const claims = requireAuth(request, set);
+    if (!claims) return { error: "Unauthorized" };
+    if (claims?.isAdmin) {
+      return db.query.households.findMany({ where: isNull(households.archivedAt) });
+    }
     return db.query.households.findMany({
-      where: isNull(households.archivedAt),
-      with: { },
+      where: and(eq(households.id, claims!.householdId), isNull(households.archivedAt)),
     });
   }, { detail: { summary: "List all active households" } })
 
-  .post("/", async ({ body }) => {
+  .post("/", async ({ request, set, body }) => {
+    const claims = requireAdmin(request, set);
+    if (!claims) return { error: "Admin access required" };
+
     const id = randomUUID();
     await db.insert(households).values({ id, ...body });
     return db.query.households.findFirst({ where: eq(households.id, id) });
@@ -26,15 +34,24 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
     detail: { summary: "Create a new household" },
   })
 
-  .get("/:id", async ({ params }) => {
+  .get("/:id", async ({ request, set, params }) => {
+    const claims = requireHouseholdScope(request, set, params.id);
+    if (!claims) return { error: "Forbidden" };
+
     const row = await db.query.households.findFirst({
       where: and(eq(households.id, params.id), isNull(households.archivedAt)),
     });
-    if (!row) throw new Error("Household not found");
+    if (!row) {
+      set.status = 404;
+      return { error: "Household not found" };
+    }
     return row;
   }, { detail: { summary: "Get household by ID" } })
 
-  .patch("/:id", async ({ params, body }) => {
+  .patch("/:id", async ({ request, set, params, body }) => {
+    const claims = requireHouseholdScope(request, set, params.id);
+    if (!claims) return { error: "Forbidden" };
+
     await db.update(households).set(body).where(eq(households.id, params.id));
     return db.query.households.findFirst({ where: eq(households.id, params.id) });
   }, {
@@ -48,7 +65,10 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
     detail: { summary: "Update household" },
   })
 
-  .delete("/:id", async ({ params }) => {
+  .delete("/:id", async ({ request, set, params }) => {
+    const claims = requireHouseholdScope(request, set, params.id);
+    if (!claims) return { error: "Forbidden" };
+
     await db.update(households)
       .set({ archivedAt: new Date() })
       .where(eq(households.id, params.id));
@@ -56,7 +76,10 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
   }, { detail: { summary: "Archive (soft-delete) a household" } })
 
   // People profiles
-  .get("/:id/profiles", async ({ params }) => {
+  .get("/:id/profiles", async ({ request, set, params }) => {
+    const claims = requireHouseholdScope(request, set, params.id);
+    if (!claims) return { error: "Forbidden" };
+
     return db.query.householdPeopleProfiles.findMany({
       where: and(
         eq(householdPeopleProfiles.householdId, params.id),
@@ -65,7 +88,10 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
     });
   }, { detail: { summary: "List people profiles for a household" } })
 
-  .post("/:id/profiles", async ({ params, body }) => {
+  .post("/:id/profiles", async ({ request, set, params, body }) => {
+    const claims = requireHouseholdScope(request, set, params.id);
+    if (!claims) return { error: "Forbidden" };
+
     const id = randomUUID();
     await db.insert(householdPeopleProfiles).values({
       id, householdId: params.id, ...body,
@@ -86,12 +112,23 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
     detail: { summary: "Create a people profile" },
   })
 
-  .patch("/:id/profiles/:profileId", async ({ params, body }) => {
+  .patch("/:id/profiles/:profileId", async ({ request, set, params, body }) => {
+    const claims = requireHouseholdScope(request, set, params.id);
+    if (!claims) return { error: "Forbidden" };
+
     await db.update(householdPeopleProfiles)
       .set(body)
-      .where(eq(householdPeopleProfiles.id, params.profileId));
+      .where(and(
+        eq(householdPeopleProfiles.id, params.profileId),
+        eq(householdPeopleProfiles.householdId, params.id),
+        isNull(householdPeopleProfiles.archivedAt)
+      ));
     return db.query.householdPeopleProfiles.findFirst({
-      where: eq(householdPeopleProfiles.id, params.profileId),
+      where: and(
+        eq(householdPeopleProfiles.id, params.profileId),
+        eq(householdPeopleProfiles.householdId, params.id),
+        isNull(householdPeopleProfiles.archivedAt)
+      ),
     });
   }, {
     body: t.Partial(t.Object({
@@ -106,9 +143,16 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
     detail: { summary: "Update a people profile" },
   })
 
-  .delete("/:id/profiles/:profileId", async ({ params }) => {
+  .delete("/:id/profiles/:profileId", async ({ request, set, params }) => {
+    const claims = requireHouseholdScope(request, set, params.id);
+    if (!claims) return { error: "Forbidden" };
+
     await db.update(householdPeopleProfiles)
       .set({ archivedAt: new Date() })
-      .where(eq(householdPeopleProfiles.id, params.profileId));
+      .where(and(
+        eq(householdPeopleProfiles.id, params.profileId),
+        eq(householdPeopleProfiles.householdId, params.id),
+        isNull(householdPeopleProfiles.archivedAt)
+      ));
     return { archived: true };
   }, { detail: { summary: "Archive a people profile" } });

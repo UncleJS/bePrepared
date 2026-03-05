@@ -2,7 +2,7 @@ import { Elysia, t } from "elysia";
 import { db } from "../../db/client";
 import { users } from "../../db/schema";
 import { eq, isNull, and } from "drizzle-orm";
-import { createHash } from "crypto";
+import { issueApiToken } from "../../lib/authToken";
 
 // Minimal bcrypt-compatible check using the same library the frontend uses.
 // We use bcryptjs on both sides so hashes are interoperable.
@@ -15,6 +15,12 @@ async function verifyPassword(plain: string, hash: string): Promise<boolean> {
 export const authRoute = new Elysia({ prefix: "/auth", tags: ["auth"] })
 
   .post("/login", async ({ body, set }) => {
+    const secret = process.env.API_AUTH_SECRET ?? process.env.AUTH_SECRET;
+    if (!secret) {
+      set.status = 500;
+      return { error: "Server auth secret is not configured" };
+    }
+
     const user = await db.query.users.findFirst({
       where: and(eq(users.username, body.username), isNull(users.archivedAt)),
     });
@@ -30,8 +36,20 @@ export const authRoute = new Elysia({ prefix: "/auth", tags: ["auth"] })
       return { error: "Invalid credentials" };
     }
 
+    const token = issueApiToken(
+      {
+        sub: user.id,
+        username: user.username,
+        householdId: user.householdId,
+        isAdmin: user.isAdmin,
+      },
+      secret,
+      60 * 60 * 12
+    );
+
     // Return safe user fields (no password hash)
     return {
+      token,
       id:          user.id,
       username:    user.username,
       email:       user.email,

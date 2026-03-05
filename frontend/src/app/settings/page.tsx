@@ -1,4 +1,9 @@
-import { apiFetch, HOUSEHOLD_ID } from "@/lib/api";
+import { apiFetch, getSessionHouseholdId } from "@/lib/api";
+import { HouseholdSettingsEditor } from "@/components/settings/HouseholdSettingsEditor";
+import { HouseholdManager } from "@/components/settings/HouseholdManager";
+import { PolicySettingsEditor } from "@/components/settings/PolicySettingsEditor";
+import { ScenarioPolicySettingsEditor } from "@/components/settings/ScenarioPolicySettingsEditor";
+import Link from "next/link";
 
 type PolicyDefault = {
   key: string;
@@ -9,104 +14,85 @@ type PolicyDefault = {
 };
 
 type HouseholdPolicy = PolicyDefault & { id: string };
+type ScenarioPolicy = PolicyDefault & { id: string };
+type Household = {
+  id: string;
+  name: string;
+  targetPeople: number;
+  activeScenario: "shelter_in_place" | "evacuation";
+  notes?: string | null;
+};
 
-async function getData() {
-  const [defaults, overrides] = await Promise.allSettled([
+async function getData(householdId: string) {
+  const [household, defaults, overrides, sip, evac] = await Promise.allSettled([
+    apiFetch<Household>(`/households/${householdId}`),
     apiFetch<PolicyDefault[]>("/settings/defaults"),
-    apiFetch<HouseholdPolicy[]>(`/settings/${HOUSEHOLD_ID}/policies`),
+    apiFetch<HouseholdPolicy[]>(`/settings/${householdId}/policies`),
+    apiFetch<ScenarioPolicy[]>(`/settings/${householdId}/scenario/shelter_in_place`),
+    apiFetch<ScenarioPolicy[]>(`/settings/${householdId}/scenario/evacuation`),
   ]);
 
   return {
+    household: household.status === "fulfilled" ? household.value : null,
     defaults:  defaults.status  === "fulfilled" ? defaults.value  : [],
     overrides: overrides.status === "fulfilled" ? overrides.value : [],
+    scenarioPolicies: {
+      shelter_in_place: sip.status === "fulfilled" ? sip.value : [],
+      evacuation: evac.status === "fulfilled" ? evac.value : [],
+    },
   };
 }
 
 export default async function SettingsPage() {
-  const { defaults, overrides } = await getData();
+  const householdId = await getSessionHouseholdId();
+  if (!householdId) return <p className="text-sm text-muted-foreground">No household in session.</p>;
 
-  const overrideMap = Object.fromEntries(overrides.map((o) => [o.key, o]));
+  const { household, defaults, overrides, scenarioPolicies } = await getData(householdId);
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold">Settings</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Policy defaults and household overrides. Use the API / Swagger to change values.
+          Policy defaults and household overrides. Edit values inline and save.
         </p>
       </div>
 
       <section>
-        <h2 className="text-lg font-semibold mb-3">Policy Defaults</h2>
-        <div className="rounded-lg border border-border overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="text-left px-4 py-2 font-medium text-muted-foreground">Key</th>
-                <th className="text-left px-4 py-2 font-medium text-muted-foreground">System Default</th>
-                <th className="text-left px-4 py-2 font-medium text-muted-foreground">Household Override</th>
-                <th className="text-left px-4 py-2 font-medium text-muted-foreground">Unit</th>
-                <th className="text-left px-4 py-2 font-medium text-muted-foreground">Description</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {defaults.map((d) => {
-                const override = overrideMap[d.key];
-                const defaultVal = d.valueDecimal ?? String(d.valueInt ?? "—");
-                const overrideVal = override
-                  ? (override.valueDecimal ?? String(override.valueInt ?? "—"))
-                  : null;
+        <h2 className="text-lg font-semibold mb-3">Household</h2>
+        {household ? (
+          <HouseholdSettingsEditor household={household} />
+        ) : (
+          <p className="text-sm text-muted-foreground">Unable to load household settings.</p>
+        )}
+      </section>
 
-                return (
-                  <tr key={d.key} className="hover:bg-accent/30 transition-colors">
-                    <td className="px-4 py-2.5 font-mono text-xs text-primary">{d.key}</td>
-                    <td className="px-4 py-2.5 font-mono">{defaultVal}</td>
-                    <td className="px-4 py-2.5 font-mono">
-                      {overrideVal ? (
-                        <span className="text-yellow-400">{overrideVal}</span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-2.5 text-muted-foreground text-xs">{d.unit}</td>
-                    <td className="px-4 py-2.5 text-muted-foreground text-xs">{d.description ?? "—"}</td>
-                  </tr>
-                );
-              })}
-              {defaults.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                    No policy defaults. Run seed data.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+      <section>
+        <h2 className="text-lg font-semibold mb-3">Category Management</h2>
+        <div className="flex flex-wrap gap-3">
+          <Link href="/settings/inventory-categories" className="rounded-md border border-border px-3 py-2 text-sm hover:bg-accent">
+            Inventory Categories
+          </Link>
+          <Link href="/settings/equipment-categories" className="rounded-md border border-border px-3 py-2 text-sm hover:bg-accent">
+            Equipment Categories
+          </Link>
         </div>
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold mb-1">Changing Policy Values</h2>
-        <p className="text-sm text-muted-foreground mb-2">
-          Use the Swagger UI at{" "}
-          <a
-            href="/api/docs"
-            target="_blank"
-            rel="noopener"
-            className="text-primary underline underline-offset-2"
-          >
-            /api/docs
-          </a>{" "}
-          to set overrides:
-        </p>
-        <pre className="text-xs bg-muted rounded-lg p-4 overflow-x-auto">
-{`PUT /settings/${HOUSEHOLD_ID}/policies/water_liters_per_person_per_day
-{
-  "unit": "liters/person/day",
-  "valueDecimal": 6.0
-}`}
-        </pre>
+        <h2 className="text-lg font-semibold mb-3">Policy Defaults</h2>
+        <PolicySettingsEditor householdId={householdId} defaults={defaults} overrides={overrides} />
       </section>
+
+      <section>
+        <h2 className="text-lg font-semibold mb-3">Scenario Overrides</h2>
+        <ScenarioPolicySettingsEditor householdId={householdId} defaults={defaults} scenarioPolicies={scenarioPolicies} />
+      </section>
+
+      <section>
+        <HouseholdManager />
+      </section>
+
     </div>
   );
 }

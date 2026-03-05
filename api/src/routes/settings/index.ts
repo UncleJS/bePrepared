@@ -3,16 +3,25 @@ import { db } from "../../db/client";
 import { policyDefaults, householdPolicies, scenarioPolicies, auditLog } from "../../db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { randomUUID } from "crypto";
+import { requireAuth, requireHouseholdScope } from "../../lib/routeAuth";
+
+type Scenario = "shelter_in_place" | "evacuation";
 
 export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"] })
 
   // System defaults (read-only for UI, writable for admin)
-  .get("/defaults", async () => {
+  .get("/defaults", async ({ request, set }) => {
+    const claims = requireAuth(request, set);
+    if (!claims) return { error: "Unauthorized" };
+
     return db.query.policyDefaults.findMany();
   }, { detail: { summary: "Get all system policy defaults" } })
 
   // Household global policy overrides
-  .get("/:householdId/policies", async ({ params }) => {
+  .get("/:householdId/policies", async ({ request, set, params }) => {
+    const claims = requireHouseholdScope(request, set, params.householdId);
+    if (!claims) return { error: "Forbidden" };
+
     return db.query.householdPolicies.findMany({
       where: and(
         eq(householdPolicies.householdId, params.householdId),
@@ -21,7 +30,10 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
     });
   }, { detail: { summary: "Get household global policy overrides" } })
 
-  .put("/:householdId/policies/:key", async ({ params, body }) => {
+  .put("/:householdId/policies/:key", async ({ request, set, params, body }) => {
+    const claims = requireHouseholdScope(request, set, params.householdId);
+    if (!claims) return { error: "Forbidden" };
+
     // Archive existing then insert new (full audit trail)
     const existing = await db.query.householdPolicies.findFirst({
       where: and(
@@ -64,7 +76,10 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
     detail: { summary: "Upsert a household-level policy override (archived-trail)" },
   })
 
-  .delete("/:householdId/policies/:key", async ({ params }) => {
+  .delete("/:householdId/policies/:key", async ({ request, set, params }) => {
+    const claims = requireHouseholdScope(request, set, params.householdId);
+    if (!claims) return { error: "Forbidden" };
+
     await db.update(householdPolicies)
       .set({ archivedAt: new Date() })
       .where(and(
@@ -76,21 +91,27 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
   }, { detail: { summary: "Reset a household policy override (revert to default)" } })
 
   // Scenario-specific overrides
-  .get("/:householdId/scenario/:scenario", async ({ params }) => {
+  .get("/:householdId/scenario/:scenario", async ({ request, set, params }) => {
+    const claims = requireHouseholdScope(request, set, params.householdId);
+    if (!claims) return { error: "Forbidden" };
+
     return db.query.scenarioPolicies.findMany({
       where: and(
         eq(scenarioPolicies.householdId, params.householdId),
-        eq(scenarioPolicies.scenario, params.scenario as any),
+        eq(scenarioPolicies.scenario, params.scenario as Scenario),
         isNull(scenarioPolicies.archivedAt)
       ),
     });
   }, { detail: { summary: "Get scenario-specific policy overrides" } })
 
-  .put("/:householdId/scenario/:scenario/:key", async ({ params, body }) => {
+  .put("/:householdId/scenario/:scenario/:key", async ({ request, set, params, body }) => {
+    const claims = requireHouseholdScope(request, set, params.householdId);
+    if (!claims) return { error: "Forbidden" };
+
     const existing = await db.query.scenarioPolicies.findFirst({
       where: and(
         eq(scenarioPolicies.householdId, params.householdId),
-        eq(scenarioPolicies.scenario, params.scenario as any),
+        eq(scenarioPolicies.scenario, params.scenario as Scenario),
         eq(scenarioPolicies.key, params.key),
         isNull(scenarioPolicies.archivedAt)
       ),
@@ -104,7 +125,7 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
     await db.insert(scenarioPolicies).values({
       id,
       householdId:  params.householdId,
-      scenario:     params.scenario as any,
+      scenario:     params.scenario as Scenario,
       key:          params.key,
       unit:         body.unit,
       valueDecimal: body.valueDecimal?.toString(),
@@ -121,7 +142,10 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
   })
 
   // Audit log
-  .get("/:householdId/audit", async ({ params }) => {
+  .get("/:householdId/audit", async ({ request, set, params }) => {
+    const claims = requireHouseholdScope(request, set, params.householdId);
+    if (!claims) return { error: "Forbidden" };
+
     return db.query.auditLog.findMany({
       where: eq(auditLog.householdId, params.householdId),
       orderBy: auditLog.createdAt,

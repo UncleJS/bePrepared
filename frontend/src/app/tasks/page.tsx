@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiFetch, HOUSEHOLD_ID } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
+import { useActiveHouseholdId } from "@/lib/useActiveHouseholdId";
 import { CheckSquare, Square, ChevronDown, ChevronRight } from "lucide-react";
 
 type Task = {
@@ -32,24 +33,35 @@ const LEVEL_LABELS: Record<string, string> = {
 const LEVEL_ORDER = ["l1_72h", "l2_14d", "l3_30d", "l4_90d"];
 
 export default function TasksPage() {
+  const { householdId, status } = useActiveHouseholdId();
+
   const [tasks, setTasks]       = useState<Task[]>([]);
   const [progress, setProgress] = useState<Record<string, Progress>>({});
   const [loading, setLoading]   = useState(true);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({ l1_72h: true });
 
   useEffect(() => {
+    if (!householdId) return;
+
     Promise.all([
       apiFetch<Task[]>("/tasks"),
-      apiFetch<Progress[]>(`/tasks/${HOUSEHOLD_ID}/progress`),
+      apiFetch<Progress[]>(`/tasks/${householdId}/progress`),
     ]).then(([t, p]) => {
-      setTasks(t);
+      const deduped = new Map<string, Task>();
+      for (const task of t) {
+        const key = `${task.moduleId}:${task.readinessLevel}:${task.scenario}:${task.title.trim().toLowerCase()}`;
+        if (!deduped.has(key)) deduped.set(key, task);
+      }
+      setTasks(Array.from(deduped.values()));
       const map: Record<string, Progress> = {};
       p.forEach((pr) => { map[pr.taskId] = pr; });
       setProgress(map);
     }).catch(console.error).finally(() => setLoading(false));
-  }, []);
+  }, [householdId]);
 
   async function toggle(task: Task) {
+    if (!householdId) return;
+
     const existing = progress[task.id];
     const newStatus = existing?.status === "completed" ? "pending" : "completed";
     const completedAt = newStatus === "completed" ? new Date().toISOString() : undefined;
@@ -62,12 +74,12 @@ export default function TasksPage() {
 
     try {
       if (existing?.id) {
-        await apiFetch(`/tasks/${HOUSEHOLD_ID}/progress/${existing.id}`, {
+        await apiFetch(`/tasks/${householdId}/progress/${existing.id}`, {
           method: "PATCH",
           body: JSON.stringify({ status: newStatus, completedAt }),
         });
       } else {
-        const created = await apiFetch<Progress>(`/tasks/${HOUSEHOLD_ID}/progress`, {
+        const created = await apiFetch<Progress>(`/tasks/${householdId}/progress`, {
           method: "POST",
           body: JSON.stringify({ taskId: task.id, status: newStatus, completedAt }),
         });
@@ -83,6 +95,8 @@ export default function TasksPage() {
     tasks: tasks.filter((t) => t.readinessLevel === lvl),
   }));
 
+  if (status === "loading") return <p className="text-muted-foreground text-sm">Loading session…</p>;
+  if (!householdId) return <p className="text-muted-foreground text-sm">No household in session.</p>;
   if (loading) return <p className="text-muted-foreground text-sm">Loading ticksheets…</p>;
 
   return (

@@ -460,8 +460,9 @@ Query params:
 List all active (non-archived) alerts for a household.
 
 Query params:
-- `status` — filter by status: `active` | `read` | `resolved` | `snoozed`
-- `severity` — filter by severity: `info` | `warning` | `critical`
+- `status` — optional: `active` or `resolved`
+- `unread` — optional boolean-like string (`"true"`)
+- `unresolved` — optional boolean-like string (`"true"`)
 
 ---
 
@@ -580,31 +581,32 @@ Query param `people` — manual override of people count (integer).
 **Response**:
 ```json
 {
-  "householdId": "demo-household-001",
-  "scenario": "shelter_in_place",
-  "effectivePeople": 4,
-  "effectiveWaterLPPD": 4.0,
-  "effectiveCaloriesKcalPPD": 2200,
-  "horizons": {
-    "h72h": {
-      "days": 3,
-      "waterLiters": 48,
-      "caloriesKcal": 26400
+  "people": {
+    "count": 4,
+    "source": "household_baseline"
+  },
+  "policy": {
+    "waterLitersPerPersonPerDay": 4,
+    "caloriesKcalPerPersonPerDay": 2200,
+    "alertUpcomingDays": 14,
+    "alertGraceDays": 3
+  },
+  "totals": {
+    "h72": {
+      "water": 48,
+      "calories": 26400
     },
-    "h14d": {
-      "days": 14,
-      "waterLiters": 224,
-      "caloriesKcal": 123200
+    "d14": {
+      "water": 224,
+      "calories": 123200
     },
-    "h30d": {
-      "days": 30,
-      "waterLiters": 480,
-      "caloriesKcal": 264000
+    "d30": {
+      "water": 480,
+      "calories": 264000
     },
-    "h90d": {
-      "days": 90,
-      "waterLiters": 1440,
-      "caloriesKcal": 792000
+    "d90": {
+      "water": 1440,
+      "calories": 792000
     }
   }
 }

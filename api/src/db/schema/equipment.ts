@@ -1,11 +1,12 @@
 // schema/equipment.ts
 import {
-  mysqlTable, varchar, text, int, decimal, boolean, timestamp, mysqlEnum, date
+  mysqlTable, varchar, text, int, decimal, boolean, timestamp, mysqlEnum, date, uniqueIndex
 } from "drizzle-orm/mysql-core";
 
 export const equipmentItems = mysqlTable("equipment_items", {
   id:           varchar("id", { length: 36 }).primaryKey(),
   householdId:  varchar("household_id", { length: 36 }).notNull(),
+  categoryId:   varchar("category_id", { length: 36 }),
   categorySlug: varchar("category_slug", { length: 100 }).notNull(),
   name:         varchar("name", { length: 500 }).notNull(),
   model:        varchar("model", { length: 255 }),
@@ -18,6 +19,18 @@ export const equipmentItems = mysqlTable("equipment_items", {
   createdAt:    timestamp("created_at").notNull().defaultNow(),
   updatedAt:    timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
   archivedAt:   timestamp("archived_at"),
+});
+
+export const equipmentCategories = mysqlTable("equipment_categories", {
+  id:          varchar("id", { length: 36 }).primaryKey(),
+  householdId: varchar("household_id", { length: 36 }),
+  isSystem:    boolean("is_system").notNull().default(false),
+  name:        varchar("name", { length: 255 }).notNull(),
+  slug:        varchar("slug", { length: 100 }).notNull(),
+  sortOrder:   int("sort_order").notNull().default(0),
+  createdAt:   timestamp("created_at").notNull().defaultNow(),
+  updatedAt:   timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+  archivedAt:  timestamp("archived_at"),
 });
 
 // Battery-specific profiling (linked to equipment_items or standalone)
@@ -33,7 +46,9 @@ export const batteryProfiles = mysqlTable("battery_profiles", {
   storageTempMax:    int("storage_temp_max"),
   notes:             text("notes"),
   archivedAt:        timestamp("archived_at"),
-});
+}, (table) => ({
+  nameUnique: uniqueIndex("battery_profiles_name_unique").on(table.name),
+}));
 
 // Templates for maintenance tasks (reusable)
 export const maintenanceTemplates = mysqlTable("maintenance_templates", {
@@ -48,7 +63,9 @@ export const maintenanceTemplates = mysqlTable("maintenance_templates", {
   defaultUsageInterval: decimal("default_usage_interval", { precision: 10, scale: 2 }),
   graceDays:       int("grace_days").notNull().default(7),
   archivedAt:      timestamp("archived_at"),
-});
+}, (table) => ({
+  categoryNameUnique: uniqueIndex("maintenance_templates_category_name_unique").on(table.categorySlug, table.name),
+}));
 
 // Per-item scheduled maintenance (links item to template with optional overrides)
 export const maintenanceSchedules = mysqlTable("maintenance_schedules", {

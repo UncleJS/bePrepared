@@ -1,6 +1,6 @@
 // schema/modules.ts
 import {
-  mysqlTable, varchar, text, int, boolean, timestamp, mysqlEnum
+  mysqlTable, varchar, text, int, boolean, timestamp, mysqlEnum, uniqueIndex
 } from "drizzle-orm/mysql-core";
 
 export const modules = mysqlTable("modules", {
@@ -28,7 +28,9 @@ export const sections = mysqlTable("sections", {
   createdAt:  timestamp("created_at").notNull().defaultNow(),
   updatedAt:  timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
   archivedAt: timestamp("archived_at"),
-});
+}, (table) => ({
+  moduleSlugUnique: uniqueIndex("sections_module_slug_unique").on(table.moduleId, table.slug),
+}));
 
 export const guidanceDocs = mysqlTable("guidance_docs", {
   id:         varchar("id", { length: 36 }).primaryKey(),
