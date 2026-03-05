@@ -58,7 +58,7 @@ cd ../frontend
 bun run dev
 ```
 
-Open http://localhost:3000 — UI. Open http://localhost:3001/docs — Swagger.
+Open http://localhost:9999 — UI and API docs proxy at http://localhost:9999/api/bff/docs.
 
 ---
 
@@ -93,9 +93,9 @@ Open http://localhost:3000 — UI. Open http://localhost:3001/docs — Swagger.
 ### Verify
 
 - [ ] `systemctl --user status beprepared-api` shows `active (running)`
-- [ ] `curl http://localhost:3001/health` returns `{"status":"ok",...}`
-- [ ] `curl http://localhost:3000` returns HTML (frontend)
-- [ ] Swagger UI accessible at http://localhost:3001/docs
+- [ ] `curl http://localhost:9999` returns HTML (frontend)
+- [ ] Swagger UI accessible at http://localhost:9999/api/bff/docs
+- [ ] API health check from inside API container succeeds (`podman exec beprepared-api curl -s http://localhost:3001/health`)
 - [ ] Worker logs show at least one successful alert-check run
 
 ### Enable auto-start
@@ -108,7 +108,7 @@ Open http://localhost:3000 — UI. Open http://localhost:3001/docs — Swagger.
 
 [↑ TOC](#table-of-contents)
 
-After deploy, follow these steps in the UI (or via Swagger at `/docs`):
+After deploy, follow these steps in the UI (or via Swagger at `/api/bff/docs` through the frontend proxy):
 
 ### Step 1 — Create your household
 - Name it something meaningful
@@ -162,13 +162,13 @@ systemctl --user is-active beprepared-api beprepared-worker beprepared-frontend
 # Any service errors in last 24h?
 journalctl --user -u 'beprepared*' --since "24 hours ago" -p err
 
-# DB accessible?
-curl -s http://localhost:3001/health | jq .
+# API reachable through frontend proxy?
+curl -s http://localhost:9999/api/bff/health | jq .
 ```
 
 In the UI:
 - [ ] Review new alerts (bell icon on dashboard)
-- [ ] Check for any `critical` severity alerts and act on them
+- [ ] Check for any `overdue` severity alerts and act on them
 
 ---
 
@@ -197,7 +197,7 @@ In the UI:
 
 - [ ] Verify backup restores correctly (test restore to a temp DB)
 - [ ] Check for application updates (git pull)
-- [ ] Review all `warning` and `critical` alerts, resolve or snooze
+- [ ] Review all `due` and `overdue` alerts, resolve as needed
 - [ ] Review readiness level progress — aim to advance one level per quarter
 - [ ] Walk the physical stores — verify logged quantities match reality
 - [ ] Review and update `target_people` if household composition changed
@@ -215,7 +215,7 @@ In the UI:
 | No alerts generating | `systemctl --user restart beprepared-worker` |
 | Frontend shows blank | `systemctl --user restart beprepared-frontend` |
 | DB connection refused | `systemctl --user status beprepared-db` — check logs for init state |
-| Port 3000 taken | Check `.env` for `PORT` or use `ss -tlnp | grep 3000` |
+| Port 9999 taken | Check `.env` for `FRONTEND_PORT` or use `ss -tlnp | grep 9999` |
 | Migrations fail | Check `DATABASE_URL` in `.env`; ensure DB is up first |
 | Old image still running | Rebuild image then `systemctl --user restart <service>` |
 
@@ -238,19 +238,19 @@ systemctl --user status 'beprepared*' --no-pager
 journalctl --user -u 'beprepared*' -f
 
 # Count active alerts via API
-curl -s "http://localhost:3001/alerts/${HOUSEHOLD_ID}" | jq length
+curl -s "http://localhost:9999/api/bff/alerts/${HOUSEHOLD_ID}" | jq length
 
 # Get current planning totals (shelter_in_place, 4 people)
-curl -s "http://localhost:3001/planning/${HOUSEHOLD_ID}/shelter_in_place?people=4" | jq .
+curl -s "http://localhost:9999/api/bff/planning/${HOUSEHOLD_ID}/shelter_in_place?people=4" | jq .
 
 # Get lots expiring in 90 days
-curl -s "http://localhost:3001/inventory/${HOUSEHOLD_ID}/expiring?days=90" | jq length
+curl -s "http://localhost:9999/api/bff/inventory/${HOUSEHOLD_ID}/expiring?days=90" | jq length
 
 # List due maintenance tasks
-curl -s "http://localhost:3001/maintenance/${HOUSEHOLD_ID}/due?days=30" | jq .
+curl -s "http://localhost:9999/api/bff/maintenance/${HOUSEHOLD_ID}/due?days=30" | jq .
 
 # Open Swagger in browser (Linux)
-xdg-open http://localhost:3001/docs
+xdg-open http://localhost:9999/api/bff/docs
 
 # Quick DB row count check
 podman exec beprepared-db mariadb \

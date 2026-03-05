@@ -88,22 +88,22 @@ bePrepared/
 ┌─────────────────────────────────────────────────────────┐
 │                     Podman Pod: beprepared               │
 │                                                         │
-│  ┌──────────────┐   HTTP (3000)   ┌──────────────────┐  │
+│  ┌──────────────┐   HTTP (9999)   ┌──────────────────┐  │
 │  │  frontend    │────────────────▶│     api           │  │
-│  │  Next.js     │  /api/*  proxy  │  Bun + Elysia    │  │
-│  │  :3000       │                 │  :3001            │  │
+│  │  Next.js     │ /api/bff/* proxy│  Bun + Elysia    │  │
+│  │  :9999       │                 │  :3001            │  │
 │  └──────────────┘                 │  /docs (Swagger)  │  │
 │                                   └────────┬─────────┘  │
 │                                            │             │
 │  ┌──────────────┐                          │ Drizzle     │
 │  │  worker      │──────────────────────────┤             │
-│  │  Bun cron    │    direct DB writes       │             │
+│  │  Bun cron    │    direct DB writes      │             │
 │  │  (no port)   │                          │             │
 │  └──────────────┘                 ┌────────▼─────────┐  │
 │                                   │   MariaDB :3306   │  │
 │                                   └──────────────────┘  │
 └─────────────────────────────────────────────────────────┘
-        Exposed: :3000 (frontend) — all others internal
+        Exposed: :9999 (frontend), :9998 (phpMyAdmin)
 ```
 
 The `api` and `worker` both connect directly to MariaDB via `mysql2` pool. The `frontend` only speaks to the `api` over HTTP.
@@ -119,7 +119,7 @@ The `api` and `worker` both connect directly to MariaDB via `mysql2` pool. The `
 ```
 Browser
   │
-  │  GET /api/planning/:householdId/shelter_in_place
+  │  GET /api/bff/planning/:householdId/shelter_in_place
   ▼
 Next.js Route Handler (rewrite proxy)
   │
@@ -149,17 +149,9 @@ Worker (every ~1 hour)
   │     SELECT inventory_lots WHERE next_replace_at < cutoff
   │     INSERT alerts (upsert on duplicate)
   │
-  ├── checkMaintenanceDueAlerts()
-  │     SELECT maintenance_schedules WHERE next_due_at < cutoff
-  │     INSERT alerts (upsert on duplicate)
-  │
-  ├── checkLowStockAlerts()
-  │     SELECT items WHERE SUM(lot_qty) < low_stock_threshold
-  │     INSERT alerts (upsert on duplicate)
-  │
-  └── checkTaskOverdueAlerts()
-        SELECT recurring task_progress WHERE next_due_at < cutoff
-        INSERT alerts (upsert on duplicate)
+  └── checkMaintenanceDueAlerts()
+        SELECT maintenance_schedules WHERE next_due_at < cutoff
+        INSERT alerts (idempotent upsert by entity+category)
 ```
 
 ---
@@ -212,8 +204,8 @@ Supported policy keys:
 `worker/src/index.ts` runs on startup and then on a 1-hour interval (using `setInterval`). It:
 
 - Queries all active households
-- For each household, checks five alert categories with deduplication (`onDuplicateKeyUpdate`)
-- Alert records have a `dedupeKey` (`VARCHAR(255) UNIQUE`) to prevent duplicate rows per item+type+window
+- For each household, checks inventory expiry, lot replacement due, and maintenance due
+- Uses idempotent upsert/update behavior to avoid duplicate active alerts for the same entity+category
 
 The worker shares the same Drizzle schema (imported from `../../api/src/db/schema`) — intentional cross-workspace reference in the monorepo.
 
@@ -256,7 +248,7 @@ systemctl --user status beprepared-api
 journalctl --user -u beprepared-api -f
 ```
 
-Only **port 3000** (frontend) is published to the host. The API (3001) and DB (3306) are internal to the pod network.
+Only **port 9999** (frontend) and **port 9998** (phpMyAdmin) are published to the host. The API (3001) and DB (3306) are internal to the pod network.
 
 See `docs/11-operations-podman.md` for full operational runbook.
 
@@ -273,7 +265,7 @@ See `docs/11-operations-podman.md` for full operational runbook.
 | ORM | Drizzle | Type-safe, no magic, SQL-close, drizzle-kit migrations |
 | DB | MariaDB | Open-source, battle-tested, Drizzle support, simple for self-hosting |
 | Deletion policy | Archive-only | Audit trail, accidental-delete safety, restore flows |
-| Auth | None (v0.1) | Single-household local deployment; auth can be layered at proxy |
+| Auth | NextAuth + API bearer tokens | Credentials login at `/auth/login`; household/admin scope checks on API routes |
 | Container runtime | Podman rootless | No root daemon, systemd-native, RHEL 10 compatible |
 | Frontend | Next.js App Router | File-based routing, RSC, strong ecosystem |
 | ID type | UUID v4 string | No integer sequence leakage, safe for future federation |

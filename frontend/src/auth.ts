@@ -4,6 +4,7 @@
  * Strategy: CredentialsProvider → POST /auth/login on the API.
  * The API holds the DB and does the bcrypt comparison.
  * We store { id, username, email, householdId, isAdmin, apiToken } in the JWT token.
+ * The API token stays server-side and is not exposed to client session payloads.
  */
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
@@ -70,11 +71,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return token;
     },
     session({ session, token }) {
-      // Expose extra fields to the client session
+      // Expose non-sensitive fields to the client session
       if (session.user) {
         (session.user as { householdId?: string }).householdId = token.householdId as string;
         (session.user as { isAdmin?: boolean }).isAdmin = token.isAdmin as boolean;
-        (session.user as { apiToken?: string }).apiToken = token.apiToken as string;
       }
       return session;
     },

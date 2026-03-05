@@ -4,7 +4,7 @@
 ![Status](https://img.shields.io/badge/status-active-brightgreen?style=flat-square)
 ![Stack](https://img.shields.io/badge/stack-Next.js%20%7C%20Elysia%20%7C%20MariaDB-blue?style=flat-square)
 ![Deploy](https://img.shields.io/badge/deploy-Podman_Pod-orange?style=flat-square)
-![Docs](https://img.shields.io/badge/docs-14_pages-informational?style=flat-square)
+![Docs](https://img.shields.io/badge/docs-15_pages-informational?style=flat-square)
 
 > A database-driven household preparedness platform — from 72-hour readiness to 90-day self-sufficiency.
 
@@ -17,7 +17,8 @@
 3. [Quick Start](#3-quick-start)
 4. [Core Concepts at a Glance](#4-core-concepts-at-a-glance)
 5. [System Architecture Summary](#5-system-architecture-summary)
-6. [License and Attribution](#6-license-and-attribution)
+6. [Review and Remediation Backlog](#6-review-and-remediation-backlog)
+7. [License and Attribution](#7-license-and-attribution)
 
 ---
 
@@ -55,6 +56,7 @@ Source of truth note: for persisted enums, field names, and API payload semantic
 | 11 | [Operations — Podman](./11-operations-podman.md) | Pod deployment, startup, and maintenance |
 | 12 | [Governance and License](./12-governance-license.md) | CC BY-NC-SA rules, contribution standards |
 | 13 | [Quickstart Operator Checklist](./13-quickstart-operator-checklist.md) | One-page printable runbook |
+| 14 | [Project Review and Remediation Backlog](./14-project-review-and-remediation-backlog.md) | Prioritized findings checklist for deep-dive follow-up |
 
 [↑ Go to TOC](#table-of-contents)
 
@@ -74,18 +76,17 @@ cp deploy/.env.example deploy/.env
 # Edit deploy/.env with your secrets
 
 # 4. Start Podman pod
-cd deploy
-./pod-start.sh
+./deploy/pod-start.sh
 
 # 5. Run DB migrations + seed
-bun run db:migrate
-bun run db:seed
+podman exec beprepared-api bun run db:migrate
+podman exec beprepared-api bun run db:seed
 
 # 6. Open frontend
-http://localhost:3000
+http://localhost:9999
 
 # 7. Open API docs
-http://localhost:3001/docs
+http://localhost:9999/api/bff/docs
 ```
 
 [↑ Go to TOC](#table-of-contents)
@@ -118,7 +119,7 @@ http://localhost:3001/docs
 │  ┌─────────────┐   ┌─────────────┐   ┌─────────────┐               │
 │  │  frontend   │──▶│     api     │──▶│   mariadb   │               │
 │  │  Next.js    │   │ Elysia/Bun  │   │ (persistent)│               │
-│  │  :3000      │   │  :3001      │   │  :3306      │               │
+│  │  :9999      │   │  :3001      │   │  :3306      │               │
 │  └─────────────┘   └──────┬──────┘   └──────▲──────┘               │
 │                            │                 │                       │
 │                     ┌──────▼──────┐          │                       │
@@ -134,7 +135,19 @@ See [Architecture](./08-architecture.md) and [Operations — Podman](./11-operat
 
 ---
 
-## 6. License and Attribution
+## 6. Review and Remediation Backlog
+
+For a persistent, prioritized checklist based on the latest project-wide review, see:
+
+- [Project Review and Remediation Backlog](./14-project-review-and-remediation-backlog.md)
+
+This file is intended to be the working list for deep-dive sessions and implementation follow-ups.
+
+[↑ Go to TOC](#table-of-contents)
+
+---
+
+## 7. License and Attribution
 
 This documentation and all authored guidance content is licensed under:
 

@@ -88,7 +88,8 @@ All unit files live in `deploy/quadlet/`. After copying to `~/.config/containers
 ```ini
 [Pod]
 PodName=beprepared
-PublishPort=3000:3000
+PublishPort=9999:9999
+PublishPort=9998:80
 
 [Install]
 WantedBy=default.target
@@ -335,7 +336,7 @@ Copy `deploy/.env.example` to `deploy/.env` and fill in values.
 | `DB_ROOT_PASSWORD` | yes | — | MariaDB container only |
 | `DATABASE_URL` | yes | — | `mysql://user:pass@host:3306/dbname` |
 | `PORT` | no | `3001` | API listen port (internal) |
-| `NEXT_PUBLIC_API_URL` | yes | `http://localhost:3001` | Frontend → API URL |
+| `NEXT_PUBLIC_API_URL` | yes | `http://localhost:3001` | Browser API base URL (`/api` rewrite in frontend proxy) |
 | `NODE_ENV` | no | `production` | |
 
 ---
@@ -354,10 +355,10 @@ journalctl --user -u beprepared-db -n 30
 systemctl --user restart beprepared-api
 ```
 
-### Port 3000 already in use
+### Port 9999 already in use
 ```bash
 # Find conflicting process
-ss -tlnp | grep 3000
+ss -tlnp | grep 9999
 # Edit deploy/.env to change the published port, then reload
 systemctl --user daemon-reload && systemctl --user restart beprepared-pod
 ```

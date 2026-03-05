@@ -28,15 +28,18 @@
 
 [↑ TOC](#table-of-contents)
 
-- **Base URL**: `http://localhost:3001` (or internal pod URL `http://api:3001`)
-- **Interactive docs**: `GET /docs` — Swagger UI with "Try it out"
-- **Machine-readable spec**: `GET /docs/json` — OpenAPI 3.0 JSON
+- **Base URL**: browser access is typically via frontend BFF proxy `http://localhost:9999/api/bff`; API listens internally on `http://localhost:3001`
+- **Interactive docs**: `GET /docs` (or via frontend proxy `GET /api/bff/docs`) — Swagger UI with "Try it out"
+- **Machine-readable spec**: `GET /docs/json` (or via frontend proxy `GET /api/bff/docs/json`) — OpenAPI 3.0 JSON
 - **Content-Type**: `application/json` for all request bodies
 - **Timestamps**: ISO-8601 UTC strings (`2026-03-05T14:30:00.000Z`) — dates are `YYYY-MM-DD`
 - **Deletion**: all `DELETE` endpoints are soft-archive — row is kept with `archived_at` set
 - **IDs**: UUID v4 strings
+- **Authentication**: Bearer token required for all routes except `/`, `/health`, `/auth/login`, and `/docs*`
 - **HTTP status codes**:
   - `200` — success
+  - `401` — unauthorized
+  - `403` — forbidden (scope mismatch)
   - `201` — created (some routes return `200` + body)
   - `400` — validation error
   - `404` — not found
@@ -161,13 +164,8 @@ Create a module.
 
 ---
 
-### `GET /modules/:id`
-Get one module.
-
----
-
-### `GET /modules/:id/sections`
-List sections within a module.
+### `GET /modules/:slug`
+Get one module with nested sections and guidance docs.
 
 ---
 
@@ -181,11 +179,6 @@ Create a section.
   "sortOrder": 1
 }
 ```
-
----
-
-### `GET /modules/:moduleId/sections/:sectionId/docs`
-List guidance documents in a section.
 
 ---
 
@@ -299,6 +292,26 @@ List all inventory categories.
 
 ---
 
+### `GET /inventory/:householdId/categories`
+List available inventory categories for the household (`isSystem=true` plus household custom categories).
+
+---
+
+### `POST /inventory/:householdId/categories`
+Create a household custom inventory category.
+
+---
+
+### `PATCH /inventory/:householdId/categories/:categoryId`
+Update a household custom inventory category.
+
+---
+
+### `DELETE /inventory/:householdId/categories/:categoryId?reassignToCategoryId=:id`
+Archive a household custom inventory category. Requires `reassignToCategoryId` when items still reference that category.
+
+---
+
 ### `GET /inventory/:householdId/items`
 List all active inventory items for a household, with their active lots nested.
 
@@ -369,6 +382,26 @@ Get lots expiring within the next N days (default 30).
 
 ### `GET /equipment/battery-profiles`
 List all battery chemistry profiles.
+
+---
+
+### `GET /equipment/:householdId/categories`
+List available equipment categories for the household (`isSystem=true` plus household custom categories).
+
+---
+
+### `POST /equipment/:householdId/categories`
+Create a household custom equipment category.
+
+---
+
+### `PATCH /equipment/:householdId/categories/:categoryId`
+Update a household custom equipment category.
+
+---
+
+### `DELETE /equipment/:householdId/categories/:categoryId?reassignToCategoryId=:id`
+Archive a household custom equipment category. Requires `reassignToCategoryId` when equipment still references that category.
 
 ---
 
@@ -493,24 +526,6 @@ Query params:
 
 ---
 
-### `POST /alerts/:householdId`
-Create a custom alert.
-
-**Body**:
-```json
-{
-  "alertType": "custom",
-  "severity": "warning",
-  "title": "Check propane level",
-  "body": "Last checked 6 months ago",
-  "entityType": null,
-  "entityId": null,
-  "dueDate": "2026-04-01"
-}
-```
-
----
-
 ### `PATCH /alerts/:householdId/:alertId/read`
 Mark an alert as read.
 
@@ -522,16 +537,6 @@ Mark an alert as read.
 Mark an alert as resolved.
 
 **Response**: `{ "resolved": true }`
-
----
-
-### `PATCH /alerts/:householdId/:alertId/snooze`
-Snooze an alert.
-
-**Body**:
-```json
-{ "snoozeUntil": "2026-03-12T00:00:00Z" }
-```
 
 ---
 

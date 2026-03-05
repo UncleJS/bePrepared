@@ -15,6 +15,7 @@ import { settingsRoute }     from "./routes/settings";
 import { planningRoute }     from "./routes/planning";
 
 const PORT = Number(process.env.PORT ?? 3001);
+const NODE_ENV = (process.env.NODE_ENV ?? "development").toLowerCase();
 const AUTH_ENABLED = (process.env.AUTH_ENABLED ?? "true") === "true";
 const API_AUTH_SECRET = process.env.API_AUTH_SECRET ?? process.env.AUTH_SECRET;
 const CORS_ORIGINS = (process.env.CORS_ORIGINS ?? "http://localhost:9999")
@@ -24,6 +25,10 @@ const CORS_ORIGINS = (process.env.CORS_ORIGINS ?? "http://localhost:9999")
 
 if (AUTH_ENABLED && !API_AUTH_SECRET) {
   throw new Error("API auth is enabled but API_AUTH_SECRET/AUTH_SECRET is not set.");
+}
+
+if (NODE_ENV === "production" && !AUTH_ENABLED) {
+  throw new Error("AUTH_ENABLED=false is not allowed in production.");
 }
 
 function isPublicPath(pathname: string): boolean {

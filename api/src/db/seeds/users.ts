@@ -20,6 +20,9 @@ export async function seedUsers() {
   const householdId  = "demo-household-001";
   const username     = "admin";
   const rawPassword  = process.env.SEED_ADMIN_PASSWORD ?? "changeme";
+  if ((process.env.NODE_ENV ?? "").toLowerCase() === "production" && rawPassword === "changeme") {
+    throw new Error("SEED_ADMIN_PASSWORD cannot be 'changeme' in production.");
+  }
   const passwordHash = await hashPassword(rawPassword);
 
   await db.insert(users).values({

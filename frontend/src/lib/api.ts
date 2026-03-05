@@ -1,5 +1,3 @@
-const API_BASE_SERVER =
-  process.env.NEXTAUTH_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 const ACTIVE_HOUSEHOLD_COOKIE = "bp_active_household_id";
 const ACTIVE_HOUSEHOLD_EVENT = "bp:active-household-changed";
 
@@ -12,16 +10,15 @@ function readActiveHouseholdCookie(): string | null {
   return cookieId ? decodeURIComponent(cookieId) : null;
 }
 
-async function resolveApiToken(): Promise<string | null> {
-  if (typeof window === "undefined") {
-    const { auth } = await import("@/auth");
-    const session = await auth();
-    return (session?.user as { apiToken?: string } | undefined)?.apiToken ?? null;
-  }
+async function resolveServerOrigin(): Promise<string> {
+  const configured = process.env.NEXTAUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL;
+  if (configured) return configured.replace(/\/$/, "");
 
-  const { getSession } = await import("next-auth/react");
-  const session = await getSession();
-  return (session?.user as { apiToken?: string } | undefined)?.apiToken ?? null;
+  const { headers } = await import("next/headers");
+  const incoming = await headers();
+  const proto = incoming.get("x-forwarded-proto") ?? "http";
+  const host = incoming.get("x-forwarded-host") ?? incoming.get("host") ?? "localhost:9999";
+  return `${proto}://${host}`;
 }
 
 export async function getSessionHouseholdId(): Promise<string | null> {
@@ -48,7 +45,8 @@ export async function getSessionHouseholdId(): Promise<string | null> {
 }
 
 export function setActiveHouseholdId(householdId: string) {
-  document.cookie = `${ACTIVE_HOUSEHOLD_COOKIE}=${encodeURIComponent(householdId)}; path=/; max-age=2592000; samesite=lax`;
+  const secure = typeof window !== "undefined" && window.location.protocol === "https:" ? "; secure" : "";
+  document.cookie = `${ACTIVE_HOUSEHOLD_COOKIE}=${encodeURIComponent(householdId)}; path=/; max-age=2592000; samesite=lax${secure}`;
   window.dispatchEvent(new CustomEvent<string>(ACTIVE_HOUSEHOLD_EVENT, { detail: householdId }));
 }
 
@@ -72,13 +70,19 @@ export function resolveClientHouseholdId(user?: { householdId?: string; isAdmin?
 }
 
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
-  const base = typeof window === "undefined" ? API_BASE_SERVER : "/api";
+  const base = typeof window === "undefined"
+    ? `${await resolveServerOrigin()}/api/bff`
+    : "/api/bff";
   const url = path.startsWith("http") ? path : `${base}${path}`;
 
-  const token = await resolveApiToken();
   const headers = new Headers(options?.headers ?? undefined);
   if (!headers.has("Content-Type")) headers.set("Content-Type", "application/json");
-  if (token && !headers.has("Authorization")) headers.set("Authorization", `Bearer ${token}`);
+  if (typeof window === "undefined" && !headers.has("cookie")) {
+    const { headers: nextHeaders } = await import("next/headers");
+    const incoming = await nextHeaders();
+    const cookie = incoming.get("cookie");
+    if (cookie) headers.set("cookie", cookie);
+  }
 
   const res = await fetch(url, {
     cache: "no-store",
