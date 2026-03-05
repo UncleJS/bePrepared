@@ -6,7 +6,9 @@ import { randomUUID } from "crypto";
 import { requireAuth, requireHouseholdScope } from "../../lib/routeAuth";
 import {
   isAllowedCategoryForHousehold,
-  isCustomCategoryForHousehold,
+  requireAllowedCategoryForHousehold,
+  requireCustomCategoryForHousehold,
+  validateCategoryReplacementInput,
 } from "../_shared/categoryHelpers";
 
 export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["inventory"] })
@@ -93,8 +95,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
       const cat = await db.query.inventoryCategories.findFirst({
         where: eq(inventoryCategories.id, params.categoryId),
       });
-      if (!isCustomCategoryForHousehold(cat, params.householdId)) {
-        set.status = 404;
+      if (!requireCustomCategoryForHousehold(cat, params.householdId, set)) {
         return { error: "Custom category not found" };
       }
 
@@ -127,8 +128,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
       const cat = await db.query.inventoryCategories.findFirst({
         where: eq(inventoryCategories.id, params.categoryId),
       });
-      if (!isCustomCategoryForHousehold(cat, params.householdId)) {
-        set.status = 404;
+      if (!requireCustomCategoryForHousehold(cat, params.householdId, set)) {
         return { error: "Custom category not found" };
       }
 
@@ -150,9 +150,13 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
           };
         }
 
-        if (query.replacementCategoryId === params.categoryId) {
-          set.status = 400;
-          return { error: "replacementCategoryId must be different from archived category" };
+        const replacementValidation = validateCategoryReplacementInput(
+          query.replacementCategoryId,
+          params.categoryId,
+          set
+        );
+        if (!replacementValidation.ok) {
+          return { error: replacementValidation.error };
         }
       }
 
@@ -246,9 +250,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
         const category = await db.query.inventoryCategories.findFirst({
           where: eq(inventoryCategories.id, body.categoryId),
         });
-        const allowed = isAllowedCategoryForHousehold(category, params.householdId);
-        if (!allowed) {
-          set.status = 400;
+        if (!requireAllowedCategoryForHousehold(category, params.householdId, set)) {
           return { error: "Invalid category for household" };
         }
       }
@@ -298,9 +300,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
         const category = await db.query.inventoryCategories.findFirst({
           where: eq(inventoryCategories.id, body.categoryId),
         });
-        const allowed = isAllowedCategoryForHousehold(category, params.householdId);
-        if (!allowed) {
-          set.status = 400;
+        if (!requireAllowedCategoryForHousehold(category, params.householdId, set)) {
           return { error: "Invalid category for household" };
         }
       }
