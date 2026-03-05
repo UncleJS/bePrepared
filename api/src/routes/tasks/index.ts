@@ -81,7 +81,7 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
     detail: { summary: "Create a task" },
   })
 
-  .patch("/:id", async ({ request, set, params, body }) => {
+  .patch("/by-id/:id", async ({ request, set, params, body }) => {
     const claims = requireAdmin(request, set);
     if (!claims) return { error: "Admin access required" };
 

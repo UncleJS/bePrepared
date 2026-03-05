@@ -242,7 +242,7 @@ export default function TasksPage() {
     setSaving(true);
     setError(null);
     try {
-      await apiFetch<Task>(`/tasks/${editingId}`, {
+      await apiFetch<Task>(`/tasks/by-id/${editingId}`, {
         method: "PATCH",
         body: JSON.stringify(toPayload(editForm)),
       });

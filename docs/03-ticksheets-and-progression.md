@@ -240,7 +240,7 @@ Admins can manage the global task library directly from the Ticksheets UI:
 API equivalents:
 
 - `POST /tasks` (create)
-- `PATCH /tasks/:id` (update)
+- `PATCH /tasks/by-id/:id` (update)
 
 [↑ Go to TOC](#table-of-contents)
 

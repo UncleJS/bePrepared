@@ -242,7 +242,7 @@ Create a task (global library entry, admin only).
 
 ---
 
-### `PATCH /tasks/:id`
+### `PATCH /tasks/by-id/:id`
 Update a task (global library entry, admin only).
 
 All body fields are optional; omitted fields remain unchanged.
