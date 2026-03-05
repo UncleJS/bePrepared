@@ -215,8 +215,13 @@ List all active tasks. Supports query params:
 
 ---
 
+### `GET /tasks/by-id/:id`
+Get one active task by ID.
+
+---
+
 ### `POST /tasks`
-Create a task (global library entry).
+Create a task (global library entry, admin only).
 
 **Body**:
 ```json
@@ -232,6 +237,28 @@ Create a task (global library entry).
   "recurDays": null,
   "sortOrder": 1,
   "evidencePrompt": "Photo of stored containers"
+}
+```
+
+---
+
+### `PATCH /tasks/:id`
+Update a task (global library entry, admin only).
+
+All body fields are optional; omitted fields remain unchanged.
+
+**Body** (partial):
+```json
+{
+  "title": "Store 72h potable water supply",
+  "description": "Updated wording",
+  "taskClass": "acquire",
+  "readinessLevel": "l1_72h",
+  "scenario": "both",
+  "isRecurring": false,
+  "recurDays": null,
+  "sortOrder": 1,
+  "evidencePrompt": "Photo + storage location"
 }
 ```
 

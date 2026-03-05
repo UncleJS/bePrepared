@@ -81,6 +81,49 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
     detail: { summary: "Create a task" },
   })
 
+  .patch("/:id", async ({ request, set, params, body }) => {
+    const claims = requireAdmin(request, set);
+    if (!claims) return { error: "Admin access required" };
+
+    await db.update(tasks).set({
+      moduleId:       body.moduleId,
+      sectionId:      body.sectionId,
+      title:          body.title,
+      description:    body.description,
+      taskClass:      body.taskClass      ? (body.taskClass      as TaskClass)      : undefined,
+      readinessLevel: body.readinessLevel ? (body.readinessLevel as ReadinessLevel) : undefined,
+      scenario:       body.scenario       ? (body.scenario       as TaskScenario)    : undefined,
+      isRecurring:    body.isRecurring,
+      recurDays:      body.recurDays,
+      sortOrder:      body.sortOrder,
+      evidencePrompt: body.evidencePrompt,
+    }).where(and(eq(tasks.id, params.id), isNull(tasks.archivedAt)));
+
+    const row = await db.query.tasks.findFirst({
+      where: and(eq(tasks.id, params.id), isNull(tasks.archivedAt)),
+    });
+    if (!row) {
+      set.status = 404;
+      return { error: "Task not found" };
+    }
+    return row;
+  }, {
+    body: t.Partial(t.Object({
+      moduleId:       t.String(),
+      sectionId:      t.String(),
+      title:          t.String({ minLength: 1 }),
+      description:    t.String(),
+      taskClass:      t.String(),
+      readinessLevel: t.String(),
+      scenario:       t.String(),
+      isRecurring:    t.Boolean(),
+      recurDays:      t.Number(),
+      sortOrder:      t.Number(),
+      evidencePrompt: t.String(),
+    })),
+    detail: { summary: "Update a task" },
+  })
+
   // Task progress (ticksheet)
   .get("/:householdId/progress", async ({ request, set, params }) => {
     const claims = requireHouseholdScope(request, set, params.householdId);

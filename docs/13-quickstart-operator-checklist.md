@@ -130,6 +130,12 @@ After deploy, follow these steps in the UI (or via Swagger at `/docs`):
 - Tick tasks as you acquire/prepare items
 - Add evidence notes (optional but recommended)
 
+**Admin note — add/edit task definitions:**
+- Open `Ticksheets` as an admin user.
+- **Add task**: complete the **Add Task** form (title, module/section, class, level, scenario, recurrence) and click **Create Task**.
+- **Edit task**: locate the task in its level panel, click **Edit**, update fields, then click **Save Changes**.
+- Refresh the page to confirm the task appears with updated metadata and ordering.
+
 ### Step 5 — Log your inventory
 - Add items to inventory as you acquire them
 - Always add lots with an `acquired_at` date

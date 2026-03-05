@@ -19,6 +19,7 @@
 8. [Recurring Tasks](#8-recurring-tasks)
 9. [Readiness Scoring](#9-readiness-scoring)
 10. [Level Unlock Rules](#10-level-unlock-rules)
+11. [Task Library Management (Admin)](#11-task-library-management-admin)
 
 ---
 
@@ -223,6 +224,23 @@ This means:
 - You cannot claim L2 readiness until all L1 tasks are done
 - Completing L3 tasks before L2 is done does not contribute to your L2 score
 - The dashboard clearly shows which tasks are blocking your current level
+
+[↑ Go to TOC](#table-of-contents)
+
+---
+
+## 11. Task Library Management (Admin)
+
+Admins can manage the global task library directly from the Ticksheets UI:
+
+- **Add task**: create new task definitions with module, section, class, level, scenario, recurrence, and evidence prompt.
+- **Edit task**: update existing task definitions to refine wording, ordering, or recurrence settings.
+- **Immediate effect**: changes apply to the shared task catalog and appear in household ticksheet views on next load.
+
+API equivalents:
+
+- `POST /tasks` (create)
+- `PATCH /tasks/:id` (update)
 
 [↑ Go to TOC](#table-of-contents)
 
