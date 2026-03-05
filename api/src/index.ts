@@ -2,6 +2,10 @@ import { Elysia } from "elysia";
 import { swagger } from "@elysiajs/swagger";
 import { cors } from "@elysiajs/cors";
 import { bearerFromHeader, verifyApiToken } from "./lib/authToken";
+import { setRequestClaims } from "./lib/authContext";
+import { db } from "./db/client";
+import { users } from "./db/schema";
+import { and, eq, isNull } from "drizzle-orm";
 
 import { authRoute }         from "./routes/auth";
 import { householdsRoute }   from "./routes/households";
@@ -66,14 +70,33 @@ const app = new Elysia()
     if (!token) return { auth: null };
     return { auth: verifyApiToken(token, API_AUTH_SECRET) };
   })
-  .onBeforeHandle(({ request, set, auth }) => {
+  .onBeforeHandle(async ({ request, set, auth }) => {
     if (!AUTH_ENABLED) return;
     const pathname = new URL(request.url).pathname;
     if (isPublicPath(pathname)) return;
     if (!auth) {
+      setRequestClaims(request, null);
       set.status = 401;
       return { error: "Unauthorized" };
     }
+
+    const dbUser = await db.query.users.findFirst({
+      where: and(eq(users.id, auth.sub), isNull(users.archivedAt)),
+    });
+    if (!dbUser) {
+      setRequestClaims(request, null);
+      set.status = 401;
+      return { error: "Unauthorized" };
+    }
+
+    setRequestClaims(request, {
+      sub: dbUser.id,
+      username: dbUser.username,
+      householdId: dbUser.householdId,
+      isAdmin: dbUser.isAdmin,
+      iat: auth.iat,
+      exp: auth.exp,
+    });
   })
   .use(cors({ origin: CORS_ORIGINS, credentials: true }))
   .use(

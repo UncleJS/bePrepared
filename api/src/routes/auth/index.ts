@@ -118,8 +118,8 @@ export const authRoute = new Elysia({ prefix: "/auth", tags: ["auth"] })
     };
   }, {
     body: t.Object({
-      username: t.String({ minLength: 1 }),
-      password: t.String({ minLength: 1 }),
+      username: t.String({ minLength: 1, maxLength: 100 }),
+      password: t.String({ minLength: 1, maxLength: 255 }),
     }),
     detail: { summary: "Authenticate with username + password" },
   });

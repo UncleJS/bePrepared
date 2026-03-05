@@ -59,9 +59,9 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
     return db.query.inventoryCategories.findFirst({ where: eq(inventoryCategories.id, id) });
   }, {
     body: t.Object({
-      name: t.String({ minLength: 1 }),
-      slug: t.String({ minLength: 1 }),
-      sortOrder: t.Optional(t.Number()),
+      name: t.String({ minLength: 1, maxLength: 255 }),
+      slug: t.String({ minLength: 1, maxLength: 100 }),
+      sortOrder: t.Optional(t.Number({ minimum: -10000, maximum: 10000 })),
     }),
     detail: { summary: "Create custom inventory category" },
   })
@@ -82,9 +82,9 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
     return db.query.inventoryCategories.findFirst({ where: eq(inventoryCategories.id, params.categoryId) });
   }, {
     body: t.Partial(t.Object({
-      name: t.String(),
-      slug: t.String(),
-      sortOrder: t.Number(),
+      name: t.String({ minLength: 1, maxLength: 255 }),
+      slug: t.String({ minLength: 1, maxLength: 100 }),
+      sortOrder: t.Number({ minimum: -10000, maximum: 10000 }),
     })),
     detail: { summary: "Update custom inventory category" },
   })
@@ -147,7 +147,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
     return { archived: true };
   }, {
     query: t.Object({
-      replacementCategoryId: t.Optional(t.String()),
+      replacementCategoryId: t.Optional(t.String({ minLength: 36, maxLength: 36 })),
     }),
     detail: { summary: "Archive custom inventory category" },
   })
@@ -207,16 +207,16 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
     return db.query.inventoryItems.findFirst({ where: eq(inventoryItems.id, id) });
   }, {
     body: t.Object({
-      name:               t.String({ minLength: 1 }),
-      categoryId:         t.Optional(t.String()),
-      description:        t.Optional(t.String()),
-      unit:               t.Optional(t.String()),
-      location:           t.Optional(t.String()),
-      targetQty:          t.Optional(t.Number()),
-      lowStockThreshold:  t.Optional(t.Number()),
-      defaultReplaceDays: t.Optional(t.Number()),
+      name:               t.String({ minLength: 1, maxLength: 500 }),
+      categoryId:         t.Optional(t.String({ minLength: 36, maxLength: 36 })),
+      description:        t.Optional(t.String({ maxLength: 10000 })),
+      unit:               t.Optional(t.String({ maxLength: 50 })),
+      location:           t.Optional(t.String({ maxLength: 255 })),
+      targetQty:          t.Optional(t.Number({ minimum: 0, maximum: 1000000000 })),
+      lowStockThreshold:  t.Optional(t.Number({ minimum: 0, maximum: 1000000000 })),
+      defaultReplaceDays: t.Optional(t.Number({ minimum: 1, maximum: 36500 })),
       isTrackedByExpiry:  t.Optional(t.Boolean()),
-      notes:              t.Optional(t.String()),
+      notes:              t.Optional(t.String({ maxLength: 10000 })),
     }),
     detail: { summary: "Create an inventory item" },
   })
@@ -259,16 +259,16 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
     });
   }, {
     body: t.Partial(t.Object({
-      name:               t.String(),
-      categoryId:         t.String(),
-      description:        t.String(),
-      unit:               t.String(),
-      location:           t.String(),
-      targetQty:          t.Number(),
-      lowStockThreshold:  t.Number(),
-      defaultReplaceDays: t.Number(),
+      name:               t.String({ minLength: 1, maxLength: 500 }),
+      categoryId:         t.String({ minLength: 36, maxLength: 36 }),
+      description:        t.String({ maxLength: 10000 }),
+      unit:               t.String({ maxLength: 50 }),
+      location:           t.String({ maxLength: 255 }),
+      targetQty:          t.Number({ minimum: 0, maximum: 1000000000 }),
+      lowStockThreshold:  t.Number({ minimum: 0, maximum: 1000000000 }),
+      defaultReplaceDays: t.Number({ minimum: 1, maximum: 36500 }),
       isTrackedByExpiry:  t.Boolean(),
-      notes:              t.String(),
+      notes:              t.String({ maxLength: 10000 }),
     })),
     detail: { summary: "Update an inventory item" },
   })
@@ -312,12 +312,12 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
     return db.query.inventoryLots.findFirst({ where: eq(inventoryLots.id, id) });
   }, {
     body: t.Object({
-      qty:          t.Number({ minimum: 0 }),
-      acquiredAt:   t.Optional(t.String()),
-      expiresAt:    t.Optional(t.String()),
-      replaceDays:  t.Optional(t.Number()),
-      batchRef:     t.Optional(t.String()),
-      notes:        t.Optional(t.String()),
+      qty:          t.Number({ minimum: 0, maximum: 1000000000 }),
+      acquiredAt:   t.Optional(t.String({ maxLength: 64 })),
+      expiresAt:    t.Optional(t.String({ maxLength: 64 })),
+      replaceDays:  t.Optional(t.Number({ minimum: 1, maximum: 36500 })),
+      batchRef:     t.Optional(t.String({ maxLength: 255 })),
+      notes:        t.Optional(t.String({ maxLength: 10000 })),
     }),
     detail: { summary: "Add a lot (batch) to an inventory item" },
   })
@@ -375,13 +375,13 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
     });
   }, {
     body: t.Partial(t.Object({
-      qty: t.Number({ minimum: 0 }),
-      acquiredAt: t.String(),
-      expiresAt: t.String(),
-      replaceDays: t.Number(),
-      nextReplaceAt: t.String(),
-      batchRef: t.String(),
-      notes: t.String(),
+      qty: t.Number({ minimum: 0, maximum: 1000000000 }),
+      acquiredAt: t.String({ maxLength: 64 }),
+      expiresAt: t.String({ maxLength: 64 }),
+      replaceDays: t.Number({ minimum: 1, maximum: 36500 }),
+      nextReplaceAt: t.String({ maxLength: 64 }),
+      batchRef: t.String({ maxLength: 255 }),
+      notes: t.String({ maxLength: 10000 }),
     })),
     detail: { summary: "Update a lot (batch)" },
   })
@@ -404,6 +404,6 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
       ),
     });
   }, {
-    query: t.Object({ days: t.Optional(t.String()) }),
+    query: t.Object({ days: t.Optional(t.Number({ minimum: 1, maximum: 3650 })) }),
     detail: { summary: "Get lots expiring within N days" },
   });

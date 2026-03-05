@@ -24,9 +24,9 @@ export const alertsRoute = new Elysia({ prefix: "/alerts", tags: ["alerts"] })
     return rows;
   }, {
     query: t.Object({
-      status:     t.Optional(t.String()),
-      unread:     t.Optional(t.String()),
-      unresolved: t.Optional(t.String()),
+      status:     t.Optional(t.Union([t.Literal("active"), t.Literal("resolved")])),
+      unread:     t.Optional(t.Union([t.Literal("true"), t.Literal("false")])),
+      unresolved: t.Optional(t.Union([t.Literal("true"), t.Literal("false")])),
     }),
     detail: { summary: "Get all alerts for a household" },
   })

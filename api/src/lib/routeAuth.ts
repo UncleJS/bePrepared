@@ -1,8 +1,12 @@
 import { bearerFromHeader, verifyApiToken, type ApiTokenClaims } from "./authToken";
+import { getRequestClaims } from "./authContext";
 
 type MutableSet = { status?: number | string };
 
 function claimsFromRequest(request: Request): ApiTokenClaims | null {
+  const cached = getRequestClaims(request);
+  if (cached !== undefined) return cached;
+
   const secret = process.env.API_AUTH_SECRET ?? process.env.AUTH_SECRET;
   if (!secret) return null;
   const token = bearerFromHeader(request.headers.get("authorization"));

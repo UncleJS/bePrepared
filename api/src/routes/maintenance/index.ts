@@ -72,14 +72,17 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
     });
   }, {
     body: t.Object({
-      categorySlug: t.String(),
-      name: t.String({ minLength: 1 }),
-      description: t.Optional(t.String()),
-      taskType: t.Optional(t.String()),
-      defaultCalDays: t.Optional(t.Number()),
-      usageMeterUnit: t.Optional(t.String()),
-      defaultUsageInterval: t.Optional(t.Number()),
-      graceDays: t.Optional(t.Number()),
+      categorySlug: t.String({ minLength: 1, maxLength: 100 }),
+      name: t.String({ minLength: 1, maxLength: 500 }),
+      description: t.Optional(t.String({ maxLength: 10000 })),
+      taskType: t.Optional(t.Union([
+        t.Literal("inspect"), t.Literal("clean"), t.Literal("lubricate"), t.Literal("test"),
+        t.Literal("full_service"), t.Literal("recharge"), t.Literal("replace"),
+      ])),
+      defaultCalDays: t.Optional(t.Number({ minimum: 1, maximum: 36500 })),
+      usageMeterUnit: t.Optional(t.String({ maxLength: 50 })),
+      defaultUsageInterval: t.Optional(t.Number({ minimum: 0, maximum: 1000000000 })),
+      graceDays: t.Optional(t.Number({ minimum: 0, maximum: 3650 })),
     }),
     detail: { summary: "Create a maintenance template" },
   })
@@ -137,14 +140,14 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
     });
   }, {
     body: t.Object({
-      templateId: t.Optional(t.String()),
-      name: t.String({ minLength: 1 }),
-      calDays: t.Optional(t.Number()),
-      usageMeterUnit: t.Optional(t.String()),
-      usageInterval: t.Optional(t.Number()),
-      graceDays: t.Optional(t.Number()),
-      lastDoneAt: t.Optional(t.String()),
-      nextDueAt: t.Optional(t.String()),
+      templateId: t.Optional(t.String({ minLength: 36, maxLength: 36 })),
+      name: t.String({ minLength: 1, maxLength: 500 }),
+      calDays: t.Optional(t.Number({ minimum: 1, maximum: 36500 })),
+      usageMeterUnit: t.Optional(t.String({ maxLength: 50 })),
+      usageInterval: t.Optional(t.Number({ minimum: 0, maximum: 1000000000 })),
+      graceDays: t.Optional(t.Number({ minimum: 0, maximum: 3650 })),
+      lastDoneAt: t.Optional(t.String({ maxLength: 64 })),
+      nextDueAt: t.Optional(t.String({ maxLength: 64 })),
     }),
     detail: { summary: "Create a maintenance schedule for an equipment item" },
   })
@@ -176,11 +179,11 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
     });
   }, {
     body: t.Partial(t.Object({
-      name: t.String(),
-      calDays: t.Number(),
-      graceDays: t.Number(),
-      lastDoneAt: t.String(),
-      nextDueAt: t.String(),
+      name: t.String({ minLength: 1, maxLength: 500 }),
+      calDays: t.Number({ minimum: 1, maximum: 36500 }),
+      graceDays: t.Number({ minimum: 0, maximum: 3650 }),
+      lastDoneAt: t.String({ maxLength: 64 }),
+      nextDueAt: t.String({ maxLength: 64 }),
       isActive: t.Boolean(),
     })),
     detail: { summary: "Update a maintenance schedule" },
@@ -249,10 +252,10 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
     });
   }, {
     body: t.Object({
-      performedAt: t.Optional(t.String()),
-      performedBy: t.Optional(t.String()),
-      meterReading: t.Optional(t.Number()),
-      notes: t.Optional(t.String()),
+      performedAt: t.Optional(t.String({ maxLength: 64 })),
+      performedBy: t.Optional(t.String({ maxLength: 255 })),
+      meterReading: t.Optional(t.Number({ minimum: 0, maximum: 1000000000 })),
+      notes: t.Optional(t.String({ maxLength: 10000 })),
     }),
     detail: { summary: "Record a completed maintenance event and advance next due date" },
   })
@@ -299,6 +302,6 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
 
     return rows.map((r) => r.schedule);
   }, {
-    query: t.Object({ days: t.Optional(t.String()) }),
+    query: t.Object({ days: t.Optional(t.Number({ minimum: 1, maximum: 3650 })) }),
     detail: { summary: "Get maintenance schedules due within N days" },
   });

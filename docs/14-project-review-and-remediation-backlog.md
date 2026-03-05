@@ -29,11 +29,11 @@
 
 ### P2
 
-- [ ] **Reduce stale privilege risk**: re-verify `isAdmin` for sensitive actions or implement revocation strategy.
+- [x] **Reduce stale privilege risk**: globally re-verify authenticated users against DB on each private request; admin demotion now applies immediately.
 - [x] **Swagger exposure policy**: `/docs` now requires auth in production, and Swagger Try-It-Out is disabled in production.
 - [x] **phpMyAdmin exposure policy**: removed phpMyAdmin Quadlet service and host port exposure from default deployment.
 - [x] **CORS production validation**: enforce explicit trusted origins and startup checks (no wildcard; localhost blocked in production unless explicitly overridden).
-- [ ] **Payload constraints**: add max length/size limits to user-controlled string inputs.
+- [x] **Payload constraints**: added route-level max length and numeric bounds across auth, household, module, task, inventory, equipment, maintenance, settings, planning, and alerts endpoints.
 
 ---
 
@@ -41,7 +41,7 @@
 
 ### P0
 
-- [ ] **Create baseline API tests**: auth, household scope checks, critical CRUD, and planning calculations.
+- [~] **Create baseline API tests**: auth token + route scope coverage added; critical CRUD and planning calculation tests still pending.
 - [ ] **Create baseline frontend tests**: smoke tests for protected routes and core page rendering.
 
 ### P1
@@ -78,7 +78,7 @@
 
 - [x] **Align alert model docs** with current schema (`upcoming|due|overdue`, read/resolved lifecycle).
 - [x] **Align worker behavior docs** with currently implemented jobs.
-- [ ] **Fix quickstart command sequencing** for workspace-aware migration/seed commands.
+- [x] **Fix quickstart command sequencing** for workspace-aware migration/seed commands.
 
 ---
 

@@ -66,17 +66,23 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
     return db.query.tasks.findFirst({ where: eq(tasks.id, id) });
   }, {
     body: t.Object({
-      moduleId:       t.String(),
-      sectionId:      t.Optional(t.String()),
-      title:          t.String({ minLength: 1 }),
-      description:    t.Optional(t.String()),
-      taskClass:      t.Optional(t.String()),
-      readinessLevel: t.Optional(t.String()),
-      scenario:       t.Optional(t.String()),
+      moduleId:       t.String({ minLength: 36, maxLength: 36 }),
+      sectionId:      t.Optional(t.String({ minLength: 36, maxLength: 36 })),
+      title:          t.String({ minLength: 1, maxLength: 500 }),
+      description:    t.Optional(t.String({ maxLength: 10000 })),
+      taskClass:      t.Optional(t.Union([
+        t.Literal("acquire"), t.Literal("prepare"), t.Literal("test"), t.Literal("maintain"), t.Literal("document"),
+      ])),
+      readinessLevel: t.Optional(t.Union([
+        t.Literal("l1_72h"), t.Literal("l2_14d"), t.Literal("l3_30d"), t.Literal("l4_90d"),
+      ])),
+      scenario:       t.Optional(t.Union([
+        t.Literal("both"), t.Literal("shelter_in_place"), t.Literal("evacuation"),
+      ])),
       isRecurring:    t.Optional(t.Boolean()),
-      recurDays:      t.Optional(t.Number()),
-      sortOrder:      t.Optional(t.Number()),
-      evidencePrompt: t.Optional(t.String()),
+      recurDays:      t.Optional(t.Number({ minimum: 1, maximum: 3650 })),
+      sortOrder:      t.Optional(t.Number({ minimum: -10000, maximum: 10000 })),
+      evidencePrompt: t.Optional(t.String({ maxLength: 500 })),
     }),
     detail: { summary: "Create a task" },
   })
@@ -109,17 +115,23 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
     return row;
   }, {
     body: t.Partial(t.Object({
-      moduleId:       t.String(),
-      sectionId:      t.String(),
-      title:          t.String({ minLength: 1 }),
-      description:    t.String(),
-      taskClass:      t.String(),
-      readinessLevel: t.String(),
-      scenario:       t.String(),
+      moduleId:       t.String({ minLength: 36, maxLength: 36 }),
+      sectionId:      t.String({ minLength: 36, maxLength: 36 }),
+      title:          t.String({ minLength: 1, maxLength: 500 }),
+      description:    t.String({ maxLength: 10000 }),
+      taskClass:      t.Union([
+        t.Literal("acquire"), t.Literal("prepare"), t.Literal("test"), t.Literal("maintain"), t.Literal("document"),
+      ]),
+      readinessLevel: t.Union([
+        t.Literal("l1_72h"), t.Literal("l2_14d"), t.Literal("l3_30d"), t.Literal("l4_90d"),
+      ]),
+      scenario:       t.Union([
+        t.Literal("both"), t.Literal("shelter_in_place"), t.Literal("evacuation"),
+      ]),
       isRecurring:    t.Boolean(),
-      recurDays:      t.Number(),
-      sortOrder:      t.Number(),
-      evidencePrompt: t.String(),
+      recurDays:      t.Number({ minimum: 1, maximum: 3650 }),
+      sortOrder:      t.Number({ minimum: -10000, maximum: 10000 }),
+      evidencePrompt: t.String({ maxLength: 500 }),
     })),
     detail: { summary: "Update a task" },
   })
@@ -193,12 +205,14 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
     return db.query.taskProgress.findFirst({ where: eq(taskProgress.id, id) });
   }, {
     body: t.Object({
-      taskId:       t.String(),
-      status:       t.Optional(t.String()),
-      completedAt:  t.Optional(t.String()),
-      nextDueAt:    t.Optional(t.String()),
-      evidenceNote: t.Optional(t.String()),
-      completedBy:  t.Optional(t.String()),
+      taskId:       t.String({ minLength: 36, maxLength: 36 }),
+      status:       t.Optional(t.Union([
+        t.Literal("pending"), t.Literal("in_progress"), t.Literal("completed"), t.Literal("overdue"),
+      ])),
+      completedAt:  t.Optional(t.String({ maxLength: 64 })),
+      nextDueAt:    t.Optional(t.String({ maxLength: 64 })),
+      evidenceNote: t.Optional(t.String({ maxLength: 10000 })),
+      completedBy:  t.Optional(t.String({ maxLength: 255 })),
     }),
     detail: { summary: "Create or update task progress entry" },
   })
@@ -229,11 +243,13 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
     });
   }, {
     body: t.Partial(t.Object({
-      status:       t.String(),
-      completedAt:  t.String(),
-      nextDueAt:    t.String(),
-      evidenceNote: t.String(),
-      completedBy:  t.String(),
+      status:       t.Union([
+        t.Literal("pending"), t.Literal("in_progress"), t.Literal("completed"), t.Literal("overdue"),
+      ]),
+      completedAt:  t.String({ maxLength: 64 }),
+      nextDueAt:    t.String({ maxLength: 64 }),
+      evidenceNote: t.String({ maxLength: 10000 }),
+      completedBy:  t.String({ maxLength: 255 }),
     })),
     detail: { summary: "Update task progress (check/uncheck)" },
   });

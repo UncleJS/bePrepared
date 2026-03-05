@@ -10,7 +10,7 @@ export const planningRoute = new Elysia({ prefix: "/planning", tags: ["planning"
     const claims = requireHouseholdScope(request, set, params.householdId);
     if (!claims) return { error: "Forbidden" };
 
-    const manualPeople = query.people ? Number(query.people) : undefined;
+    const manualPeople = query.people;
     return resolvePlanningTotals(
       params.householdId,
       params.scenario as Scenario,
@@ -18,7 +18,7 @@ export const planningRoute = new Elysia({ prefix: "/planning", tags: ["planning"
     );
   }, {
     query: t.Object({
-      people: t.Optional(t.String()),
+      people: t.Optional(t.Number({ minimum: 1, maximum: 1000 })),
     }),
     detail: {
       summary: "Resolve effective planning totals for a household and scenario",

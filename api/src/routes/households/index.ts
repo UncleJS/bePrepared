@@ -27,9 +27,9 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
     return db.query.households.findFirst({ where: eq(households.id, id) });
   }, {
     body: t.Object({
-      name:          t.String({ minLength: 1 }),
-      targetPeople:  t.Optional(t.Number({ minimum: 1 })),
-      notes:         t.Optional(t.String()),
+      name:          t.String({ minLength: 1, maxLength: 255 }),
+      targetPeople:  t.Optional(t.Number({ minimum: 1, maximum: 1000 })),
+      notes:         t.Optional(t.String({ maxLength: 10000 })),
     }),
     detail: { summary: "Create a new household" },
   })
@@ -56,11 +56,11 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
     return db.query.households.findFirst({ where: eq(households.id, params.id) });
   }, {
     body: t.Partial(t.Object({
-      name:             t.String(),
-      targetPeople:     t.Number({ minimum: 1 }),
+      name:             t.String({ minLength: 1, maxLength: 255 }),
+      targetPeople:     t.Number({ minimum: 1, maximum: 1000 }),
       activeScenario:   t.Union([t.Literal("shelter_in_place"), t.Literal("evacuation")]),
-      activeProfileId:  t.String(),
-      notes:            t.String(),
+      activeProfileId:  t.String({ minLength: 36, maxLength: 36 }),
+      notes:            t.String({ maxLength: 10000 }),
     })),
     detail: { summary: "Update household" },
   })
@@ -101,13 +101,13 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
     });
   }, {
     body: t.Object({
-      name:          t.String({ minLength: 1 }),
-      peopleCount:   t.Number({ minimum: 1 }),
+      name:          t.String({ minLength: 1, maxLength: 255 }),
+      peopleCount:   t.Number({ minimum: 1, maximum: 1000 }),
       isDefault:     t.Optional(t.Boolean()),
       scenarioBound: t.Optional(t.Union([
         t.Literal("shelter_in_place"), t.Literal("evacuation")
       ])),
-      notes: t.Optional(t.String()),
+      notes: t.Optional(t.String({ maxLength: 10000 })),
     }),
     detail: { summary: "Create a people profile" },
   })
@@ -132,13 +132,13 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
     });
   }, {
     body: t.Partial(t.Object({
-      name:          t.String(),
-      peopleCount:   t.Number({ minimum: 1 }),
+      name:          t.String({ minLength: 1, maxLength: 255 }),
+      peopleCount:   t.Number({ minimum: 1, maximum: 1000 }),
       isDefault:     t.Boolean(),
       scenarioBound: t.Union([
         t.Literal("shelter_in_place"), t.Literal("evacuation")
       ]),
-      notes: t.String(),
+      notes: t.String({ maxLength: 10000 }),
     })),
     detail: { summary: "Update a people profile" },
   })

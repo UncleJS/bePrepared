@@ -106,12 +106,23 @@ export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] }
     return db.query.modules.findFirst({ where: eq(modules.id, id) });
   }, {
     body: t.Object({
-      slug:        t.String({ minLength: 1 }),
-      title:       t.String({ minLength: 1 }),
-      description: t.Optional(t.String()),
-      iconName:    t.Optional(t.String()),
-      sortOrder:   t.Optional(t.Number()),
-      category:    t.Optional(t.String()),
+      slug:        t.String({ minLength: 1, maxLength: 100 }),
+      title:       t.String({ minLength: 1, maxLength: 255 }),
+      description: t.Optional(t.String({ maxLength: 10000 })),
+      iconName:    t.Optional(t.String({ maxLength: 100 })),
+      sortOrder:   t.Optional(t.Number({ minimum: -10000, maximum: 10000 })),
+      category:    t.Optional(t.Union([
+        t.Literal("water"),
+        t.Literal("food"),
+        t.Literal("shelter"),
+        t.Literal("medical"),
+        t.Literal("security"),
+        t.Literal("comms"),
+        t.Literal("sanitation"),
+        t.Literal("power"),
+        t.Literal("mobility"),
+        t.Literal("general"),
+      ])),
     }),
     detail: { summary: "Create a module" },
   })
@@ -126,9 +137,9 @@ export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] }
     return db.query.sections.findFirst({ where: eq(sections.id, id) });
   }, {
     body: t.Object({
-      slug:      t.String({ minLength: 1 }),
-      title:     t.String({ minLength: 1 }),
-      sortOrder: t.Optional(t.Number()),
+      slug:      t.String({ minLength: 1, maxLength: 100 }),
+      title:     t.String({ minLength: 1, maxLength: 255 }),
+      sortOrder: t.Optional(t.Number({ minimum: -10000, maximum: 10000 })),
     }),
     detail: { summary: "Create a section within a module" },
   })
@@ -143,10 +154,10 @@ export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] }
     return db.query.guidanceDocs.findFirst({ where: eq(guidanceDocs.id, id) });
   }, {
     body: t.Object({
-      title:     t.String({ minLength: 1 }),
-      body:      t.String(),
-      sortOrder: t.Optional(t.Number()),
-      badgeJson: t.Optional(t.String()),
+      title:     t.String({ minLength: 1, maxLength: 255 }),
+      body:      t.String({ minLength: 1, maxLength: 50000 }),
+      sortOrder: t.Optional(t.Number({ minimum: -10000, maximum: 10000 })),
+      badgeJson: t.Optional(t.String({ maxLength: 10000 })),
     }),
     detail: { summary: "Create a guidance doc within a section" },
   })
@@ -159,10 +170,10 @@ export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] }
     return db.query.guidanceDocs.findFirst({ where: eq(guidanceDocs.id, params.docId) });
   }, {
     body: t.Partial(t.Object({
-      title:     t.String(),
-      body:      t.String(),
-      sortOrder: t.Number(),
-      badgeJson: t.String(),
+      title:     t.String({ minLength: 1, maxLength: 255 }),
+      body:      t.String({ minLength: 1, maxLength: 50000 }),
+      sortOrder: t.Number({ minimum: -10000, maximum: 10000 }),
+      badgeJson: t.String({ maxLength: 10000 }),
     })),
     detail: { summary: "Update a guidance doc" },
   });

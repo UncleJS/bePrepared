@@ -69,9 +69,9 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
     return db.query.householdPolicies.findFirst({ where: eq(householdPolicies.id, id) });
   }, {
     body: t.Object({
-      unit:         t.String(),
-      valueDecimal: t.Optional(t.Number()),
-      valueInt:     t.Optional(t.Number()),
+      unit:         t.String({ minLength: 1, maxLength: 50 }),
+      valueDecimal: t.Optional(t.Number({ minimum: 0, maximum: 1000000000 })),
+      valueInt:     t.Optional(t.Number({ minimum: 0, maximum: 1000000000 })),
     }),
     detail: { summary: "Upsert a household-level policy override (archived-trail)" },
   })
@@ -134,9 +134,9 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
     return db.query.scenarioPolicies.findFirst({ where: eq(scenarioPolicies.id, id) });
   }, {
     body: t.Object({
-      unit:         t.String(),
-      valueDecimal: t.Optional(t.Number()),
-      valueInt:     t.Optional(t.Number()),
+      unit:         t.String({ minLength: 1, maxLength: 50 }),
+      valueDecimal: t.Optional(t.Number({ minimum: 0, maximum: 1000000000 })),
+      valueInt:     t.Optional(t.Number({ minimum: 0, maximum: 1000000000 })),
     }),
     detail: { summary: "Upsert a scenario-specific policy override" },
   })

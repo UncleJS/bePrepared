@@ -38,13 +38,20 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
     return db.query.batteryProfiles.findFirst({ where: eq(batteryProfiles.id, id) });
   }, {
     body: t.Object({
-      name: t.String({ minLength: 1 }),
-      chemistry: t.String(),
-      shelfLifeDays: t.Optional(t.Number()),
-      recheckCycleDays: t.Optional(t.Number()),
-      storageTempMin: t.Optional(t.Number()),
-      storageTempMax: t.Optional(t.Number()),
-      notes: t.Optional(t.String()),
+      name: t.String({ minLength: 1, maxLength: 255 }),
+      chemistry: t.Union([
+        t.Literal("alkaline"),
+        t.Literal("lithium_primary"),
+        t.Literal("liion"),
+        t.Literal("nimh"),
+        t.Literal("lead_acid"),
+        t.Literal("other"),
+      ]),
+      shelfLifeDays: t.Optional(t.Number({ minimum: 1, maximum: 36500 })),
+      recheckCycleDays: t.Optional(t.Number({ minimum: 1, maximum: 36500 })),
+      storageTempMin: t.Optional(t.Number({ minimum: -100, maximum: 200 })),
+      storageTempMax: t.Optional(t.Number({ minimum: -100, maximum: 200 })),
+      notes: t.Optional(t.String({ maxLength: 10000 })),
     }),
     detail: { summary: "Create a battery profile" },
   })
@@ -87,9 +94,9 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
     return db.query.equipmentCategories.findFirst({ where: eq(equipmentCategories.id, id) });
   }, {
     body: t.Object({
-      name: t.String({ minLength: 1 }),
-      slug: t.String({ minLength: 1 }),
-      sortOrder: t.Optional(t.Number()),
+      name: t.String({ minLength: 1, maxLength: 255 }),
+      slug: t.String({ minLength: 1, maxLength: 100 }),
+      sortOrder: t.Optional(t.Number({ minimum: -10000, maximum: 10000 })),
     }),
     detail: { summary: "Create custom equipment category" },
   })
@@ -110,9 +117,9 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
     return db.query.equipmentCategories.findFirst({ where: eq(equipmentCategories.id, params.categoryId) });
   }, {
     body: t.Partial(t.Object({
-      name: t.String(),
-      slug: t.String(),
-      sortOrder: t.Number(),
+      name: t.String({ minLength: 1, maxLength: 255 }),
+      slug: t.String({ minLength: 1, maxLength: 100 }),
+      sortOrder: t.Number({ minimum: -10000, maximum: 10000 }),
     })),
     detail: { summary: "Update custom equipment category" },
   })
@@ -178,7 +185,7 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
     return { archived: true };
   }, {
     query: t.Object({
-      replacementCategoryId: t.Optional(t.String()),
+      replacementCategoryId: t.Optional(t.String({ minLength: 36, maxLength: 36 })),
     }),
     detail: { summary: "Archive custom equipment category" },
   })
@@ -225,15 +232,17 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
     return db.query.equipmentItems.findFirst({ where: eq(equipmentItems.id, id) });
   }, {
     body: t.Object({
-      categoryId: t.Optional(t.String()),
-      categorySlug: t.Optional(t.String()),
-      name: t.String({ minLength: 1 }),
-      model: t.Optional(t.String()),
-      serialNo: t.Optional(t.String()),
-      location: t.Optional(t.String()),
-      status: t.Optional(t.String()),
-      acquiredAt: t.Optional(t.String()),
-      notes: t.Optional(t.String()),
+      categoryId: t.Optional(t.String({ minLength: 36, maxLength: 36 })),
+      categorySlug: t.Optional(t.String({ minLength: 1, maxLength: 100 })),
+      name: t.String({ minLength: 1, maxLength: 500 }),
+      model: t.Optional(t.String({ maxLength: 255 })),
+      serialNo: t.Optional(t.String({ maxLength: 255 })),
+      location: t.Optional(t.String({ maxLength: 255 })),
+      status: t.Optional(t.Union([
+        t.Literal("operational"), t.Literal("needs_service"), t.Literal("unserviceable"), t.Literal("retired"),
+      ])),
+      acquiredAt: t.Optional(t.String({ maxLength: 64 })),
+      notes: t.Optional(t.String({ maxLength: 10000 })),
     }),
     detail: { summary: "Add an equipment item" },
   })
@@ -275,15 +284,17 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
     });
   }, {
     body: t.Partial(t.Object({
-      categoryId: t.String(),
-      categorySlug: t.String(),
-      name: t.String(),
-      model: t.String(),
-      serialNo: t.String(),
-      location: t.String(),
-      status: t.String(),
-      acquiredAt: t.String(),
-      notes: t.String(),
+      categoryId: t.String({ minLength: 36, maxLength: 36 }),
+      categorySlug: t.String({ minLength: 1, maxLength: 100 }),
+      name: t.String({ minLength: 1, maxLength: 500 }),
+      model: t.String({ maxLength: 255 }),
+      serialNo: t.String({ maxLength: 255 }),
+      location: t.String({ maxLength: 255 }),
+      status: t.Union([
+        t.Literal("operational"), t.Literal("needs_service"), t.Literal("unserviceable"), t.Literal("retired"),
+      ]),
+      acquiredAt: t.String({ maxLength: 64 }),
+      notes: t.String({ maxLength: 10000 }),
     })),
     detail: { summary: "Update an equipment item" },
   })
