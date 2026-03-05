@@ -1,255 +1,48 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { apiFetch, fmtDate } from "@/lib/api";
+import { useEffect, useMemo } from "react";
 import { useActiveHouseholdId } from "@/lib/useActiveHouseholdId";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import Link from "next/link";
+import { EquipmentRow } from "./EquipmentRow";
 import { EquipmentFormFields } from "./EquipmentFormFields";
-import { EMPTY_CATEGORY_FORM, EMPTY_EQUIPMENT_FORM, STATUS_COLORS } from "./constants";
-import type { CategoryForm, Equipment, EquipmentCategory, EquipmentForm } from "./types";
-import { asNum, toForm } from "./utils";
+import { useEquipmentData } from "./useEquipmentData";
+import { useEquipmentItemActions } from "./useEquipmentItemActions";
 
 export default function EquipmentPage() {
   const { householdId, status } = useActiveHouseholdId();
 
-  const [equipment, setEquipment] = useState<Equipment[]>([]);
-  const [categories, setCategories] = useState<EquipmentCategory[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-
-  const [createForm, setCreateForm] = useState<EquipmentForm>(EMPTY_EQUIPMENT_FORM);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<EquipmentForm>(EMPTY_EQUIPMENT_FORM);
-
-  const [categoryForm, setCategoryForm] = useState<CategoryForm>(EMPTY_CATEGORY_FORM);
-  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
-  const [editCategoryForm, setEditCategoryForm] = useState<CategoryForm>(EMPTY_CATEGORY_FORM);
-  const [archiveCategoryId, setArchiveCategoryId] = useState<string | null>(null);
-  const [archiveReplacementCategoryId, setArchiveReplacementCategoryId] = useState<string>("");
+  const { equipment, categories, loading, error, setError, loadData } = useEquipmentData();
+  const {
+    saving,
+    message,
+    createForm,
+    setCreateForm,
+    editingId,
+    editForm,
+    setEditForm,
+    createItem,
+    startEdit,
+    cancelEdit,
+    saveItemEdit,
+    archiveItem,
+  } = useEquipmentItemActions({ householdId, loadData, setError });
 
   const categoryMap = useMemo(
     () => Object.fromEntries(categories.map((c) => [c.id, c.name])),
     [categories]
   );
-  const archiveTargetCategory = useMemo(
-    () => categories.find((c) => c.id === archiveCategoryId) ?? null,
-    [categories, archiveCategoryId]
-  );
-  const archiveInUseCount = useMemo(
-    () =>
-      archiveCategoryId
-        ? equipment.filter((item) => item.categoryId === archiveCategoryId).length
-        : 0,
-    [equipment, archiveCategoryId]
-  );
-  const archiveCategoryCandidates = useMemo(
-    () => categories.filter((c) => c.id !== archiveCategoryId),
-    [categories, archiveCategoryId]
-  );
-
-  async function loadData(id: string) {
-    setLoading(true);
-    try {
-      const [items, cats] = await Promise.all([
-        apiFetch<Equipment[]>(`/equipment/${id}`),
-        apiFetch<EquipmentCategory[]>(`/equipment/${id}/categories`),
-      ]);
-      setEquipment(items);
-      setCategories(cats);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load equipment.");
-    } finally {
-      setLoading(false);
-    }
-  }
 
   useEffect(() => {
     if (!householdId) return;
     void loadData(householdId);
-  }, [householdId]);
+  }, [householdId, loadData]);
 
   if (status === "loading")
     return <p className="text-muted-foreground text-sm">Loading session...</p>;
   if (!householdId)
     return <p className="text-muted-foreground text-sm">No household in session.</p>;
   if (loading) return <p className="text-muted-foreground text-sm">Loading equipment...</p>;
-
-  async function createItem() {
-    if (!householdId) return;
-
-    setSaving(true);
-    setError(null);
-    setMessage(null);
-    try {
-      if (!createForm.name.trim()) {
-        setError("Equipment name is required.");
-        return;
-      }
-      await apiFetch(`/equipment/${householdId}`, {
-        method: "POST",
-        body: JSON.stringify({
-          name: createForm.name.trim(),
-          categoryId: createForm.categoryId || undefined,
-          model: createForm.model.trim() || undefined,
-          serialNo: createForm.serialNo.trim() || undefined,
-          location: createForm.location.trim() || undefined,
-          status: createForm.status,
-          acquiredAt: createForm.acquiredAt || undefined,
-          notes: createForm.notes.trim() || undefined,
-        }),
-      });
-      setCreateForm(EMPTY_EQUIPMENT_FORM);
-      setMessage("Equipment item added.");
-      await loadData(householdId);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to add equipment item.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function saveItemEdit() {
-    if (!householdId) return;
-    if (!editingId) return;
-    setSaving(true);
-    setError(null);
-    setMessage(null);
-    try {
-      await apiFetch(`/equipment/${householdId}/${editingId}`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          name: editForm.name.trim(),
-          categoryId: editForm.categoryId || undefined,
-          model: editForm.model.trim() || undefined,
-          serialNo: editForm.serialNo.trim() || undefined,
-          location: editForm.location.trim() || undefined,
-          status: editForm.status,
-          acquiredAt: editForm.acquiredAt || undefined,
-          notes: editForm.notes.trim() || undefined,
-        }),
-      });
-      setEditingId(null);
-      setMessage("Equipment item updated.");
-      await loadData(householdId);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to update equipment item.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function archiveItem(id: string) {
-    if (!householdId) return;
-    if (!window.confirm("Archive this equipment item?")) return;
-    setSaving(true);
-    setError(null);
-    setMessage(null);
-    try {
-      await apiFetch(`/equipment/${householdId}/${id}`, { method: "DELETE" });
-      setMessage("Equipment item archived.");
-      await loadData(householdId);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to archive equipment item.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function createCategory() {
-    if (!householdId) return;
-    setSaving(true);
-    setError(null);
-    setMessage(null);
-    try {
-      if (!categoryForm.name.trim() || !categoryForm.slug.trim()) {
-        setError("Category name and slug are required.");
-        return;
-      }
-      await apiFetch(`/equipment/${householdId}/categories`, {
-        method: "POST",
-        body: JSON.stringify({
-          name: categoryForm.name.trim(),
-          slug: categoryForm.slug.trim(),
-          sortOrder: asNum(categoryForm.sortOrder),
-        }),
-      });
-      setCategoryForm(EMPTY_CATEGORY_FORM);
-      setMessage("Category added.");
-      await loadData(householdId);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to create category.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function saveCategoryEdit() {
-    if (!householdId) return;
-    if (!editingCategoryId) return;
-    setSaving(true);
-    setError(null);
-    setMessage(null);
-    try {
-      await apiFetch(`/equipment/${householdId}/categories/${editingCategoryId}`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          name: editCategoryForm.name.trim(),
-          slug: editCategoryForm.slug.trim(),
-          sortOrder: asNum(editCategoryForm.sortOrder),
-        }),
-      });
-      setEditingCategoryId(null);
-      setMessage("Category updated.");
-      await loadData(householdId);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to update category.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function archiveCategory(id: string) {
-    if (!householdId) return;
-    const inUseCount = equipment.filter((item) => item.categoryId === id).length;
-    if (inUseCount > 0) {
-      if (!window.confirm("Category is in use. Reassign items before archiving?")) return;
-      if (categories.filter((c) => c.id !== id).length === 0) {
-        setError("Cannot archive category in use: no replacement categories available.");
-        return;
-      }
-      setArchiveCategoryId(id);
-      setArchiveReplacementCategoryId("");
-      return;
-    }
-
-    if (!window.confirm("Archive this custom category?")) return;
-    await performArchiveCategory(id);
-  }
-
-  async function performArchiveCategory(id: string, replacementCategoryId?: string) {
-    if (!householdId) return;
-
-    setSaving(true);
-    setError(null);
-    setMessage(null);
-    try {
-      const path = replacementCategoryId
-        ? `/equipment/${householdId}/categories/${id}?replacementCategoryId=${encodeURIComponent(replacementCategoryId)}`
-        : `/equipment/${householdId}/categories/${id}`;
-      await apiFetch(path, { method: "DELETE" });
-      setArchiveCategoryId(null);
-      setArchiveReplacementCategoryId("");
-      setMessage("Category archived.");
-      await loadData(householdId);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to archive category.");
-    } finally {
-      setSaving(false);
-    }
-  }
 
   return (
     <div className="space-y-6">
@@ -301,44 +94,14 @@ export default function EquipmentPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {equipment.map((eq) => (
-              <tr key={eq.id} className="hover:bg-accent/30 transition-colors">
-                <td className="px-4 py-2.5 font-medium">{eq.name}</td>
-                <td className="px-4 py-2.5 text-muted-foreground">
-                  {(eq.categoryId && categoryMap[eq.categoryId]) || eq.categorySlug || "-"}
-                </td>
-                <td className="px-4 py-2.5 text-muted-foreground text-xs">
-                  {[eq.model, eq.serialNo].filter(Boolean).join(" / ") || "-"}
-                </td>
-                <td className="px-4 py-2.5 text-muted-foreground">{eq.location ?? "-"}</td>
-                <td className="px-4 py-2.5">
-                  <span className={`font-medium capitalize ${STATUS_COLORS[eq.status]}`}>
-                    {eq.status.replace("_", " ")}
-                  </span>
-                </td>
-                <td className="px-4 py-2.5 text-muted-foreground">{fmtDate(eq.acquiredAt)}</td>
-                <td className="px-4 py-2.5 text-right">
-                  <div className="inline-flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditingId(eq.id);
-                        setEditForm(toForm(eq));
-                      }}
-                      className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
-                    >
-                      <Pencil size={12} /> Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => archiveItem(eq.id)}
-                      className="rounded-md border border-border px-2 py-1 text-xs text-destructive hover:bg-destructive/10 inline-flex items-center gap-1"
-                    >
-                      <Trash2 size={12} /> Archive
-                    </button>
-                  </div>
-                </td>
-              </tr>
+            {equipment.map((item) => (
+              <EquipmentRow
+                key={item.id}
+                item={item}
+                categoryMap={categoryMap}
+                onEdit={startEdit}
+                onArchive={archiveItem}
+              />
             ))}
           </tbody>
         </table>
@@ -361,7 +124,7 @@ export default function EquipmentPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setEditingId(null)}
+                onClick={cancelEdit}
                 className="rounded-md border border-border px-4 py-2 text-sm text-muted-foreground"
               >
                 Cancel

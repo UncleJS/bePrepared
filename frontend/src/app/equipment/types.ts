@@ -30,9 +30,3 @@ export type EquipmentForm = {
   acquiredAt: string;
   notes: string;
 };
-
-export type CategoryForm = {
-  name: string;
-  slug: string;
-  sortOrder: string;
-};

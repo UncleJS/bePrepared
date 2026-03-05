@@ -55,7 +55,7 @@
 
 ### P1
 
-- [~] **Refactor large frontend pages**: `tasks` page refactored into focused modules/hooks and `equipment` form UI extracted into reusable modules; `inventory` and remaining equipment extraction still pending.
+- [x] **Refactor large frontend pages**: `tasks`, `inventory`, and `equipment` pages are split into focused modules with extracted forms/rows plus dedicated data/action hooks.
 - [ ] **Deduplicate category management**: shared backend helpers and shared frontend category management UI.
 - [x] **Strengthen enum validation**: removed loose enum casts in routes and tightened scenario path params with explicit schema validation.
 

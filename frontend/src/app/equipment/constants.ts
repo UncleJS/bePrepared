@@ -1,4 +1,4 @@
-import type { CategoryForm, EquipmentForm } from "./types";
+import type { EquipmentForm } from "./types";
 
 export const STATUS_COLORS: Record<string, string> = {
   operational: "text-primary",
@@ -16,10 +16,4 @@ export const EMPTY_EQUIPMENT_FORM: EquipmentForm = {
   status: "operational",
   acquiredAt: "",
   notes: "",
-};
-
-export const EMPTY_CATEGORY_FORM: CategoryForm = {
-  name: "",
-  slug: "",
-  sortOrder: "100",
 };
