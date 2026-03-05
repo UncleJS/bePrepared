@@ -57,12 +57,12 @@
 
 - [ ] **Refactor large frontend pages**: split `tasks`, `inventory`, and `equipment` into hooks + focused components.
 - [ ] **Deduplicate category management**: shared backend helpers and shared frontend category management UI.
-- [ ] **Strengthen enum validation**: replace loose string casting with strict schema-level enum validation.
+- [x] **Strengthen enum validation**: removed loose enum casts in routes and tightened scenario path params with explicit schema validation.
 
 ### P2
 
-- [ ] **Add transactions** for multi-step write flows (archive/reassign/audit).
-- [ ] **Clarify `task_dependencies` lifecycle**: implement usage or remove dead schema path.
+- [x] **Add transactions** for multi-step write flows (archive/reassign/audit).
+- [x] **Clarify `task_dependencies` lifecycle**: implemented dependency APIs and completion-time enforcement in task progress routes.
 
 ---
 

@@ -150,35 +150,49 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
           set.status = 400;
           return { error: "replacementCategoryId must be different from archived category" };
         }
-
-        const replacement = await db.query.inventoryCategories.findFirst({
-          where: eq(inventoryCategories.id, query.replacementCategoryId),
-        });
-        const replacementAllowed =
-          replacement &&
-          !replacement.archivedAt &&
-          (replacement.isSystem || replacement.householdId === params.householdId);
-        if (!replacementAllowed) {
-          set.status = 400;
-          return { error: "Invalid replacement category for household" };
-        }
-
-        await db
-          .update(inventoryItems)
-          .set({ categoryId: query.replacementCategoryId })
-          .where(
-            and(
-              eq(inventoryItems.householdId, params.householdId),
-              eq(inventoryItems.categoryId, params.categoryId),
-              isNull(inventoryItems.archivedAt)
-            )
-          );
       }
 
-      await db
-        .update(inventoryCategories)
-        .set({ archivedAt: new Date() })
-        .where(eq(inventoryCategories.id, params.categoryId));
+      const replacementCategoryId = query.replacementCategoryId;
+      const txResult = await db.transaction(async (tx) => {
+        if (linkedItems.length > 0 && replacementCategoryId) {
+          const replacementRows = await tx
+            .select()
+            .from(inventoryCategories)
+            .where(eq(inventoryCategories.id, replacementCategoryId))
+            .limit(1);
+          const replacement = replacementRows[0];
+          const replacementAllowed =
+            replacement &&
+            !replacement.archivedAt &&
+            (replacement.isSystem || replacement.householdId === params.householdId);
+          if (!replacementAllowed) {
+            return { error: "Invalid replacement category for household" } as const;
+          }
+
+          await tx
+            .update(inventoryItems)
+            .set({ categoryId: replacementCategoryId })
+            .where(
+              and(
+                eq(inventoryItems.householdId, params.householdId),
+                eq(inventoryItems.categoryId, params.categoryId),
+                isNull(inventoryItems.archivedAt)
+              )
+            );
+        }
+
+        await tx
+          .update(inventoryCategories)
+          .set({ archivedAt: new Date() })
+          .where(eq(inventoryCategories.id, params.categoryId));
+
+        return { archived: true } as const;
+      });
+
+      if ("error" in txResult) {
+        set.status = 400;
+        return { error: txResult.error };
+      }
 
       return { archived: true };
     },

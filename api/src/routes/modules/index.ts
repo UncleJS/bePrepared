@@ -5,18 +5,6 @@ import { eq, isNull, and, inArray } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { requireAdmin, requireAuth } from "../../lib/routeAuth";
 
-type ModuleCategory =
-  | "water"
-  | "food"
-  | "shelter"
-  | "medical"
-  | "security"
-  | "comms"
-  | "sanitation"
-  | "power"
-  | "mobility"
-  | "general";
-
 export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] })
 
   .get(
@@ -123,7 +111,7 @@ export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] }
         description: body.description,
         iconName: body.iconName,
         sortOrder: body.sortOrder,
-        category: body.category ? (body.category as ModuleCategory) : undefined,
+        category: body.category,
       });
       return db.query.modules.findFirst({ where: eq(modules.id, id) });
     },

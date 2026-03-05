@@ -2,8 +2,6 @@ import { Elysia, t } from "elysia";
 import { resolvePlanningTotals } from "../../lib/policyEngine";
 import { requireHouseholdScope } from "../../lib/routeAuth";
 
-type Scenario = "shelter_in_place" | "evacuation";
-
 export const planningRoute = new Elysia({ prefix: "/planning", tags: ["planning"] }).get(
   "/:householdId/:scenario",
   async ({ request, set, params, query }) => {
@@ -11,9 +9,13 @@ export const planningRoute = new Elysia({ prefix: "/planning", tags: ["planning"
     if (!claims) return { error: "Forbidden" };
 
     const manualPeople = query.people;
-    return resolvePlanningTotals(params.householdId, params.scenario as Scenario, manualPeople);
+    return resolvePlanningTotals(params.householdId, params.scenario, manualPeople);
   },
   {
+    params: t.Object({
+      householdId: t.String({ minLength: 36, maxLength: 36 }),
+      scenario: t.Union([t.Literal("shelter_in_place"), t.Literal("evacuation")]),
+    }),
     query: t.Object({
       people: t.Optional(t.Number({ minimum: 1, maximum: 1000 })),
     }),

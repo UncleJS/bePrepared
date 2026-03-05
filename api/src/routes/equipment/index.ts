@@ -5,9 +5,6 @@ import { eq, isNull, and } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { requireAdmin, requireHouseholdScope } from "../../lib/routeAuth";
 
-type EquipmentStatus = "operational" | "needs_service" | "unserviceable" | "retired";
-type BatteryChemistry = "alkaline" | "lithium_primary" | "liion" | "nimh" | "lead_acid" | "other";
-
 export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipment"] })
 
   // Battery profiles
@@ -34,7 +31,7 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
       await db.insert(batteryProfiles).values({
         id,
         name: body.name,
-        chemistry: body.chemistry as BatteryChemistry,
+        chemistry: body.chemistry,
         shelfLifeDays: body.shelfLifeDays,
         recheckCycleDays: body.recheckCycleDays,
         storageTempMin: body.storageTempMin,
@@ -187,38 +184,52 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
           set.status = 400;
           return { error: "replacementCategoryId must be different from archived category" };
         }
-
-        const replacement = await db.query.equipmentCategories.findFirst({
-          where: eq(equipmentCategories.id, query.replacementCategoryId),
-        });
-        const replacementAllowed =
-          replacement &&
-          !replacement.archivedAt &&
-          (replacement.isSystem || replacement.householdId === params.householdId);
-        if (!replacementAllowed) {
-          set.status = 400;
-          return { error: "Invalid replacement category for household" };
-        }
-
-        await db
-          .update(equipmentItems)
-          .set({
-            categoryId: query.replacementCategoryId,
-            categorySlug: replacement.slug,
-          })
-          .where(
-            and(
-              eq(equipmentItems.householdId, params.householdId),
-              eq(equipmentItems.categoryId, params.categoryId),
-              isNull(equipmentItems.archivedAt)
-            )
-          );
       }
 
-      await db
-        .update(equipmentCategories)
-        .set({ archivedAt: new Date() })
-        .where(eq(equipmentCategories.id, params.categoryId));
+      const replacementCategoryId = query.replacementCategoryId;
+      const txResult = await db.transaction(async (tx) => {
+        if (linkedItems.length > 0 && replacementCategoryId) {
+          const replacementRows = await tx
+            .select()
+            .from(equipmentCategories)
+            .where(eq(equipmentCategories.id, replacementCategoryId))
+            .limit(1);
+          const replacement = replacementRows[0];
+          const replacementAllowed =
+            replacement &&
+            !replacement.archivedAt &&
+            (replacement.isSystem || replacement.householdId === params.householdId);
+          if (!replacementAllowed) {
+            return { error: "Invalid replacement category for household" } as const;
+          }
+
+          await tx
+            .update(equipmentItems)
+            .set({
+              categoryId: replacementCategoryId,
+              categorySlug: replacement.slug,
+            })
+            .where(
+              and(
+                eq(equipmentItems.householdId, params.householdId),
+                eq(equipmentItems.categoryId, params.categoryId),
+                isNull(equipmentItems.archivedAt)
+              )
+            );
+        }
+
+        await tx
+          .update(equipmentCategories)
+          .set({ archivedAt: new Date() })
+          .where(eq(equipmentCategories.id, params.categoryId));
+
+        return { archived: true } as const;
+      });
+
+      if ("error" in txResult) {
+        set.status = 400;
+        return { error: txResult.error };
+      }
 
       return { archived: true };
     },
@@ -276,7 +287,7 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
         model: body.model,
         serialNo: body.serialNo,
         location: body.location,
-        status: (body.status as EquipmentStatus) ?? "operational",
+        status: body.status ?? "operational",
         acquiredAt: body.acquiredAt ? new Date(body.acquiredAt) : undefined,
         notes: body.notes,
       });
@@ -334,7 +345,7 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
           model: body.model,
           serialNo: body.serialNo,
           location: body.location,
-          status: body.status ? (body.status as EquipmentStatus) : undefined,
+          status: body.status,
           acquiredAt: body.acquiredAt ? new Date(body.acquiredAt) : undefined,
           notes: body.notes,
         })

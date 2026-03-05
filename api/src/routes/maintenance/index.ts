@@ -10,15 +10,6 @@ import { eq, isNull, and, lte } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { requireAdmin, requireAuth, requireHouseholdScope } from "../../lib/routeAuth";
 
-type MaintenanceTaskType =
-  | "inspect"
-  | "clean"
-  | "lubricate"
-  | "test"
-  | "full_service"
-  | "recharge"
-  | "replace";
-
 async function scheduleForHousehold(householdId: string, scheduleId: string) {
   const rows = await db
     .select({
@@ -66,7 +57,7 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
         categorySlug: body.categorySlug,
         name: body.name,
         description: body.description,
-        taskType: body.taskType ? (body.taskType as MaintenanceTaskType) : undefined,
+        taskType: body.taskType,
         defaultCalDays: body.defaultCalDays,
         usageMeterUnit: body.usageMeterUnit,
         defaultUsageInterval:
@@ -260,27 +251,29 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
         nextDueDate.setDate(nextDueDate.getDate() + found.schedule.calDays);
       }
 
-      await db.insert(maintenanceEvents).values({
-        id,
-        scheduleId: params.scheduleId,
-        equipmentItemId: found.schedule.equipmentItemId,
-        performedAt: performedDate,
-        performedBy: body.performedBy,
-        meterReading: body.meterReading != null ? String(body.meterReading) : undefined,
-        nextDueAt: nextDueDate,
-        notes: body.notes,
-      });
+      await db.transaction(async (tx) => {
+        await tx.insert(maintenanceEvents).values({
+          id,
+          scheduleId: params.scheduleId,
+          equipmentItemId: found.schedule.equipmentItemId,
+          performedAt: performedDate,
+          performedBy: body.performedBy,
+          meterReading: body.meterReading != null ? String(body.meterReading) : undefined,
+          nextDueAt: nextDueDate,
+          notes: body.notes,
+        });
 
-      if (nextDueDate) {
-        await db
-          .update(maintenanceSchedules)
-          .set({
-            lastDoneAt: performedDate,
-            nextDueAt: nextDueDate,
-            lastMeterValue: body.meterReading != null ? String(body.meterReading) : undefined,
-          })
-          .where(eq(maintenanceSchedules.id, params.scheduleId));
-      }
+        if (nextDueDate) {
+          await tx
+            .update(maintenanceSchedules)
+            .set({
+              lastDoneAt: performedDate,
+              nextDueAt: nextDueDate,
+              lastMeterValue: body.meterReading != null ? String(body.meterReading) : undefined,
+            })
+            .where(eq(maintenanceSchedules.id, params.scheduleId));
+        }
+      });
 
       return db.query.maintenanceEvents.findFirst({
         where: eq(maintenanceEvents.id, id),

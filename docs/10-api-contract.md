@@ -236,6 +236,28 @@ Get one active task by ID.
 
 ---
 
+### `GET /tasks/by-id/:id/dependencies`
+
+List dependency edges for a task, including resolved dependency task metadata.
+
+---
+
+### `POST /tasks/by-id/:id/dependencies`
+
+Create a dependency edge (`task` depends on `dependsOnTaskId`, admin only).
+
+**Body**:
+
+```json
+{
+  "dependsOnTaskId": "uuid"
+}
+```
+
+Returns `409` if the dependency already exists.
+
+---
+
 ### `POST /tasks`
 
 Create a task (global library entry, admin only).
@@ -306,11 +328,15 @@ Create or update task progress (tick/untick).
 }
 ```
 
+Returns `409` when dependencies for `taskId` are not completed.
+
 ---
 
 ### `PATCH /tasks/:householdId/progress/:progressId`
 
 Update a progress record.
+
+Returns `409` when moving to `completed` while dependencies remain incomplete.
 
 ---
 

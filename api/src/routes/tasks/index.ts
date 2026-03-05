@@ -1,14 +1,40 @@
 import { Elysia, t } from "elysia";
 import { db } from "../../db/client";
 import { tasks, taskDependencies, taskProgress } from "../../db/schema";
-import { eq, isNull, and } from "drizzle-orm";
+import { eq, isNull, and, inArray } from "drizzle-orm";
 import { randomUUID } from "crypto";
-import { requireAdmin, requireHouseholdScope } from "../../lib/routeAuth";
+import { requireAdmin, requireAuth, requireHouseholdScope } from "../../lib/routeAuth";
 
-type TaskClass = "acquire" | "prepare" | "test" | "maintain" | "document";
-type ReadinessLevel = "l1_72h" | "l2_14d" | "l3_30d" | "l4_90d";
-type TaskScenario = "both" | "shelter_in_place" | "evacuation";
-type TaskStatus = "pending" | "in_progress" | "completed" | "overdue";
+async function unresolvedTaskDependencies(householdId: string, taskId: string) {
+  const dependencies = await db.query.taskDependencies.findMany({
+    where: eq(taskDependencies.taskId, taskId),
+  });
+  if (dependencies.length === 0) return [];
+
+  const dependencyIds = [...new Set(dependencies.map((d) => d.dependsOnTaskId))];
+
+  const progressRows = await db.query.taskProgress.findMany({
+    where: and(
+      eq(taskProgress.householdId, householdId),
+      isNull(taskProgress.archivedAt),
+      inArray(taskProgress.taskId, dependencyIds)
+    ),
+  });
+
+  const completedIds = new Set(
+    progressRows.filter((row) => row.status === "completed").map((row) => row.taskId)
+  );
+
+  const unresolvedIds = dependencyIds.filter((id) => !completedIds.has(id));
+  if (unresolvedIds.length === 0) return [];
+
+  const unresolvedTasks = await db.query.tasks.findMany({
+    where: and(isNull(tasks.archivedAt), inArray(tasks.id, unresolvedIds)),
+  });
+
+  const titleById = new Map(unresolvedTasks.map((row) => [row.id, row.title]));
+  return unresolvedIds.map((id) => ({ id, title: titleById.get(id) ?? "Unknown task" }));
+}
 
 export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
 
@@ -52,6 +78,81 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
     { detail: { summary: "Get a task by ID" } }
   )
 
+  .get(
+    "/by-id/:id/dependencies",
+    async ({ request, set, params }) => {
+      const claims = requireAuth(request, set);
+      if (!claims) return { error: "Unauthorized" };
+
+      const dependencyRows = await db.query.taskDependencies.findMany({
+        where: eq(taskDependencies.taskId, params.id),
+      });
+      if (dependencyRows.length === 0) return [];
+
+      const dependencyIds = [...new Set(dependencyRows.map((row) => row.dependsOnTaskId))];
+      const dependencyTasks = await db.query.tasks.findMany({
+        where: and(isNull(tasks.archivedAt), inArray(tasks.id, dependencyIds)),
+      });
+      const taskById = new Map(dependencyTasks.map((row) => [row.id, row]));
+
+      return dependencyRows.map((row) => ({
+        ...row,
+        dependsOnTask: taskById.get(row.dependsOnTaskId) ?? null,
+      }));
+    },
+    { detail: { summary: "List dependencies for a task" } }
+  )
+
+  .post(
+    "/by-id/:id/dependencies",
+    async ({ request, set, params, body }) => {
+      const claims = requireAdmin(request, set);
+      if (!claims) return { error: "Admin access required" };
+
+      if (params.id === body.dependsOnTaskId) {
+        set.status = 400;
+        return { error: "Task cannot depend on itself" };
+      }
+
+      const [task, dependsOn] = await Promise.all([
+        db.query.tasks.findFirst({ where: and(eq(tasks.id, params.id), isNull(tasks.archivedAt)) }),
+        db.query.tasks.findFirst({
+          where: and(eq(tasks.id, body.dependsOnTaskId), isNull(tasks.archivedAt)),
+        }),
+      ]);
+
+      if (!task || !dependsOn) {
+        set.status = 404;
+        return { error: "Task or dependency task not found" };
+      }
+
+      const existing = await db.query.taskDependencies.findFirst({
+        where: and(
+          eq(taskDependencies.taskId, params.id),
+          eq(taskDependencies.dependsOnTaskId, body.dependsOnTaskId)
+        ),
+      });
+      if (existing) {
+        set.status = 409;
+        return { error: "Dependency already exists" };
+      }
+
+      const id = randomUUID();
+      await db.insert(taskDependencies).values({
+        id,
+        taskId: params.id,
+        dependsOnTaskId: body.dependsOnTaskId,
+      });
+      return db.query.taskDependencies.findFirst({ where: eq(taskDependencies.id, id) });
+    },
+    {
+      body: t.Object({
+        dependsOnTaskId: t.String({ minLength: 36, maxLength: 36 }),
+      }),
+      detail: { summary: "Add a dependency edge for a task" },
+    }
+  )
+
   .post(
     "/",
     async ({ request, set, body }) => {
@@ -65,9 +166,9 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
         sectionId: body.sectionId,
         title: body.title,
         description: body.description,
-        taskClass: body.taskClass ? (body.taskClass as TaskClass) : undefined,
-        readinessLevel: body.readinessLevel ? (body.readinessLevel as ReadinessLevel) : undefined,
-        scenario: body.scenario ? (body.scenario as TaskScenario) : undefined,
+        taskClass: body.taskClass,
+        readinessLevel: body.readinessLevel,
+        scenario: body.scenario,
         isRecurring: body.isRecurring,
         recurDays: body.recurDays,
         sortOrder: body.sortOrder,
@@ -123,9 +224,9 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
           sectionId: body.sectionId,
           title: body.title,
           description: body.description,
-          taskClass: body.taskClass ? (body.taskClass as TaskClass) : undefined,
-          readinessLevel: body.readinessLevel ? (body.readinessLevel as ReadinessLevel) : undefined,
-          scenario: body.scenario ? (body.scenario as TaskScenario) : undefined,
+          taskClass: body.taskClass,
+          readinessLevel: body.readinessLevel,
+          scenario: body.scenario,
           isRecurring: body.isRecurring,
           recurDays: body.recurDays,
           sortOrder: body.sortOrder,
@@ -209,7 +310,18 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
       });
 
       if (existing) {
-        const nextStatus = body.status ? (body.status as TaskStatus) : existing.status;
+        const nextStatus = body.status ?? existing.status;
+        if (nextStatus === "completed") {
+          const unresolved = await unresolvedTaskDependencies(params.householdId, body.taskId);
+          if (unresolved.length > 0) {
+            set.status = 409;
+            return {
+              error: "Task has incomplete dependencies",
+              unresolvedDependencies: unresolved,
+            };
+          }
+        }
+
         const now = new Date();
         const nextCompletedAt = body.completedAt
           ? new Date(body.completedAt)
@@ -243,12 +355,23 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
         });
       }
 
+      if (body.status === "completed") {
+        const unresolved = await unresolvedTaskDependencies(params.householdId, body.taskId);
+        if (unresolved.length > 0) {
+          set.status = 409;
+          return {
+            error: "Task has incomplete dependencies",
+            unresolvedDependencies: unresolved,
+          };
+        }
+      }
+
       const id = randomUUID();
       await db.insert(taskProgress).values({
         id,
         householdId: params.householdId,
         taskId: body.taskId,
-        status: body.status ? (body.status as TaskStatus) : undefined,
+        status: body.status,
         completedAt: body.completedAt ? new Date(body.completedAt) : undefined,
         nextDueAt: body.nextDueAt ? new Date(body.nextDueAt) : undefined,
         evidenceNote: body.evidenceNote,
@@ -282,11 +405,35 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
       const claims = requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
+      const existing = await db.query.taskProgress.findFirst({
+        where: and(
+          eq(taskProgress.id, params.id),
+          eq(taskProgress.householdId, params.householdId),
+          isNull(taskProgress.archivedAt)
+        ),
+      });
+      if (!existing) {
+        set.status = 404;
+        return { error: "Task progress not found" };
+      }
+
+      const nextStatus = body.status ?? existing.status;
+      if (nextStatus === "completed") {
+        const unresolved = await unresolvedTaskDependencies(params.householdId, existing.taskId);
+        if (unresolved.length > 0) {
+          set.status = 409;
+          return {
+            error: "Task has incomplete dependencies",
+            unresolvedDependencies: unresolved,
+          };
+        }
+      }
+
       const now = new Date();
       await db
         .update(taskProgress)
         .set({
-          status: body.status ? (body.status as TaskStatus) : undefined,
+          status: body.status,
           completedAt:
             body.status === "completed" && !body.completedAt
               ? now

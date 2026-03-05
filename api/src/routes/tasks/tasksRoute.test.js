@@ -3,7 +3,7 @@ import { Elysia } from "elysia";
 
 const state = {
   task: {
-    id: "task-1",
+    id: "11111111-1111-1111-1111-111111111111",
     moduleId: "12345678-1234-1234-1234-123456789012",
     sectionId: null,
     title: "Initial task",
@@ -16,12 +16,36 @@ const state = {
     sortOrder: 0,
     evidencePrompt: null,
   },
+  dependencyTask: {
+    id: "22222222-2222-2222-2222-222222222222",
+    moduleId: "12345678-1234-1234-1234-123456789012",
+    sectionId: null,
+    title: "Dependency task",
+    description: null,
+    taskClass: "prepare",
+    readinessLevel: "l1_72h",
+    scenario: "both",
+    isRecurring: false,
+    recurDays: null,
+    sortOrder: 1,
+    evidencePrompt: null,
+  },
+  dependencies: [],
 };
 
 mock.module("../../db/client", () => ({
   db: {
     insert: () => ({
       values: async (values) => {
+        if (values.taskId && values.dependsOnTaskId) {
+          state.dependencies.push({
+            id: values.id,
+            taskId: values.taskId,
+            dependsOnTaskId: values.dependsOnTaskId,
+            createdAt: new Date(),
+          });
+          return;
+        }
         state.task = { ...state.task, ...values };
       },
     }),
@@ -34,8 +58,21 @@ mock.module("../../db/client", () => ({
     }),
     query: {
       tasks: {
-        findMany: async () => [state.task],
-        findFirst: async () => state.task,
+        findMany: async () => [state.task, state.dependencyTask],
+        findFirst: async ({ where } = {}) => {
+          void where;
+          return state.task;
+        },
+      },
+      taskDependencies: {
+        findMany: async ({ where } = {}) => {
+          void where;
+          return state.dependencies;
+        },
+        findFirst: async ({ where } = {}) => {
+          void where;
+          return null;
+        },
       },
       taskProgress: {
         findMany: async () => [],
@@ -46,6 +83,7 @@ mock.module("../../db/client", () => ({
 }));
 
 mock.module("../../lib/routeAuth", () => ({
+  requireAuth: () => ({ sub: "user-1", isAdmin: false, householdId: "household-1" }),
   requireAdmin: () => ({ sub: "user-1", isAdmin: true }),
   requireHouseholdScope: () => ({ sub: "user-1", isAdmin: false, householdId: "household-1" }),
 }));
@@ -77,7 +115,7 @@ describe("tasksRoute critical CRUD", () => {
 
   it("updates a task with valid partial payload", async () => {
     const res = await app.handle(
-      new Request("http://localhost/tasks/by-id/task-1", {
+      new Request("http://localhost/tasks/by-id/11111111-1111-1111-1111-111111111111", {
         method: "PATCH",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -121,5 +159,32 @@ describe("tasksRoute critical CRUD", () => {
     );
 
     expect(res.status).toBe(422);
+  });
+
+  it("blocks completion when dependency task is not completed", async () => {
+    state.dependencies = [
+      {
+        id: "dep-1",
+        taskId: "11111111-1111-1111-1111-111111111111",
+        dependsOnTaskId: "22222222-2222-2222-2222-222222222222",
+        createdAt: new Date(),
+      },
+    ];
+
+    const res = await app.handle(
+      new Request("http://localhost/tasks/household-1/progress", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          taskId: "11111111-1111-1111-1111-111111111111",
+          status: "completed",
+        }),
+      })
+    );
+
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.error).toBe("Task has incomplete dependencies");
+    expect(Array.isArray(body.unresolvedDependencies)).toBe(true);
   });
 });
