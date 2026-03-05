@@ -1,12 +1,13 @@
 /**
  * seeds/users.ts — seed the demo admin user for the demo household.
  *
- * Default credentials:  admin / changeme
- * Change via the API after first login.
+ * Credentials:
+ * - username: admin
+ * - password: SEED_ADMIN_PASSWORD (recommended), otherwise random one-time password in non-production
  */
 import { db } from "../client";
 import { users } from "../schema";
-import { randomUUID } from "crypto";
+import { randomUUID, randomBytes } from "crypto";
 
 async function hashPassword(plain: string): Promise<string> {
   const bcrypt = await import("bcryptjs");
@@ -19,9 +20,16 @@ export async function seedUsers() {
   const id = "demo-user-001";
   const householdId = "demo-household-001";
   const username = "admin";
-  const rawPassword = process.env.SEED_ADMIN_PASSWORD ?? "changeme";
-  if ((process.env.NODE_ENV ?? "").toLowerCase() === "production" && rawPassword === "changeme") {
-    throw new Error("SEED_ADMIN_PASSWORD cannot be 'changeme' in production.");
+  const configuredPassword = process.env.SEED_ADMIN_PASSWORD?.trim();
+  const generatedPassword = randomBytes(18).toString("base64url");
+  const usingGeneratedPassword = !configuredPassword;
+  const rawPassword = configuredPassword || generatedPassword;
+
+  if ((process.env.NODE_ENV ?? "").toLowerCase() === "production" && usingGeneratedPassword) {
+    throw new Error("SEED_ADMIN_PASSWORD is required in production.");
+  }
+  if (rawPassword === "changeme") {
+    throw new Error("SEED_ADMIN_PASSWORD cannot be 'changeme'.");
   }
   const passwordHash = await hashPassword(rawPassword);
 
@@ -44,7 +52,11 @@ export async function seedUsers() {
       },
     });
 
-  console.log(
-    `  ✓ Admin user '${username}' (password: ${rawPassword === "changeme" ? "changeme — CHANGE THIS" : "***"})`
-  );
+  if (usingGeneratedPassword) {
+    console.log(`  ✓ Admin user '${username}' (generated password: ${rawPassword})`);
+    console.log("    Set SEED_ADMIN_PASSWORD to a strong value for stable credentials.");
+    return;
+  }
+
+  console.log(`  ✓ Admin user '${username}' (password from SEED_ADMIN_PASSWORD)`);
 }

@@ -368,9 +368,9 @@ Update a household custom inventory category.
 
 ---
 
-### `DELETE /inventory/:householdId/categories/:categoryId?reassignToCategoryId=:id`
+### `DELETE /inventory/:householdId/categories/:categoryId?replacementCategoryId=:id`
 
-Archive a household custom inventory category. Requires `reassignToCategoryId` when items still reference that category.
+Archive a household custom inventory category. Requires `replacementCategoryId` when items still reference that category.
 
 ---
 
@@ -475,9 +475,9 @@ Update a household custom equipment category.
 
 ---
 
-### `DELETE /equipment/:householdId/categories/:categoryId?reassignToCategoryId=:id`
+### `DELETE /equipment/:householdId/categories/:categoryId?replacementCategoryId=:id`
 
-Archive a household custom equipment category. Requires `reassignToCategoryId` when equipment still references that category.
+Archive a household custom equipment category. Requires `replacementCategoryId` when equipment still references that category.
 
 ---
 

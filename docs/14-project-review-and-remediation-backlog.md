@@ -18,7 +18,7 @@
 ### P0
 
 - [x] **Secrets hygiene audit**: verified `deploy/.env` is ignored and not tracked in current git history (`git log --all -- deploy/.env` returned no commits).
-- [~] **Remove default admin credential risk**: startup guard now blocks `SEED_ADMIN_PASSWORD=changeme` when `NODE_ENV=production`; operational secret rotation still pending.
+- [x] **Remove default admin credential risk**: seeds now reject `SEED_ADMIN_PASSWORD=changeme`, require explicit seed password in production, and generate one-time random password in non-production when unset.
 - [x] **Add login rate limiting**: throttle `POST /auth/login` to mitigate brute-force and credential stuffing.
 
 ### P1
@@ -56,7 +56,7 @@
 ### P1
 
 - [x] **Refactor large frontend pages**: `tasks`, `inventory`, and `equipment` pages are split into focused modules with extracted forms/rows plus dedicated data/action hooks.
-- [ ] **Deduplicate category management**: shared backend helpers and shared frontend category management UI.
+- [x] **Deduplicate category management**: shared backend category-access helpers and unified frontend category management UI component implemented.
 - [x] **Strengthen enum validation**: removed loose enum casts in routes and tightened scenario path params with explicit schema validation.
 
 ### P2

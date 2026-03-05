@@ -4,6 +4,10 @@ import { equipmentItems, batteryProfiles, equipmentCategories } from "../../db/s
 import { eq, isNull, and } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { requireAdmin, requireHouseholdScope } from "../../lib/routeAuth";
+import {
+  isAllowedCategoryForHousehold,
+  isCustomCategoryForHousehold,
+} from "../_shared/categoryHelpers";
 
 export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipment"] })
 
@@ -123,7 +127,7 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
       const row = await db.query.equipmentCategories.findFirst({
         where: eq(equipmentCategories.id, params.categoryId),
       });
-      if (!row || row.isSystem || row.householdId !== params.householdId) {
+      if (!isCustomCategoryForHousehold(row, params.householdId)) {
         set.status = 404;
         return { error: "Custom category not found" };
       }
@@ -157,7 +161,7 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
       const row = await db.query.equipmentCategories.findFirst({
         where: eq(equipmentCategories.id, params.categoryId),
       });
-      if (!row || row.isSystem || row.householdId !== params.householdId) {
+      if (!isCustomCategoryForHousehold(row, params.householdId)) {
         set.status = 404;
         return { error: "Custom category not found" };
       }
@@ -195,10 +199,10 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
             .where(eq(equipmentCategories.id, replacementCategoryId))
             .limit(1);
           const replacement = replacementRows[0];
-          const replacementAllowed =
-            replacement &&
-            !replacement.archivedAt &&
-            (replacement.isSystem || replacement.householdId === params.householdId);
+          const replacementAllowed = isAllowedCategoryForHousehold(
+            replacement,
+            params.householdId
+          );
           if (!replacementAllowed) {
             return { error: "Invalid replacement category for household" } as const;
           }
@@ -267,10 +271,7 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
         const category = await db.query.equipmentCategories.findFirst({
           where: eq(equipmentCategories.id, body.categoryId),
         });
-        const allowed =
-          category &&
-          !category.archivedAt &&
-          (category.isSystem || category.householdId === params.householdId);
+        const allowed = isAllowedCategoryForHousehold(category, params.householdId);
         if (!allowed) {
           set.status = 400;
           return { error: "Invalid category for household" };
@@ -326,10 +327,7 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
         const category = await db.query.equipmentCategories.findFirst({
           where: eq(equipmentCategories.id, body.categoryId),
         });
-        const allowed =
-          category &&
-          !category.archivedAt &&
-          (category.isSystem || category.householdId === params.householdId);
+        const allowed = isAllowedCategoryForHousehold(category, params.householdId);
         if (!allowed) {
           set.status = 400;
           return { error: "Invalid category for household" };
