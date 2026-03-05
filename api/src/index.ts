@@ -16,8 +16,10 @@ import { planningRoute }     from "./routes/planning";
 
 const PORT = Number(process.env.PORT ?? 3001);
 const NODE_ENV = (process.env.NODE_ENV ?? "development").toLowerCase();
+const IS_PRODUCTION = NODE_ENV === "production";
 const AUTH_ENABLED = (process.env.AUTH_ENABLED ?? "true") === "true";
 const API_AUTH_SECRET = process.env.API_AUTH_SECRET ?? process.env.AUTH_SECRET;
+const ALLOW_LOCALHOST_CORS_IN_PRODUCTION = (process.env.ALLOW_LOCALHOST_CORS_IN_PRODUCTION ?? "false") === "true";
 const CORS_ORIGINS = (process.env.CORS_ORIGINS ?? "http://localhost:9999")
   .split(",")
   .map((s) => s.trim())
@@ -31,12 +33,29 @@ if (NODE_ENV === "production" && !AUTH_ENABLED) {
   throw new Error("AUTH_ENABLED=false is not allowed in production.");
 }
 
+if (IS_PRODUCTION) {
+  if (CORS_ORIGINS.length === 0) {
+    throw new Error("CORS_ORIGINS must include at least one explicit origin in production.");
+  }
+  if (CORS_ORIGINS.includes("*")) {
+    throw new Error("CORS_ORIGINS cannot include '*' in production.");
+  }
+  const hasLocalhostOrigin = CORS_ORIGINS.some((origin) =>
+    /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin)
+  );
+  if (hasLocalhostOrigin && !ALLOW_LOCALHOST_CORS_IN_PRODUCTION) {
+    throw new Error(
+      "CORS_ORIGINS contains localhost in production. Set real origins or set ALLOW_LOCALHOST_CORS_IN_PRODUCTION=true intentionally."
+    );
+  }
+}
+
 function isPublicPath(pathname: string): boolean {
   return (
     pathname === "/" ||
     pathname === "/health" ||
     pathname === "/auth/login" ||
-    pathname.startsWith("/docs")
+    (!IS_PRODUCTION && pathname.startsWith("/docs"))
   );
 }
 
@@ -83,7 +102,7 @@ const app = new Elysia()
         ],
       },
       path:     "/docs",
-      swaggerOptions: { tryItOutEnabled: true },
+      swaggerOptions: { tryItOutEnabled: !IS_PRODUCTION },
     })
   )
   .get("/",         () => ({ status: "ok", name: "bePrepared API", version: "0.1.0" }))

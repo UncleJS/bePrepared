@@ -30,9 +30,9 @@
 ### P2
 
 - [ ] **Reduce stale privilege risk**: re-verify `isAdmin` for sensitive actions or implement revocation strategy.
-- [ ] **Swagger exposure policy**: restrict `/docs` in production or disable interactive mode.
-- [ ] **phpMyAdmin exposure policy**: remove from production or bind to localhost-only access path.
-- [ ] **CORS production validation**: enforce explicit trusted origins and add startup checks.
+- [x] **Swagger exposure policy**: `/docs` now requires auth in production, and Swagger Try-It-Out is disabled in production.
+- [x] **phpMyAdmin exposure policy**: removed phpMyAdmin Quadlet service and host port exposure from default deployment.
+- [x] **CORS production validation**: enforce explicit trusted origins and startup checks (no wildcard; localhost blocked in production unless explicitly overridden).
 - [ ] **Payload constraints**: add max length/size limits to user-controlled string inputs.
 
 ---
@@ -76,8 +76,8 @@
 
 ### P1
 
-- [ ] **Align alert model docs** with current schema (`upcoming|due|overdue`, read/resolved lifecycle).
-- [ ] **Align worker behavior docs** with currently implemented jobs.
+- [x] **Align alert model docs** with current schema (`upcoming|due|overdue`, read/resolved lifecycle).
+- [x] **Align worker behavior docs** with currently implemented jobs.
 - [ ] **Fix quickstart command sequencing** for workspace-aware migration/seed commands.
 
 ---

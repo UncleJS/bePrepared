@@ -89,7 +89,6 @@ All unit files live in `deploy/quadlet/`. After copying to `~/.config/containers
 [Pod]
 PodName=beprepared
 PublishPort=9999:9999
-PublishPort=9998:80
 
 [Install]
 WantedBy=default.target
@@ -337,6 +336,8 @@ Copy `deploy/.env.example` to `deploy/.env` and fill in values.
 | `DATABASE_URL` | yes | — | `mysql://user:pass@host:3306/dbname` |
 | `PORT` | no | `3001` | API listen port (internal) |
 | `NEXT_PUBLIC_API_URL` | yes | `http://localhost:3001` | Browser API base URL (`/api` rewrite in frontend proxy) |
+| `CORS_ORIGINS` | yes | `http://localhost:9999` | Comma-separated allowed browser origins |
+| `ALLOW_LOCALHOST_CORS_IN_PRODUCTION` | no | `false` | Production guard override for localhost origins |
 | `NODE_ENV` | no | `production` | |
 
 ---

@@ -103,7 +103,7 @@ bePrepared/
 │                                   │   MariaDB :3306   │  │
 │                                   └──────────────────┘  │
 └─────────────────────────────────────────────────────────┘
-        Exposed: :9999 (frontend), :9998 (phpMyAdmin)
+        Exposed: :9999 (frontend)
 ```
 
 The `api` and `worker` both connect directly to MariaDB via `mysql2` pool. The `frontend` only speaks to the `api` over HTTP.
@@ -248,7 +248,7 @@ systemctl --user status beprepared-api
 journalctl --user -u beprepared-api -f
 ```
 
-Only **port 9999** (frontend) and **port 9998** (phpMyAdmin) are published to the host. The API (3001) and DB (3306) are internal to the pod network.
+Only **port 9999** (frontend) is published to the host. The API (3001) and DB (3306) are internal to the pod network.
 
 See `docs/11-operations-podman.md` for full operational runbook.
 

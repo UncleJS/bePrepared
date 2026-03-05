@@ -29,13 +29,13 @@
 [↑ TOC](#table-of-contents)
 
 - **Base URL**: browser access is typically via frontend BFF proxy `http://localhost:9999/api/bff`; API listens internally on `http://localhost:3001`
-- **Interactive docs**: `GET /docs` (or via frontend proxy `GET /api/bff/docs`) — Swagger UI with "Try it out"
+- **Interactive docs**: `GET /docs` (or via frontend proxy `GET /api/bff/docs`) — Swagger UI (`Try it out` disabled in production)
 - **Machine-readable spec**: `GET /docs/json` (or via frontend proxy `GET /api/bff/docs/json`) — OpenAPI 3.0 JSON
 - **Content-Type**: `application/json` for all request bodies
 - **Timestamps**: ISO-8601 UTC strings (`2026-03-05T14:30:00.000Z`) — dates are `YYYY-MM-DD`
 - **Deletion**: all `DELETE` endpoints are soft-archive — row is kept with `archived_at` set
 - **IDs**: UUID v4 strings
-- **Authentication**: Bearer token required for all routes except `/`, `/health`, `/auth/login`, and `/docs*`
+- **Authentication**: Bearer token required for all routes except `/`, `/health`, and `/auth/login`; `/docs*` is public only in non-production
 - **HTTP status codes**:
   - `200` — success
   - `401` — unauthorized

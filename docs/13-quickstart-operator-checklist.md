@@ -58,7 +58,7 @@ cd ../frontend
 bun run dev
 ```
 
-Open http://localhost:9999 — UI and API docs proxy at http://localhost:9999/api/bff/docs.
+Open http://localhost:9999 — UI and API docs proxy at http://localhost:9999/api/bff/docs (after login).
 
 ---
 

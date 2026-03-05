@@ -434,17 +434,15 @@ Immutable service history records.
 |--------|------|-------|
 | `id` | VARCHAR(36) PK | |
 | `household_id` | VARCHAR(36) NOT NULL | |
-| `alert_type` | ENUM('expiry','low_stock','replacement_due','maintenance_due','task_overdue','custom') | |
-| `severity` | ENUM('info','warning','critical') NOT NULL DEFAULT 'warning' | |
+| `severity` | ENUM('upcoming','due','overdue') NOT NULL DEFAULT 'upcoming' | |
+| `category` | ENUM('expiry','replacement','maintenance','low_stock','task_due','policy') NOT NULL | |
 | `title` | VARCHAR(500) NOT NULL | |
-| `body` | TEXT NULL | |
-| `entity_type` | VARCHAR(100) NULL | Related entity table name |
-| `entity_id` | VARCHAR(36) NULL | Related row ID |
-| `due_date` | DATE NULL | Date driving the alert |
-| `dedupe_key` | VARCHAR(255) NULL UNIQUE | Prevents duplicate worker-generated alerts |
-| `status` | ENUM('active','read','resolved','snoozed') NOT NULL DEFAULT 'active' | |
-| `snoozed_until` | TIMESTAMP NULL | |
-| `read_at` | TIMESTAMP NULL | |
+| `detail` | TEXT NULL | |
+| `entity_type` | VARCHAR(100) NOT NULL | Related entity table name |
+| `entity_id` | VARCHAR(36) NOT NULL | Related row ID |
+| `due_at` | TIMESTAMP NULL | Date/time driving the alert |
+| `is_read` | BOOLEAN NOT NULL DEFAULT false | |
+| `is_resolved` | BOOLEAN NOT NULL DEFAULT false | |
 | `resolved_at` | TIMESTAMP NULL | |
 | `created_at` | TIMESTAMP NOT NULL | |
 | `updated_at` | TIMESTAMP NOT NULL | |
@@ -486,9 +484,8 @@ This means `household_policies` and `scenario_policies` may have multiple rows p
 | `equipment_items.status` | `operational`, `needs_service`, `unserviceable`, `retired` |
 | `battery_profiles.chemistry` | `alkaline`, `lithium_primary`, `liion`, `nimh`, `lead_acid`, `other` |
 | `maintenance_templates.task_type` | `inspect`, `clean`, `lubricate`, `test`, `full_service`, `recharge`, `replace` |
-| `alerts.alert_type` | `expiry`, `low_stock`, `replacement_due`, `maintenance_due`, `task_overdue`, `custom` |
-| `alerts.severity` | `info`, `warning`, `critical` |
-| `alerts.status` | `active`, `read`, `resolved`, `snoozed` |
+| `alerts.severity` | `upcoming`, `due`, `overdue` |
+| `alerts.category` | `expiry`, `replacement`, `maintenance`, `low_stock`, `task_due`, `policy` |
 
 ---
 

@@ -5,8 +5,6 @@
  *  - Inventory expiry alerts
  *  - Inventory replacement due alerts
  *  - Maintenance schedule due alerts
- *  - Task overdue alerts
- *  - Low-stock alerts
  *
  * Runs every hour by default (configurable via WORKER_INTERVAL_MS).
  */
