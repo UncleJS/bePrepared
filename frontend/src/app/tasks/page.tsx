@@ -33,7 +33,10 @@ export default function TasksPage() {
   const [saving, setSaving] = useState(false);
 
   const isAdmin = Boolean((user as { isAdmin?: boolean } | undefined)?.isAdmin);
-  const editingTask = useMemo(() => (editingId ? tasks.find((t) => t.id === editingId) : null), [editingId, tasks]);
+  const editingTask = useMemo(
+    () => (editingId ? tasks.find((t) => t.id === editingId) : null),
+    [editingId, tasks]
+  );
 
   useEffect(() => {
     void loadData();
@@ -158,7 +161,9 @@ export default function TasksPage() {
       )}
 
       {tasksByLevel.map(({ level, tasks: levelTasks }) => {
-        const doneCount = levelTasks.filter((task) => progress[task.id]?.status === "completed").length;
+        const doneCount = levelTasks.filter(
+          (task) => progress[task.id]?.status === "completed"
+        ).length;
         const totalCount = levelTasks.length;
         const percent = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
         const open = expanded[level] ?? false;
@@ -178,7 +183,10 @@ export default function TasksPage() {
               </div>
               <div className="flex items-center gap-2">
                 <div className="h-1.5 w-24 overflow-hidden rounded-full bg-muted">
-                  <div className="h-full rounded-full bg-primary" style={{ width: `${percent}%` }} />
+                  <div
+                    className="h-full rounded-full bg-primary"
+                    style={{ width: `${percent}%` }}
+                  />
                 </div>
                 <span className="w-8 text-right text-xs text-muted-foreground">{percent}%</span>
               </div>
@@ -196,7 +204,10 @@ export default function TasksPage() {
                   return (
                     <li key={task.id} className="px-4 py-3 transition-colors hover:bg-accent">
                       <div className="flex items-start justify-between gap-3">
-                        <button onClick={() => void toggleTask(task)} className="flex items-start gap-3 text-left">
+                        <button
+                          onClick={() => void toggleTask(task)}
+                          className="flex items-start gap-3 text-left"
+                        >
                           {isDone ? (
                             <CheckSquare size={18} className="mt-0.5 shrink-0 text-primary" />
                           ) : (
@@ -211,13 +222,17 @@ export default function TasksPage() {
                               {task.title}
                             </p>
                             {task.description && (
-                              <p className="mt-0.5 text-xs text-muted-foreground">{task.description}</p>
+                              <p className="mt-0.5 text-xs text-muted-foreground">
+                                {task.description}
+                              </p>
                             )}
                             <div className="mt-1 flex flex-wrap gap-2">
                               <Badge>{task.taskClass}</Badge>
                               <Badge variant="outline">{moduleTitle}</Badge>
                               {sectionTitle && <Badge variant="outline">{sectionTitle}</Badge>}
-                              {task.scenario !== "both" && <Badge variant="outline">{task.scenario}</Badge>}
+                              {task.scenario !== "both" && (
+                                <Badge variant="outline">{task.scenario}</Badge>
+                              )}
                             </div>
                           </div>
                         </button>
@@ -240,7 +255,9 @@ export default function TasksPage() {
                   );
                 })}
                 {levelTasks.length === 0 && (
-                  <li className="px-4 py-3 text-sm text-muted-foreground">No tasks for this level.</li>
+                  <li className="px-4 py-3 text-sm text-muted-foreground">
+                    No tasks for this level.
+                  </li>
                 )}
               </ul>
             )}

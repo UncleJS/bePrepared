@@ -11,7 +11,9 @@ export function InventoryLotFormFields({
   return (
     <>
       <div className="space-y-1">
-        <label className="block text-xs font-bold uppercase tracking-wide text-primary">Lot Quantity *</label>
+        <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+          Lot Quantity *
+        </label>
         <input
           className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
           value={form.qty}
@@ -20,7 +22,9 @@ export function InventoryLotFormFields({
       </div>
 
       <div className="space-y-1">
-        <label className="block text-xs font-bold uppercase tracking-wide text-primary">Lot Acquired Date</label>
+        <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+          Lot Acquired Date
+        </label>
         <input
           type="date"
           className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
@@ -30,7 +34,9 @@ export function InventoryLotFormFields({
       </div>
 
       <div className="space-y-1">
-        <label className="block text-xs font-bold uppercase tracking-wide text-primary">Lot Expiry Date</label>
+        <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+          Lot Expiry Date
+        </label>
         <input
           type="date"
           className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
@@ -51,7 +57,9 @@ export function InventoryLotFormFields({
       </div>
 
       <div className="space-y-1">
-        <label className="block text-xs font-bold uppercase tracking-wide text-primary">Batch Reference</label>
+        <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+          Batch Reference
+        </label>
         <input
           className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
           value={form.batchRef}

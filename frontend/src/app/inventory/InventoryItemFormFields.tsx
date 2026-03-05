@@ -15,7 +15,9 @@ export function InventoryItemFormFields({
   return (
     <>
       <div className="space-y-1">
-        <label className="block text-xs font-bold uppercase tracking-wide text-primary">Item Name *</label>
+        <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+          Item Name *
+        </label>
         <input
           className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
           value={form.name}
@@ -44,7 +46,9 @@ export function InventoryItemFormFields({
       </div>
 
       <div className="space-y-1">
-        <label className="block text-xs font-bold uppercase tracking-wide text-primary">Item Category</label>
+        <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+          Item Category
+        </label>
         <select
           className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
           value={form.categoryId}

@@ -42,7 +42,9 @@ export function TaskFormFields({
         <select
           className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
           value={form.moduleId}
-          onChange={(e) => setForm((prev) => ({ ...prev, moduleId: e.target.value, sectionId: "" }))}
+          onChange={(e) =>
+            setForm((prev) => ({ ...prev, moduleId: e.target.value, sectionId: "" }))
+          }
         >
           <option value="">Select module</option>
           {modules.map((m) => (

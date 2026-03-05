@@ -169,10 +169,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
             .where(eq(inventoryCategories.id, replacementCategoryId))
             .limit(1);
           const replacement = replacementRows[0];
-          const replacementAllowed = isAllowedCategoryForHousehold(
-            replacement,
-            params.householdId
-          );
+          const replacementAllowed = isAllowedCategoryForHousehold(replacement, params.householdId);
           if (!replacementAllowed) {
             return { error: "Invalid replacement category for household" } as const;
           }

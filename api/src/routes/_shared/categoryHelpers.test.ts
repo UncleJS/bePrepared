@@ -17,9 +17,9 @@ describe("categoryHelpers", () => {
   it("checks allowed and custom access", () => {
     expect(isAllowedCategoryForHousehold(base, "house-1")).toBe(true);
     expect(isCustomCategoryForHousehold(base, "house-1")).toBe(true);
-    expect(isAllowedCategoryForHousehold({ ...base, isSystem: true, householdId: null }, "house-2")).toBe(
-      true
-    );
+    expect(
+      isAllowedCategoryForHousehold({ ...base, isSystem: true, householdId: null }, "house-2")
+    ).toBe(true);
     expect(isCustomCategoryForHousehold({ ...base, isSystem: true }, "house-1")).toBe(false);
   });
 
