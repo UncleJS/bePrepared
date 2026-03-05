@@ -105,6 +105,8 @@
 - [x] **Add worker run metrics counters** (inserted/escalated/skipped/errors per category) to support operations visibility.
 - [x] **Add deployment post-restart verification script** for service status and basic endpoint checks.
 - [x] **Document recurring backup-restore drill cadence** with pass/fail criteria in operations docs.
+- [x] **Document degraded-mode recovery runbook** for DB/API/worker/frontend restart sequencing.
+- [ ] **Split shared deploy env into service-scoped env files** (deferred by operator choice; revisit when secret-minimization becomes priority).
 
 ---
 

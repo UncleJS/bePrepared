@@ -398,6 +398,35 @@ Copy `deploy/.env.example` to `deploy/.env` and fill in values.
 
 [↑ TOC](#table-of-contents)
 
+### Degraded mode recovery runbook
+
+Use this sequence when one or more services are unhealthy after restart, deploy, or host reboot.
+
+```bash
+# 1) Snapshot current status
+systemctl --user list-units 'beprepared*'
+
+# 2) Recover DB first (base dependency)
+systemctl --user restart beprepared-db
+journalctl --user -u beprepared-db -n 50
+
+# 3) Recover API after DB is ready
+systemctl --user restart beprepared-api
+journalctl --user -u beprepared-api -n 50
+
+# 4) Recover worker and frontend
+systemctl --user restart beprepared-worker beprepared-frontend
+
+# 5) Run post-restart checks
+./deploy/post-restart-check.sh
+```
+
+If checks fail repeatedly:
+
+- Re-run migrations: `podman exec beprepared-api bun run db:migrate`
+- Restart full pod: `systemctl --user restart beprepared-pod`
+- Restore from latest validated backup (section 8) if data integrity is suspected
+
 ### API won't start — "Can't connect to DB"
 
 ```bash

@@ -99,7 +99,7 @@ Primary external exposure is the frontend host port (`9999`). API and DB remain 
 ### Phase C — Health and recovery confidence
 
 - Add lightweight health checks for API and frontend service process readiness.
-- Create an operator runbook section for "degraded mode" recovery (DB restart, API restart, worker catch-up).
+- [x] Create an operator runbook section for "degraded mode" recovery (DB restart, API restart, worker catch-up).
 - Establish a recurring restore test (for example monthly) with documented pass/fail criteria.
 
 ### Phase D — Change safety
@@ -115,9 +115,10 @@ Primary external exposure is the frontend host port (`9999`). API and DB remain 
 ## 6. Prioritized Next Actions
 
 1. [x] Implement minimal-risk Quadlet hardening flags for frontend and worker (`--read-only`, tmpfs `/tmp`, `no-new-privileges`, `--cap-drop=all`).
-2. Introduce scoped env files to reduce secret sprawl.
+2. [ ] Introduce scoped env files to reduce secret sprawl (deferred by operator choice; shared `deploy/.env` retained for now).
 3. [x] Add an operations check script for post-deploy health verification (`deploy/post-restart-check.sh`).
 4. [x] Document recurring backup-restore drill cadence and pass/fail criteria in operations runbook.
+5. [x] Document degraded-mode recovery sequencing in operations troubleshooting runbook.
 
 ---
 
