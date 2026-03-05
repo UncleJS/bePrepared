@@ -61,7 +61,11 @@ describe("routeAuth", () => {
     delete process.env.API_AUTH_SECRET;
 
     const set: { status?: number | string } = {};
-    const claims = requireHouseholdScope(makeRequest(makeToken({ householdId: "household-a" })), set, "household-b");
+    const claims = requireHouseholdScope(
+      makeRequest(makeToken({ householdId: "household-a" })),
+      set,
+      "household-b"
+    );
 
     expect(claims).toBeNull();
     expect(set.status).toBe(403);
@@ -72,7 +76,11 @@ describe("routeAuth", () => {
     delete process.env.API_AUTH_SECRET;
 
     const set: { status?: number | string } = {};
-    const claims = requireHouseholdScope(makeRequest(makeToken({ isAdmin: true })), set, "household-b");
+    const claims = requireHouseholdScope(
+      makeRequest(makeToken({ isAdmin: true })),
+      set,
+      "household-b"
+    );
 
     expect(claims?.isAdmin).toBe(true);
     expect(set.status).toBeUndefined();

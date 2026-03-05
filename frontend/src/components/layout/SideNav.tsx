@@ -16,15 +16,15 @@ import {
 import { clsx } from "clsx";
 
 const publicNavItems = [
-  { href: "/dashboard",   label: "Dashboard",    icon: LayoutDashboard },
-  { href: "/modules",     label: "Modules",      icon: BookOpen },
-  { href: "/tasks",       label: "Ticksheets",   icon: CheckSquare },
-  { href: "/inventory",   label: "Inventory",    icon: Package },
-  { href: "/equipment",   label: "Equipment",    icon: ShieldCheck },
-  { href: "/maintenance", label: "Maintenance",  icon: Wrench },
-  { href: "/planning",    label: "Planning",     icon: Calculator },
-  { href: "/alerts",      label: "Alerts",       icon: Bell },
-  { href: "/settings",    label: "Settings",     icon: Settings },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/modules", label: "Modules", icon: BookOpen },
+  { href: "/tasks", label: "Ticksheets", icon: CheckSquare },
+  { href: "/inventory", label: "Inventory", icon: Package },
+  { href: "/equipment", label: "Equipment", icon: ShieldCheck },
+  { href: "/maintenance", label: "Maintenance", icon: Wrench },
+  { href: "/planning", label: "Planning", icon: Calculator },
+  { href: "/alerts", label: "Alerts", icon: Bell },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function SideNav() {

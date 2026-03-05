@@ -110,18 +110,18 @@ https://creativecommons.org/licenses/by-nc-sa/4.0/
 
 This project uses the following open-source components under their respective licenses:
 
-| Component | License | Notes |
-|-----------|---------|-------|
-| Next.js | MIT | Frontend framework |
-| React | MIT | UI library |
-| Tailwind CSS | MIT | Utility-first CSS |
-| shadcn/ui | MIT | UI component collection |
-| Elysia | MIT | Bun HTTP framework |
-| Drizzle ORM | Apache-2.0 | TypeScript ORM |
-| mysql2 | MIT | MariaDB/MySQL driver |
-| MariaDB | GPLv2 | Database (server binary, not linked) |
-| Bun | MIT | JavaScript runtime |
-| Podman | Apache-2.0 | Container engine |
+| Component    | License    | Notes                                |
+| ------------ | ---------- | ------------------------------------ |
+| Next.js      | MIT        | Frontend framework                   |
+| React        | MIT        | UI library                           |
+| Tailwind CSS | MIT        | Utility-first CSS                    |
+| shadcn/ui    | MIT        | UI component collection              |
+| Elysia       | MIT        | Bun HTTP framework                   |
+| Drizzle ORM  | Apache-2.0 | TypeScript ORM                       |
+| mysql2       | MIT        | MariaDB/MySQL driver                 |
+| MariaDB      | GPLv2      | Database (server binary, not linked) |
+| Bun          | MIT        | JavaScript runtime                   |
+| Podman       | Apache-2.0 | Container engine                     |
 
 These components retain their own licenses. CC BY-NC-SA 4.0 applies to the **bePrepared application code and documentation** only, not to the third-party libraries.
 
@@ -140,6 +140,7 @@ bePrepared is designed for **local / self-hosted deployment**. By default:
 ### Data stored locally
 
 The MariaDB database stores:
+
 - Household name and people count
 - Inventory item names, quantities, and dates
 - Equipment names, models, serial numbers
@@ -190,4 +191,4 @@ The preparedness figures and planning calculations in bePrepared are provided as
 
 ---
 
-*Content licensed under CC BY-NC-SA 4.0*
+_Content licensed under CC BY-NC-SA 4.0_

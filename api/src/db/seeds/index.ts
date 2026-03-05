@@ -2,16 +2,16 @@
  * db/seeds/index.ts — master seed runner
  */
 import { db } from "../client";
-import { seedPolicyDefaults }     from "./policyDefaults";
-import { seedModules }            from "./modules";
-import { seedBatteryProfiles }    from "./batteryProfiles";
+import { seedPolicyDefaults } from "./policyDefaults";
+import { seedModules } from "./modules";
+import { seedBatteryProfiles } from "./batteryProfiles";
 import { seedMaintenanceTemplates } from "./maintenanceTemplates";
 import { seedInventoryCategories } from "./inventoryCategories";
 import { seedEquipmentCategories } from "./equipmentCategories";
 import { seedGuidanceDocs } from "./guidanceDocs";
 import { seedTasksAndDependencies } from "./tasks";
-import { seedHousehold }          from "./household";
-import { seedUsers }              from "./users";
+import { seedHousehold } from "./household";
+import { seedUsers } from "./users";
 
 async function main() {
   console.log("🌱 Starting seed...");
@@ -29,4 +29,7 @@ async function main() {
   process.exit(0);
 }
 
-main().catch(err => { console.error(err); process.exit(1); });
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { onActiveHouseholdChange, resolveClientHouseholdId } from "@/lib/api";
 
@@ -9,17 +9,18 @@ type SessionUser = { householdId?: string; isAdmin?: boolean } | undefined;
 export function useActiveHouseholdId() {
   const { data: session, status } = useSession();
   const user = session?.user as SessionUser;
-  const [householdId, setHouseholdId] = useState<string | null>(() => resolveClientHouseholdId(user));
+  const resolvedHouseholdId = useMemo(() => resolveClientHouseholdId(user), [user]);
+  const [householdId, setHouseholdId] = useState<string | null>(() => resolvedHouseholdId);
 
   useEffect(() => {
-    setHouseholdId(resolveClientHouseholdId(user));
-  }, [user?.householdId, user?.isAdmin]);
+    setHouseholdId(resolvedHouseholdId);
+  }, [resolvedHouseholdId]);
 
   useEffect(() => {
     return onActiveHouseholdChange((id) => {
-      setHouseholdId(id || resolveClientHouseholdId(user));
+      setHouseholdId(id || resolvedHouseholdId);
     });
-  }, [user?.householdId, user?.isAdmin]);
+  }, [resolvedHouseholdId]);
 
   return { householdId, status, user };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiFetch, fmtTs } from "@/lib/api";
 import { useActiveHouseholdId } from "@/lib/useActiveHouseholdId";
 import { CheckCircle2, AlertTriangle } from "lucide-react";
@@ -19,13 +19,13 @@ type Alert = {
 
 const SEVERITY_ICON: Record<string, React.ReactNode> = {
   overdue: <AlertTriangle size={15} className="text-destructive shrink-0 mt-0.5" />,
-  due:     <AlertTriangle size={15} className="text-yellow-400 shrink-0 mt-0.5" />,
-  upcoming:<AlertTriangle size={15} className="text-blue-400 shrink-0 mt-0.5" />,
+  due: <AlertTriangle size={15} className="text-yellow-400 shrink-0 mt-0.5" />,
+  upcoming: <AlertTriangle size={15} className="text-blue-400 shrink-0 mt-0.5" />,
 };
 
 const SEVERITY_BORDER: Record<string, string> = {
   overdue: "border-destructive/40 bg-destructive/10",
-  due:  "border-yellow-600/40 bg-yellow-900/15",
+  due: "border-yellow-600/40 bg-yellow-900/15",
   upcoming: "border-border bg-card",
 };
 
@@ -35,17 +35,17 @@ export default function AlertsPage() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const load = () => {
+  const load = useCallback(() => {
     if (!householdId) return;
     apiFetch<Alert[]>(`/alerts/${householdId}`)
       .then(setAlerts)
       .catch(console.error)
       .finally(() => setLoading(false));
-  };
+  }, [householdId]);
 
   useEffect(() => {
     load();
-  }, [householdId]);
+  }, [load]);
 
   async function markRead(id: string) {
     if (!householdId) return;
@@ -59,11 +59,13 @@ export default function AlertsPage() {
     load();
   }
 
-  if (status === "loading") return <p className="text-muted-foreground text-sm">Loading session…</p>;
-  if (!householdId) return <p className="text-muted-foreground text-sm">No household in session.</p>;
+  if (status === "loading")
+    return <p className="text-muted-foreground text-sm">Loading session…</p>;
+  if (!householdId)
+    return <p className="text-muted-foreground text-sm">No household in session.</p>;
   if (loading) return <p className="text-muted-foreground text-sm">Loading alerts…</p>;
 
-  const active   = alerts.filter((a) => !a.isResolved);
+  const active = alerts.filter((a) => !a.isResolved);
   const resolved = alerts.filter((a) => a.isResolved);
 
   return (

@@ -16,30 +16,35 @@ async function hashPassword(plain: string): Promise<string> {
 export async function seedUsers() {
   console.log("  Seeding demo admin user...");
 
-  const id           = "demo-user-001";
-  const householdId  = "demo-household-001";
-  const username     = "admin";
-  const rawPassword  = process.env.SEED_ADMIN_PASSWORD ?? "changeme";
+  const id = "demo-user-001";
+  const householdId = "demo-household-001";
+  const username = "admin";
+  const rawPassword = process.env.SEED_ADMIN_PASSWORD ?? "changeme";
   if ((process.env.NODE_ENV ?? "").toLowerCase() === "production" && rawPassword === "changeme") {
     throw new Error("SEED_ADMIN_PASSWORD cannot be 'changeme' in production.");
   }
   const passwordHash = await hashPassword(rawPassword);
 
-  await db.insert(users).values({
-    id,
-    householdId,
-    username,
-    email:        "admin@localhost",
-    passwordHash,
-    isAdmin:      true,
-  }).onDuplicateKeyUpdate({
-    set: {
-      email: "admin@localhost",
-      isAdmin: true,
-      passwordHash,
+  await db
+    .insert(users)
+    .values({
+      id,
       householdId,
-    },
-  });
+      username,
+      email: "admin@localhost",
+      passwordHash,
+      isAdmin: true,
+    })
+    .onDuplicateKeyUpdate({
+      set: {
+        email: "admin@localhost",
+        isAdmin: true,
+        passwordHash,
+        householdId,
+      },
+    });
 
-  console.log(`  ✓ Admin user '${username}' (password: ${rawPassword === "changeme" ? "changeme — CHANGE THIS" : "***"})`);
+  console.log(
+    `  ✓ Admin user '${username}' (password: ${rawPassword === "changeme" ? "changeme — CHANGE THIS" : "***"})`
+  );
 }

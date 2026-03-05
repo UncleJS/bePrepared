@@ -42,13 +42,13 @@ A ticksheet in bePrepared is a structured, hierarchical checklist that drives yo
 
 Every task has a class that describes what kind of action it requires:
 
-| Class | Description | Examples |
-|-------|-------------|---------|
-| `acquire` | Obtain a physical resource | Buy water containers, stock batteries |
-| `prepare` | Organise, configure, or plan | Pack bug-out bag, identify safe room |
-| `test` | Verify functionality through exercise | Run generator under load, conduct drill |
-| `maintain` | Periodic upkeep | Rotate food stock, recharge batteries |
-| `document` | Record important information | Write contact list, copy vital docs |
+| Class      | Description                           | Examples                                |
+| ---------- | ------------------------------------- | --------------------------------------- |
+| `acquire`  | Obtain a physical resource            | Buy water containers, stock batteries   |
+| `prepare`  | Organise, configure, or plan          | Pack bug-out bag, identify safe room    |
+| `test`     | Verify functionality through exercise | Run generator under load, conduct drill |
+| `maintain` | Periodic upkeep                       | Rotate food stock, recharge batteries   |
+| `document` | Record important information          | Write contact list, copy vital docs     |
 
 Filtering by class helps you batch similar work (e.g. a single shopping run for all `acquire` tasks).
 
@@ -62,7 +62,7 @@ Filtering by class helps you batch similar work (e.g. a single shopping run for 
 flowchart TB
   subgraph L1["Level 1 — 72 Hours (Baseline)"]
     direction LR
-    L1a[Water + Food\n72h supply] 
+    L1a[Water + Food\n72h supply]
     L1b[Basic First Aid\n+ Meds 30d]
     L1c[Light + Power\nbaseline]
     L1d[Evacuation\ncontact plan]
@@ -121,7 +121,7 @@ Dependencies enforce logical order. Example dependency chains:
 "Store 14-day water supply"
     depends on →  "Store minimum 3-day water supply"
 
-"Acquire portable water filter"  
+"Acquire portable water filter"
     depends on →  "Acquire water purification tablets"
 
 "Conduct comms test across all devices"
@@ -139,11 +139,11 @@ Dependencies are shown on the task detail page. The Ticksheet view highlights bl
 
 Tasks have a scenario attribute:
 
-| Value | Behaviour |
-|-------|-----------|
-| `both` | Always shown regardless of active scenario |
+| Value              | Behaviour                                    |
+| ------------------ | -------------------------------------------- |
+| `both`             | Always shown regardless of active scenario   |
 | `shelter_in_place` | Only shown in shelter-in-place scenario view |
-| `evacuation` | Only shown in evacuation scenario view |
+| `evacuation`       | Only shown in evacuation scenario view       |
 
 Switching scenario on the dashboard instantly re-filters all ticksheets to relevant tasks.
 
@@ -160,6 +160,7 @@ Every task has an optional `evidencePrompt` that tells you what to record when c
 - "Drill date and time to rally point?"
 
 Evidence notes serve as:
+
 - Proof of completion for your own audit trail
 - Reference data when you return to a task months later
 - A record for other household members
@@ -172,13 +173,13 @@ Evidence notes serve as:
 
 Tasks marked `isRecurring = true` automatically create a new `Pending` progress entry after the `recurDays` interval passes since the last completion. Examples:
 
-| Task | Recur Interval |
-|------|---------------|
-| Rotate food stock | 90 days |
-| Water storage rotation | 180 days |
-| Maintain vehicle fuel above half-tank | 30 days |
-| Battery storage recharge | 90 days |
-| Full household drill | 180 days |
+| Task                                  | Recur Interval |
+| ------------------------------------- | -------------- |
+| Rotate food stock                     | 90 days        |
+| Water storage rotation                | 180 days       |
+| Maintain vehicle fuel above half-tank | 30 days        |
+| Battery storage recharge              | 90 days        |
+| Full household drill                  | 180 days       |
 
 Overdue recurring tasks appear in the alert queue with overdue timing and default `severity: critical`.
 
@@ -195,18 +196,19 @@ score = Σ (completed_tasks × weight) / Σ (all_tasks × weight) × 100
 ```
 
 Weight factors:
+
 - **Life-safety category multiplier**: Water/Medical = 2x, Power/Comms = 1.5x, other = 1x
 - **Level multiplier**: L1 = 4x, L2 = 3x, L3 = 2x, L4 = 1x (baseline is weighted higher)
 - **Recurring task recency**: Full weight if current; decays toward 0 if overdue
 
 Score bands:
 
-| Score | Band | Meaning |
-|-------|------|---------|
-| 0–20% | 🔴 Critical | L1 incomplete |
-| 21–50% | 🟠 Building | L1 done, working L2 |
-| 51–75% | 🟡 Stable | L2 done, working L3 |
-| 76–90% | 🔵 Resilient | L3 done, working L4 |
+| Score   | Band               | Meaning                 |
+| ------- | ------------------ | ----------------------- |
+| 0–20%   | 🔴 Critical        | L1 incomplete           |
+| 21–50%  | 🟠 Building        | L1 done, working L2     |
+| 51–75%  | 🟡 Stable          | L2 done, working L3     |
+| 76–90%  | 🔵 Resilient       | L3 done, working L4     |
 | 91–100% | 🟢 Self-Sufficient | L4 complete, maintained |
 
 [↑ Go to TOC](#table-of-contents)
@@ -221,6 +223,7 @@ A readiness level is considered "unlocked" (accessible for progression tracking)
 - All recurring tasks at the preceding level have been completed at least once
 
 This means:
+
 - You cannot claim L2 readiness until all L1 tasks are done
 - Completing L3 tasks before L2 is done does not contribute to your L2 score
 - The dashboard clearly shows which tasks are blocking your current level
@@ -246,4 +249,4 @@ API equivalents:
 
 ---
 
-*Content licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) · bePrepared Disaster Preparedness System*
+_Content licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) · bePrepared Disaster Preparedness System_

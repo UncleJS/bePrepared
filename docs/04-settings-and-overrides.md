@@ -26,12 +26,12 @@
 
 Settings are organised under four tabs in `Settings`:
 
-| Tab | Contains |
-|-----|----------|
-| **Household** | Name, baseline people, active scenario, active profile |
-| **People Profiles** | Create/edit/delete named occupancy profiles, scenario binding |
+| Tab                  | Contains                                                                  |
+| -------------------- | ------------------------------------------------------------------------- |
+| **Household**        | Name, baseline people, active scenario, active profile                    |
+| **People Profiles**  | Create/edit/delete named occupancy profiles, scenario binding             |
 | **Planning Targets** | Water and calorie defaults; global overrides; scenario-specific overrides |
-| **Lifecycle** | Alert lead-time, grace window, maintenance defaults |
+| **Lifecycle**        | Alert lead-time, grace window, maintenance defaults                       |
 
 All changes are written to the database immediately with audit timestamps.
 
@@ -41,12 +41,12 @@ All changes are written to the database immediately with audit timestamps.
 
 ## 2. Household Settings
 
-| Field | Type | Notes |
-|-------|------|-------|
-| **Household name** | Text | Display label only |
-| **Baseline target people** | Integer ≥ 1 | Used when no profile is active |
-| **Active scenario** | Enum | `shelter_in_place` or `evacuation` |
-| **Active profile** | Profile ID | Set automatically or manually |
+| Field                      | Type        | Notes                              |
+| -------------------------- | ----------- | ---------------------------------- |
+| **Household name**         | Text        | Display label only                 |
+| **Baseline target people** | Integer ≥ 1 | Used when no profile is active     |
+| **Active scenario**        | Enum        | `shelter_in_place` or `evacuation` |
+| **Active profile**         | Profile ID  | Set automatically or manually      |
 
 The baseline target people is the **last resort** fallback in the people count resolution chain. It should reflect your normal household occupancy.
 
@@ -60,13 +60,13 @@ Profiles let you define **named occupancy sets** for different situations.
 
 ### Profile Fields
 
-| Field | Description |
-|-------|-------------|
-| **Name** | Display label (e.g. "Normal — 2 people", "Extended family — 5") |
-| **People count** | Integer ≥ 1 |
-| **Default** | Boolean — marks this as the fallback profile when no scenario is matched |
-| **Scenario bound** | Optional: `shelter_in_place` or `evacuation` |
-| **Notes** | Free-text context |
+| Field              | Description                                                              |
+| ------------------ | ------------------------------------------------------------------------ |
+| **Name**           | Display label (e.g. "Normal — 2 people", "Extended family — 5")          |
+| **People count**   | Integer ≥ 1                                                              |
+| **Default**        | Boolean — marks this as the fallback profile when no scenario is matched |
+| **Scenario bound** | Optional: `shelter_in_place` or `evacuation`                             |
+| **Notes**          | Free-text context                                                        |
 
 ### Example Profile Configuration
 
@@ -112,10 +112,12 @@ flowchart TD
 ```
 
 **Manual override** persists until:
+
 - User explicitly clears it (click "Clear override" button on dashboard)
 - User switches scenario and a bound profile exists for the new scenario
 
 **When manual override is active**, the dashboard shows a banner:
+
 > ⚠ Manual people override active: 3 people — [Clear]
 
 [↑ Go to TOC](#table-of-contents)
@@ -128,12 +130,12 @@ Global overrides apply to **all scenarios** unless a scenario-specific override 
 
 ### Configurable Keys
 
-| Key | Default | Unit | UI Label |
-|-----|---------|------|----------|
-| `water_liters_per_person_per_day` | 4.0 | L/person/day | Water target |
-| `calories_kcal_per_person_per_day` | 2200 | kcal/person/day | Calorie target |
-| `alert_upcoming_days` | 14 | days | Upcoming window |
-| `alert_grace_days` | 3 | days | Due grace window |
+| Key                                | Default | Unit            | UI Label         |
+| ---------------------------------- | ------- | --------------- | ---------------- |
+| `water_liters_per_person_per_day`  | 4.0     | L/person/day    | Water target     |
+| `calories_kcal_per_person_per_day` | 2200    | kcal/person/day | Calorie target   |
+| `alert_upcoming_days`              | 14      | days            | Upcoming window  |
+| `alert_grace_days`                 | 3       | days            | Due grace window |
 
 ### UI Behaviour
 
@@ -151,12 +153,12 @@ Scenario overrides are set per scenario tab in `Settings → Planning Targets`.
 
 ### When to Use Scenario Overrides
 
-| Scenario | Typical Overrides | Reason |
-|----------|------------------|--------|
+| Scenario         | Typical Overrides                       | Reason                               |
+| ---------------- | --------------------------------------- | ------------------------------------ |
 | Shelter-in-Place | Water: 5.0–6.0 L (if sanitation needed) | Home toilet bucket flush adds demand |
-| Shelter-in-Place | Calories: 2000 (less active) | Sedentary home confinement |
-| Evacuation | Water: 3.0–3.5 L (carry constraint) | Weight limitations |
-| Evacuation | Calories: 2400–2600 (more active) | Travel, stress, physical exertion |
+| Shelter-in-Place | Calories: 2000 (less active)            | Sedentary home confinement           |
+| Evacuation       | Water: 3.0–3.5 L (carry constraint)     | Weight limitations                   |
+| Evacuation       | Calories: 2400–2600 (more active)       | Travel, stress, physical exertion    |
 
 ### Preview
 
@@ -199,14 +201,15 @@ The API endpoint `GET /planning/:householdId/:scenario` returns the effective va
 
 ## 8. Alert and Lifecycle Settings
 
-| Key | Default | Meaning |
-|-----|---------|---------|
-| `alert_upcoming_days` | 14 | Alert fires this many days before due date |
-| `alert_grace_days` | 3 | Alert escalates to overdue this many days after due |
+| Key                   | Default | Meaning                                             |
+| --------------------- | ------- | --------------------------------------------------- |
+| `alert_upcoming_days` | 14      | Alert fires this many days before due date          |
+| `alert_grace_days`    | 3       | Alert escalates to overdue this many days after due |
 
 Both are household-level configurable keys under Planning Targets → Global.
 
 **Conservative settings (recommended for critical items):**
+
 - Upcoming: 30 days — more lead time to act
 - Grace: 1 day — faster escalation to overdue
 
@@ -218,13 +221,13 @@ Both are household-level configurable keys under Planning Targets → Global.
 
 Every policy change creates an entry in `audit_log`:
 
-| Field | Value |
-|-------|-------|
-| entity | `household_policies` or `scenario_policies` |
-| action | `update` |
-| old_value | Previous value |
-| new_value | New value |
-| created_at | UTC timestamp |
+| Field      | Value                                       |
+| ---------- | ------------------------------------------- |
+| entity     | `household_policies` or `scenario_policies` |
+| action     | `update`                                    |
+| old_value  | Previous value                              |
+| new_value  | New value                                   |
+| created_at | UTC timestamp                               |
 
 View at `Settings → Audit Log`. This is read-only and cannot be edited or deleted.
 
@@ -235,6 +238,7 @@ View at `Settings → Audit Log`. This is read-only and cannot be edited or dele
 ## 10. Resetting to Defaults
 
 To reset **any** household or scenario override:
+
 1. Navigate to `Settings → Planning Targets`
 2. Click "Reset to default" next to the overridden field
 3. System archives the override row
@@ -242,6 +246,7 @@ To reset **any** household or scenario override:
 5. Audit log entry created
 
 To reset **all** overrides for a household:
+
 - Use `DELETE /settings/:householdId/policies/:key` per key
 - Or use the "Reset all to defaults" button in Settings (archives all active overrides)
 
@@ -249,4 +254,4 @@ To reset **all** overrides for a household:
 
 ---
 
-*Content licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) · bePrepared Disaster Preparedness System*
+_Content licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) · bePrepared Disaster Preparedness System_

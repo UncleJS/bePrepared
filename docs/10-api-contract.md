@@ -52,6 +52,7 @@
 [↑ TOC](#table-of-contents)
 
 ### `GET /households`
+
 List all active (non-archived) households.
 
 **Response** — array of household objects.
@@ -59,9 +60,11 @@ List all active (non-archived) households.
 ---
 
 ### `POST /households`
+
 Create a new household.
 
 **Body**:
+
 ```json
 {
   "name": "Smith Family",
@@ -75,6 +78,7 @@ Create a new household.
 ---
 
 ### `GET /households/:id`
+
 Get one household by ID.
 
 **Response** — household object or `404`.
@@ -82,9 +86,11 @@ Get one household by ID.
 ---
 
 ### `PATCH /households/:id`
+
 Update household fields.
 
 **Body** (all fields optional):
+
 ```json
 {
   "name": "Smith Family (updated)",
@@ -98,6 +104,7 @@ Update household fields.
 ---
 
 ### `DELETE /households/:id`
+
 Archive a household (`archived_at = now()`).
 
 **Response**: `{ "archived": true }`
@@ -109,14 +116,17 @@ Archive a household (`archived_at = now()`).
 [↑ TOC](#table-of-contents)
 
 ### `GET /households/:id/profiles`
+
 List active people profiles for a household.
 
 ---
 
 ### `POST /households/:id/profiles`
+
 Create a people profile.
 
 **Body**:
+
 ```json
 {
   "name": "Full family",
@@ -130,11 +140,13 @@ Create a people profile.
 ---
 
 ### `PATCH /households/:id/profiles/:profileId`
+
 Update a profile (all fields optional).
 
 ---
 
 ### `DELETE /households/:id/profiles/:profileId`
+
 Archive a profile.
 
 ---
@@ -144,14 +156,17 @@ Archive a profile.
 [↑ TOC](#table-of-contents)
 
 ### `GET /modules`
+
 List all active modules (with sections).
 
 ---
 
 ### `POST /modules`
+
 Create a module.
 
 **Body**:
+
 ```json
 {
   "slug": "water",
@@ -165,14 +180,17 @@ Create a module.
 ---
 
 ### `GET /modules/:slug`
+
 Get one module with nested sections and guidance docs.
 
 ---
 
 ### `POST /modules/:id/sections`
+
 Create a section.
 
 **Body**:
+
 ```json
 {
   "title": "Storage",
@@ -183,9 +201,11 @@ Create a section.
 ---
 
 ### `POST /modules/:moduleId/sections/:sectionId/docs`
+
 Create a guidance document.
 
 **Body**:
+
 ```json
 {
   "title": "How to store water",
@@ -201,7 +221,9 @@ Create a guidance document.
 [↑ TOC](#table-of-contents)
 
 ### `GET /tasks`
+
 List all active tasks. Supports query params:
+
 - `moduleId` — filter by module
 - `readinessLevel` — `l1_72h` | `l2_14d` | `l3_30d` | `l4_90d`
 - `scenario` — `both` | `shelter_in_place` | `evacuation`
@@ -209,14 +231,17 @@ List all active tasks. Supports query params:
 ---
 
 ### `GET /tasks/by-id/:id`
+
 Get one active task by ID.
 
 ---
 
 ### `POST /tasks`
+
 Create a task (global library entry, admin only).
 
 **Body**:
+
 ```json
 {
   "moduleId": "uuid",
@@ -236,11 +261,13 @@ Create a task (global library entry, admin only).
 ---
 
 ### `PATCH /tasks/by-id/:id`
+
 Update a task (global library entry, admin only).
 
 All body fields are optional; omitted fields remain unchanged.
 
 **Body** (partial):
+
 ```json
 {
   "title": "Store 72h potable water supply",
@@ -258,14 +285,17 @@ All body fields are optional; omitted fields remain unchanged.
 ---
 
 ### `GET /tasks/:householdId/progress`
+
 Get all task progress records for a household.
 
 ---
 
 ### `POST /tasks/:householdId/progress`
+
 Create or update task progress (tick/untick).
 
 **Body**:
+
 ```json
 {
   "taskId": "uuid",
@@ -279,6 +309,7 @@ Create or update task progress (tick/untick).
 ---
 
 ### `PATCH /tasks/:householdId/progress/:progressId`
+
 Update a progress record.
 
 ---
@@ -288,39 +319,47 @@ Update a progress record.
 [↑ TOC](#table-of-contents)
 
 ### `GET /inventory/categories`
+
 List all inventory categories.
 
 ---
 
 ### `GET /inventory/:householdId/categories`
+
 List available inventory categories for the household (`isSystem=true` plus household custom categories).
 
 ---
 
 ### `POST /inventory/:householdId/categories`
+
 Create a household custom inventory category.
 
 ---
 
 ### `PATCH /inventory/:householdId/categories/:categoryId`
+
 Update a household custom inventory category.
 
 ---
 
 ### `DELETE /inventory/:householdId/categories/:categoryId?reassignToCategoryId=:id`
+
 Archive a household custom inventory category. Requires `reassignToCategoryId` when items still reference that category.
 
 ---
 
 ### `GET /inventory/:householdId/items`
+
 List all active inventory items for a household, with their active lots nested.
 
 ---
 
 ### `POST /inventory/:householdId/items`
+
 Create an inventory item.
 
 **Body**:
+
 ```json
 {
   "name": "Drinking water (4L jugs)",
@@ -338,19 +377,23 @@ Create an inventory item.
 ---
 
 ### `PATCH /inventory/:householdId/items/:itemId`
+
 Update an inventory item.
 
 ---
 
 ### `DELETE /inventory/:householdId/items/:itemId`
+
 Archive an inventory item.
 
 ---
 
 ### `POST /inventory/:householdId/items/:itemId/lots`
+
 Add a lot (batch) to an inventory item.
 
 **Body**:
+
 ```json
 {
   "qty": 20,
@@ -367,11 +410,13 @@ Note: `nextReplaceAt` is auto-computed as `acquiredAt + replaceDays`.
 ---
 
 ### `DELETE /inventory/:householdId/items/:itemId/lots/:lotId`
+
 Archive (consume/dispose) a lot.
 
 ---
 
 ### `GET /inventory/:householdId/expiring?days=30`
+
 Get lots expiring within the next N days (default 30).
 
 ---
@@ -381,39 +426,47 @@ Get lots expiring within the next N days (default 30).
 [↑ TOC](#table-of-contents)
 
 ### `GET /equipment/battery-profiles`
+
 List all battery chemistry profiles.
 
 ---
 
 ### `GET /equipment/:householdId/categories`
+
 List available equipment categories for the household (`isSystem=true` plus household custom categories).
 
 ---
 
 ### `POST /equipment/:householdId/categories`
+
 Create a household custom equipment category.
 
 ---
 
 ### `PATCH /equipment/:householdId/categories/:categoryId`
+
 Update a household custom equipment category.
 
 ---
 
 ### `DELETE /equipment/:householdId/categories/:categoryId?reassignToCategoryId=:id`
+
 Archive a household custom equipment category. Requires `reassignToCategoryId` when equipment still references that category.
 
 ---
 
 ### `GET /equipment/:householdId`
+
 List all active equipment items for a household.
 
 ---
 
 ### `POST /equipment/:householdId`
+
 Create an equipment item.
 
 **Body**:
+
 ```json
 {
   "categorySlug": "comms",
@@ -430,11 +483,13 @@ Create an equipment item.
 ---
 
 ### `PATCH /equipment/:householdId/:itemId`
+
 Update an equipment item.
 
 ---
 
 ### `DELETE /equipment/:householdId/:itemId`
+
 Archive an equipment item.
 
 ---
@@ -444,19 +499,23 @@ Archive an equipment item.
 [↑ TOC](#table-of-contents)
 
 ### `GET /maintenance/templates`
+
 List all maintenance templates (global).
 
 ---
 
 ### `GET /maintenance/:householdId/schedules`
+
 List all maintenance schedules across all equipment for a household.
 
 ---
 
 ### `POST /maintenance/:householdId/:equipmentItemId/schedules`
+
 Create a maintenance schedule for an equipment item.
 
 **Body**:
+
 ```json
 {
   "templateId": "uuid-optional",
@@ -475,19 +534,23 @@ Note: `nextDueAt` is auto-computed as `lastDoneAt + calDays`.
 ---
 
 ### `PATCH /maintenance/:householdId/schedules/:scheduleId`
+
 Update a maintenance schedule.
 
 ---
 
 ### `DELETE /maintenance/:householdId/schedules/:scheduleId`
+
 Archive a maintenance schedule.
 
 ---
 
 ### `POST /maintenance/:householdId/schedules/:scheduleId/events`
+
 Log a completed maintenance event. Also updates schedule's `lastDoneAt` and recomputes `nextDueAt`.
 
 **Body**:
+
 ```json
 {
   "performedAt": "2026-03-05T09:00:00Z",
@@ -500,14 +563,17 @@ Log a completed maintenance event. Also updates schedule's `lastDoneAt` and reco
 ---
 
 ### `GET /maintenance/:householdId/schedules/:scheduleId/events`
+
 Get event history for a schedule.
 
 ---
 
 ### `GET /maintenance/:householdId/due`
+
 Get all overdue and upcoming maintenance tasks (sorted by urgency).
 
 Query params:
+
 - `days` — lookahead window in days (default `30`)
 
 ---
@@ -517,9 +583,11 @@ Query params:
 [↑ TOC](#table-of-contents)
 
 ### `GET /alerts/:householdId`
+
 List all active (non-archived) alerts for a household.
 
 Query params:
+
 - `status` — optional: `active` or `resolved`
 - `unread` — optional boolean-like string (`"true"`)
 - `unresolved` — optional boolean-like string (`"true"`)
@@ -527,6 +595,7 @@ Query params:
 ---
 
 ### `PATCH /alerts/:householdId/:alertId/read`
+
 Mark an alert as read.
 
 **Response**: `{ "read": true }`
@@ -534,6 +603,7 @@ Mark an alert as read.
 ---
 
 ### `PATCH /alerts/:householdId/:alertId/resolve`
+
 Mark an alert as resolved.
 
 **Response**: `{ "resolved": true }`
@@ -541,6 +611,7 @@ Mark an alert as resolved.
 ---
 
 ### `DELETE /alerts/:householdId/:alertId`
+
 Archive an alert.
 
 ---
@@ -550,19 +621,23 @@ Archive an alert.
 [↑ TOC](#table-of-contents)
 
 ### `GET /settings/defaults`
+
 Get all system policy defaults.
 
 ---
 
 ### `GET /settings/:householdId/policies`
+
 Get active household-level policy overrides.
 
 ---
 
 ### `PUT /settings/:householdId/policies/:key`
+
 Upsert a household-level policy override (archives old value, inserts new).
 
 **Body**:
+
 ```json
 {
   "unit": "liters/person/day",
@@ -573,11 +648,13 @@ Upsert a household-level policy override (archives old value, inserts new).
 ---
 
 ### `DELETE /settings/:householdId/policies/:key`
+
 Reset a household policy to system default (archives the override).
 
 ---
 
 ### `GET /settings/:householdId/scenario/:scenario`
+
 Get scenario-specific policy overrides.
 
 `:scenario` = `shelter_in_place` or `evacuation`
@@ -585,6 +662,7 @@ Get scenario-specific policy overrides.
 ---
 
 ### `PUT /settings/:householdId/scenario/:scenario/:key`
+
 Upsert a scenario-specific policy override.
 
 **Body**: same as household policy body.
@@ -592,6 +670,7 @@ Upsert a scenario-specific policy override.
 ---
 
 ### `GET /settings/:householdId/audit`
+
 Get the policy audit log for a household (append-only history).
 
 ---
@@ -601,6 +680,7 @@ Get the policy audit log for a household (append-only history).
 [↑ TOC](#table-of-contents)
 
 ### `GET /planning/:householdId/:scenario?people=N`
+
 Calculate effective planning totals for a household and scenario.
 
 `:scenario` = `shelter_in_place` or `evacuation`
@@ -611,6 +691,7 @@ Query param `people` — manual override of people count (integer).
 **People resolution**: `?people` query → scenario-bound profile → active profile → `target_people`.
 
 **Response**:
+
 ```json
 {
   "people": {
@@ -651,6 +732,7 @@ Query param `people` — manual override of people count (integer).
 [↑ TOC](#table-of-contents)
 
 ### `GET /`
+
 API identity check.
 
 **Response**: `{ "status": "ok", "name": "bePrepared API", "version": "0.1.0" }`
@@ -658,10 +740,11 @@ API identity check.
 ---
 
 ### `GET /health`
+
 Liveness probe.
 
 **Response**: `{ "status": "ok", "ts": "2026-03-05T14:30:00.000Z" }`
 
 ---
 
-*Content licensed under CC BY-NC-SA 4.0*
+_Content licensed under CC BY-NC-SA 4.0_

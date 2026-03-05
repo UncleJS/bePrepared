@@ -4,19 +4,16 @@ import { requireHouseholdScope } from "../../lib/routeAuth";
 
 type Scenario = "shelter_in_place" | "evacuation";
 
-export const planningRoute = new Elysia({ prefix: "/planning", tags: ["planning"] })
-
-  .get("/:householdId/:scenario", async ({ request, set, params, query }) => {
+export const planningRoute = new Elysia({ prefix: "/planning", tags: ["planning"] }).get(
+  "/:householdId/:scenario",
+  async ({ request, set, params, query }) => {
     const claims = requireHouseholdScope(request, set, params.householdId);
     if (!claims) return { error: "Forbidden" };
 
     const manualPeople = query.people;
-    return resolvePlanningTotals(
-      params.householdId,
-      params.scenario as Scenario,
-      manualPeople
-    );
-  }, {
+    return resolvePlanningTotals(params.householdId, params.scenario as Scenario, manualPeople);
+  },
+  {
     query: t.Object({
       people: t.Optional(t.Number({ minimum: 1, maximum: 1000 })),
     }),
@@ -28,4 +25,5 @@ Policy precedence: scenario override → household global override → system de
 People precedence: manual override → scenario-bound profile → active profile → household baseline.
       `.trim(),
     },
-  });
+  }
+);

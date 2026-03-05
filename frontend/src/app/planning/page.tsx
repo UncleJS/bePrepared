@@ -21,7 +21,9 @@ type PlanningApiResult = {
 
 async function getPlanning(householdId: string, scenario: string): Promise<PlanningResult | null> {
   try {
-    const raw = await apiFetch<PlanningResult | PlanningApiResult>(`/planning/${householdId}/${scenario}`);
+    const raw = await apiFetch<PlanningResult | PlanningApiResult>(
+      `/planning/${householdId}/${scenario}`
+    );
 
     if (raw && typeof raw === "object" && "horizons" in raw && raw.horizons) {
       return raw as PlanningResult;
@@ -77,7 +79,8 @@ function litersToGallons(liters: number): number {
 
 export default async function PlanningPage() {
   const householdId = await getSessionHouseholdId();
-  if (!householdId) return <p className="text-sm text-muted-foreground">No household in session.</p>;
+  if (!householdId)
+    return <p className="text-sm text-muted-foreground">No household in session.</p>;
 
   const [sip, evac] = await Promise.all([
     getPlanning(householdId, "shelter_in_place"),
@@ -106,41 +109,50 @@ export default async function PlanningPage() {
                   <Users size={13} /> {data.effectivePeople} people
                 </span>
                 <span className="flex items-center gap-1">
-                  <Droplets size={13} className="text-blue-400" /> {data.effectiveWaterLPPD} L/p/day ({litersToGallons(data.effectiveWaterLPPD).toFixed(2)} gal/p/day)
+                  <Droplets size={13} className="text-blue-400" /> {data.effectiveWaterLPPD} L/p/day
+                  ({litersToGallons(data.effectiveWaterLPPD).toFixed(2)} gal/p/day)
                 </span>
                 <span className="flex items-center gap-1">
-                  <Flame size={13} className="text-orange-400" /> {data.effectiveCaloriesKcalPPD} kcal/p/day
+                  <Flame size={13} className="text-orange-400" /> {data.effectiveCaloriesKcalPPD}{" "}
+                  kcal/p/day
                 </span>
               </div>
               {data.horizons && Object.keys(data.horizons).length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {Object.entries(data.horizons).map(([key, h]) => (
-                  <div key={key} className="rounded-lg border border-border bg-card p-4 space-y-3">
-                    <p className="text-sm font-semibold text-muted-foreground">
-                      {HORIZON_LABELS[key] ?? key}
-                    </p>
-                    <div>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Droplets size={11} className="text-blue-400" /> Water
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {Object.entries(data.horizons).map(([key, h]) => (
+                    <div
+                      key={key}
+                      className="rounded-lg border border-border bg-card p-4 space-y-3"
+                    >
+                      <p className="text-sm font-semibold text-muted-foreground">
+                        {HORIZON_LABELS[key] ?? key}
                       </p>
-                       <p className="text-lg font-bold">{h.waterLiters.toLocaleString()} L</p>
-                       <p className="text-xs text-muted-foreground">{litersToGallons(h.waterLiters).toFixed(1)} US gal</p>
-                     </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Flame size={11} className="text-orange-400" /> Calories
-                      </p>
-                      <p className="text-lg font-bold">{h.caloriesKcal.toLocaleString()} kcal</p>
+                      <div>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Droplets size={11} className="text-blue-400" /> Water
+                        </p>
+                        <p className="text-lg font-bold">{h.waterLiters.toLocaleString()} L</p>
+                        <p className="text-xs text-muted-foreground">
+                          {litersToGallons(h.waterLiters).toFixed(1)} US gal
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Flame size={11} className="text-orange-400" /> Calories
+                        </p>
+                        <p className="text-lg font-bold">{h.caloriesKcal.toLocaleString()} kcal</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
               ) : (
                 <p className="text-muted-foreground text-sm">No planning horizon data available.</p>
               )}
             </>
           ) : (
-            <p className="text-muted-foreground text-sm">Unable to load planning data. Check API connection.</p>
+            <p className="text-muted-foreground text-sm">
+              Unable to load planning data. Check API connection.
+            </p>
           )}
         </section>
       ))}

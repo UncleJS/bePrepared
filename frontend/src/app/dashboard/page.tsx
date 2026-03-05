@@ -57,22 +57,39 @@ function normalizePlanning(raw: PlanningResult | PlanningApiResult): PlanningRes
     effectiveWaterLPPD: normalized.policy?.waterLitersPerPersonPerDay ?? 0,
     effectiveCaloriesKcalPPD: normalized.policy?.caloriesKcalPerPersonPerDay ?? 0,
     horizons: {
-      h72h: { days: 3, waterLiters: totals.h72?.water ?? 0, caloriesKcal: totals.h72?.calories ?? 0 },
-      h14d: { days: 14, waterLiters: totals.d14?.water ?? 0, caloriesKcal: totals.d14?.calories ?? 0 },
-      h30d: { days: 30, waterLiters: totals.d30?.water ?? 0, caloriesKcal: totals.d30?.calories ?? 0 },
-      h90d: { days: 90, waterLiters: totals.d90?.water ?? 0, caloriesKcal: totals.d90?.calories ?? 0 },
+      h72h: {
+        days: 3,
+        waterLiters: totals.h72?.water ?? 0,
+        caloriesKcal: totals.h72?.calories ?? 0,
+      },
+      h14d: {
+        days: 14,
+        waterLiters: totals.d14?.water ?? 0,
+        caloriesKcal: totals.d14?.calories ?? 0,
+      },
+      h30d: {
+        days: 30,
+        waterLiters: totals.d30?.water ?? 0,
+        caloriesKcal: totals.d30?.calories ?? 0,
+      },
+      h90d: {
+        days: 90,
+        waterLiters: totals.d90?.water ?? 0,
+        caloriesKcal: totals.d90?.calories ?? 0,
+      },
     },
   };
 }
 
 export default async function DashboardPage() {
   const householdId = await getSessionHouseholdId();
-  if (!householdId) return <p className="text-sm text-muted-foreground">No household in session.</p>;
+  if (!householdId)
+    return <p className="text-sm text-muted-foreground">No household in session.</p>;
 
   const { alerts, sipPlanning, evacPlanning } = await getData(householdId);
 
   const overdue = alerts.filter((a) => a.severity === "overdue").length;
-  const due  = alerts.filter((a) => a.severity === "due").length;
+  const due = alerts.filter((a) => a.severity === "due").length;
 
   return (
     <div className="space-y-6">
@@ -115,35 +132,47 @@ export default async function DashboardPage() {
       {[
         { key: "sip", label: "Shelter in Place", planning: sipPlanning },
         { key: "evac", label: "Evacuation", planning: evacPlanning },
-      ].map(({ key, label, planning }) => (
-      planning?.horizons && (
-        <section key={key}>
-          <h2 className="text-lg font-semibold mb-3">Planning Targets ({label})</h2>
-          <div className="flex items-center gap-3 text-sm text-muted-foreground mb-3">
-            <span>{planning.effectivePeople} people</span>
-            <span>{planning.effectiveWaterLPPD} L/p/day</span>
-            <span>{planning.effectiveCaloriesKcalPPD} kcal/p/day</span>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {Object.entries(planning.horizons).map(([horizonKey, h]) => (
-              <div key={`${key}-${horizonKey}`} className="rounded-lg border border-border bg-card p-4 space-y-2">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">{horizonKey.toUpperCase()}</p>
-                <div className="flex items-center gap-2 text-sm">
-                  <Droplets size={14} className="text-blue-400" />
-                  <span>
-                    <strong>{h.waterLiters.toLocaleString()}</strong> L
-                    <span className="text-muted-foreground"> / {litersToGallons(h.waterLiters).toFixed(1)} gal</span>
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Flame size={14} className="text-orange-400" />
-                  <span><strong>{h.caloriesKcal.toLocaleString()}</strong> kcal</span>
-                </div>
+      ].map(
+        ({ key, label, planning }) =>
+          planning?.horizons && (
+            <section key={key}>
+              <h2 className="text-lg font-semibold mb-3">Planning Targets ({label})</h2>
+              <div className="flex items-center gap-3 text-sm text-muted-foreground mb-3">
+                <span>{planning.effectivePeople} people</span>
+                <span>{planning.effectiveWaterLPPD} L/p/day</span>
+                <span>{planning.effectiveCaloriesKcalPPD} kcal/p/day</span>
               </div>
-            ))}
-          </div>
-        </section>
-      ))) }
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {Object.entries(planning.horizons).map(([horizonKey, h]) => (
+                  <div
+                    key={`${key}-${horizonKey}`}
+                    className="rounded-lg border border-border bg-card p-4 space-y-2"
+                  >
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                      {horizonKey.toUpperCase()}
+                    </p>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Droplets size={14} className="text-blue-400" />
+                      <span>
+                        <strong>{h.waterLiters.toLocaleString()}</strong> L
+                        <span className="text-muted-foreground">
+                          {" "}
+                          / {litersToGallons(h.waterLiters).toFixed(1)} gal
+                        </span>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Flame size={14} className="text-orange-400" />
+                      <span>
+                        <strong>{h.caloriesKcal.toLocaleString()}</strong> kcal
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )
+      )}
 
       {/* Active alerts */}
       {alerts.length > 0 && (
@@ -157,19 +186,19 @@ export default async function DashboardPage() {
                   a.severity === "overdue"
                     ? "border-destructive/50 bg-destructive/10"
                     : a.severity === "due"
-                    ? "border-yellow-600/40 bg-yellow-900/20"
-                    : "border-border bg-card"
+                      ? "border-yellow-600/40 bg-yellow-900/20"
+                      : "border-border bg-card"
                 }`}
               >
                 <AlertTriangle
                   size={15}
                   className={
-                     a.severity === "overdue"
-                       ? "text-destructive mt-0.5"
-                       : a.severity === "due"
-                       ? "text-yellow-400 mt-0.5"
-                       : "text-muted-foreground mt-0.5"
-                   }
+                    a.severity === "overdue"
+                      ? "text-destructive mt-0.5"
+                      : a.severity === "due"
+                        ? "text-yellow-400 mt-0.5"
+                        : "text-muted-foreground mt-0.5"
+                  }
                 />
                 <div>
                   <p className="font-medium">{a.title}</p>

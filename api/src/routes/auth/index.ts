@@ -58,13 +58,13 @@ function clearAttemptWindow(key: string): void {
 // We use bcryptjs on both sides so hashes are interoperable.
 // At runtime we import dynamically to keep the API's Bun bundle clean.
 async function verifyPassword(plain: string, hash: string): Promise<boolean> {
-  const { compare } = await import("bcryptjs") as typeof import("bcryptjs");
+  const { compare } = (await import("bcryptjs")) as typeof import("bcryptjs");
   return compare(plain, hash);
 }
 
-export const authRoute = new Elysia({ prefix: "/auth", tags: ["auth"] })
-
-  .post("/login", async ({ body, request, set }) => {
+export const authRoute = new Elysia({ prefix: "/auth", tags: ["auth"] }).post(
+  "/login",
+  async ({ body, request, set }) => {
     const attemptKey = loginAttemptKey(request, body.username);
     if (isRateLimited(attemptKey)) {
       set.status = 429;
@@ -110,16 +110,18 @@ export const authRoute = new Elysia({ prefix: "/auth", tags: ["auth"] })
     // Return safe user fields (no password hash)
     return {
       token,
-      id:          user.id,
-      username:    user.username,
-      email:       user.email,
+      id: user.id,
+      username: user.username,
+      email: user.email,
       householdId: user.householdId,
-      isAdmin:     user.isAdmin,
+      isAdmin: user.isAdmin,
     };
-  }, {
+  },
+  {
     body: t.Object({
       username: t.String({ minLength: 1, maxLength: 100 }),
       password: t.String({ minLength: 1, maxLength: 255 }),
     }),
     detail: { summary: "Authenticate with username + password" },
-  });
+  }
+);

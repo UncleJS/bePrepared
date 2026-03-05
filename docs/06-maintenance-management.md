@@ -27,6 +27,7 @@
 In a disaster, equipment must work on first use. The most common preparedness failure mode is not missing equipment — it is equipment that fails when needed because it was not maintained.
 
 Common failures from lack of maintenance:
+
 - Generator that won't start (stale fuel, seized carb, dead battery)
 - Water filter with degraded/expired element
 - Li-Ion power banks that have deep-discharged and cannot recover
@@ -43,15 +44,15 @@ bePrepared's maintenance system ensures every piece of critical equipment has a 
 
 Equipment items are **durable assets** — gear that lasts multiple years and requires periodic service rather than replacement.
 
-| Field | Description |
-|-------|-------------|
-| `name` | Item description |
-| `category_slug` | Equipment category (power, water, comms, medical, etc.) |
-| `model` | Manufacturer model (optional) |
-| `serial_no` | Serial number for warranty/service records |
-| `location` | Where it's stored |
-| `status` | `operational` / `needs_service` / `unserviceable` / `retired` |
-| `acquired_at` | Purchase date (helps estimate warranty windows) |
+| Field           | Description                                                   |
+| --------------- | ------------------------------------------------------------- |
+| `name`          | Item description                                              |
+| `category_slug` | Equipment category (power, water, comms, medical, etc.)       |
+| `model`         | Manufacturer model (optional)                                 |
+| `serial_no`     | Serial number for warranty/service records                    |
+| `location`      | Where it's stored                                             |
+| `status`        | `operational` / `needs_service` / `unserviceable` / `retired` |
+| `acquired_at`   | Purchase date (helps estimate warranty windows)               |
 
 Equipment categories: `power`, `water`, `comms`, `medical`, `shelter`, `mobility`, `security`, `batteries`, `general`
 
@@ -63,13 +64,13 @@ Equipment categories: `power`, `water`, `comms`, `medical`, `shelter`, `mobility
 
 Battery profiles capture chemistry-specific management rules. The system ships with these defaults:
 
-| Profile | Chemistry | Shelf Life | Recheck Cycle | Storage Notes |
-|---------|-----------|-----------|---------------|---------------|
-| Alkaline AA/AAA | Alkaline | 10 years | 12 months | Inspect for leakage; store at room temp |
-| Lithium Primary | lithium_primary | 10 years | 12 months | Excellent cold-weather; ideal for critical devices |
-| Li-Ion Rechargeable | liion | 2 years | 3 months | Store at 40–60% charge; recharge every 90 days |
-| NiMH Rechargeable | nimh | 1 year | 3 months | Higher self-discharge; check and recharge quarterly |
-| Lead-Acid 12V | lead_acid | 1 year | 1 month | Check charge monthly; keep terminals clean |
+| Profile             | Chemistry       | Shelf Life | Recheck Cycle | Storage Notes                                       |
+| ------------------- | --------------- | ---------- | ------------- | --------------------------------------------------- |
+| Alkaline AA/AAA     | Alkaline        | 10 years   | 12 months     | Inspect for leakage; store at room temp             |
+| Lithium Primary     | lithium_primary | 10 years   | 12 months     | Excellent cold-weather; ideal for critical devices  |
+| Li-Ion Rechargeable | liion           | 2 years    | 3 months      | Store at 40–60% charge; recharge every 90 days      |
+| NiMH Rechargeable   | nimh            | 1 year     | 3 months      | Higher self-discharge; check and recharge quarterly |
+| Lead-Acid 12V       | lead_acid       | 1 year     | 1 month       | Check charge monthly; keep terminals clean          |
 
 **Battery best practices:**
 
@@ -89,15 +90,15 @@ Battery profiles capture chemistry-specific management rules. The system ships w
 
 Templates define reusable maintenance task definitions that can be applied to any equipment item in the same category.
 
-| Field | Description |
-|-------|-------------|
-| `category_slug` | What kind of equipment this applies to |
-| `name` | Short name for the maintenance action |
-| `task_type` | `inspect` / `clean` / `lubricate` / `test` / `full_service` / `recharge` / `replace` |
-| `default_cal_days` | Default calendar interval in days |
-| `usage_meter_unit` | Optional: `hours`, `cycles`, `km` |
-| `default_usage_interval` | Usage interval value |
-| `grace_days` | Grace window before escalating to overdue |
+| Field                    | Description                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------------ |
+| `category_slug`          | What kind of equipment this applies to                                               |
+| `name`                   | Short name for the maintenance action                                                |
+| `task_type`              | `inspect` / `clean` / `lubricate` / `test` / `full_service` / `recharge` / `replace` |
+| `default_cal_days`       | Default calendar interval in days                                                    |
+| `usage_meter_unit`       | Optional: `hours`, `cycles`, `km`                                                    |
+| `default_usage_interval` | Usage interval value                                                                 |
+| `grace_days`             | Grace window before escalating to overdue                                            |
 
 When you add a maintenance schedule to an equipment item, you can link it to a template (inheriting defaults) or define a custom schedule from scratch.
 
@@ -109,19 +110,19 @@ When you add a maintenance schedule to an equipment item, you can link it to a t
 
 A schedule ties a specific equipment item to a specific maintenance cadence.
 
-| Field | Description |
-|-------|-------------|
-| `equipment_item_id` | The item being maintained |
-| `name` | Descriptive label |
-| `cal_days` | Calendar interval (overrides template default) |
-| `usage_meter_unit` | Optional usage unit |
-| `usage_interval` | Trigger usage value |
-| `grace_days` | Overdue grace window |
-| `last_done_at` | Date of last completed maintenance |
-| `last_meter_value` | Meter reading at last maintenance |
-| `next_due_at` | Calculated next due date |
-| `next_due_meter` | Calculated next due meter value |
-| `is_active` | Toggle to pause a schedule without archiving |
+| Field               | Description                                    |
+| ------------------- | ---------------------------------------------- |
+| `equipment_item_id` | The item being maintained                      |
+| `name`              | Descriptive label                              |
+| `cal_days`          | Calendar interval (overrides template default) |
+| `usage_meter_unit`  | Optional usage unit                            |
+| `usage_interval`    | Trigger usage value                            |
+| `grace_days`        | Overdue grace window                           |
+| `last_done_at`      | Date of last completed maintenance             |
+| `last_meter_value`  | Meter reading at last maintenance              |
+| `next_due_at`       | Calculated next due date                       |
+| `next_due_meter`    | Calculated next due meter value                |
+| `is_active`         | Toggle to pause a schedule without archiving   |
 
 Multiple schedules can exist per item (e.g. a generator might have both a "quarterly test run" and an "annual full service" schedule).
 
@@ -153,30 +154,35 @@ When you complete a maintenance task:
 ## 7. Calendar vs Usage-Based Scheduling
 
 ### Calendar-Based
+
 Trigger is purely time: "Every 90 days from last service"
 
 Best for:
+
 - Items in standby storage (batteries, fire extinguishers)
 - Items where time degrades performance regardless of use (fuel stabiliser, filters)
 - Fixed inspection cadences (smoke detectors, first aid kits)
 
 ### Usage-Based
+
 Trigger is accumulated use: "Every 100 hours / 50 cycles / 5,000 km"
 
 Best for:
+
 - Generators (hours run)
 - Portable stoves (burner cycles)
 - Water pump filters (litres pumped)
 - Vehicles (kilometres driven)
 
 ### Both Together
+
 A schedule can have both calendar and usage triggers. The alert fires **whichever occurs first**. Example:
 
 ```
 Generator full service:
   Calendar:  Every 365 days
   Usage:     Every 100 hours of runtime
-  
+
   → Alerts when either 365 days pass OR 100 hours accumulated
 ```
 
@@ -210,26 +216,26 @@ flowchart TD
 
 ## 9. Default Maintenance Intervals
 
-| Equipment | Task | Interval | Grace |
-|-----------|------|----------|-------|
-| Generator | Test run | 90 days | 7 days |
-| Generator | Full service | 365 days | 14 days |
-| Water filter | Inspection | 90 days | 14 days |
-| Water filter | Full service | 365 days | 14 days |
-| Solar panel | Cleaning | 90 days | 14 days |
-| Inverter | Inspection | 180 days | 14 days |
-| Li-Ion battery | Storage recharge | 90 days | 7 days |
-| Lead-acid battery | Charge check | 30 days | 5 days |
-| Battery bank | Capacity test | 180 days | 14 days |
-| Radio | Test + battery check | 90 days | 7 days |
-| First aid kit | Inspection | 90 days | 14 days |
-| AED | Inspection | 90 days | 7 days |
-| Vehicle kit | Inspection | 180 days | 14 days |
-| Vehicle fuel | Level check | 30 days | 5 days |
-| Fire extinguisher | Inspection | 365 days | 14 days |
-| Smoke detector | Test | 90 days | 7 days |
-| Emergency binder | Review | 180 days | 14 days |
-| Household drill | Full exercise | 180 days | 30 days |
+| Equipment         | Task                 | Interval | Grace   |
+| ----------------- | -------------------- | -------- | ------- |
+| Generator         | Test run             | 90 days  | 7 days  |
+| Generator         | Full service         | 365 days | 14 days |
+| Water filter      | Inspection           | 90 days  | 14 days |
+| Water filter      | Full service         | 365 days | 14 days |
+| Solar panel       | Cleaning             | 90 days  | 14 days |
+| Inverter          | Inspection           | 180 days | 14 days |
+| Li-Ion battery    | Storage recharge     | 90 days  | 7 days  |
+| Lead-acid battery | Charge check         | 30 days  | 5 days  |
+| Battery bank      | Capacity test        | 180 days | 14 days |
+| Radio             | Test + battery check | 90 days  | 7 days  |
+| First aid kit     | Inspection           | 90 days  | 14 days |
+| AED               | Inspection           | 90 days  | 7 days  |
+| Vehicle kit       | Inspection           | 180 days | 14 days |
+| Vehicle fuel      | Level check          | 30 days  | 5 days  |
+| Fire extinguisher | Inspection           | 365 days | 14 days |
+| Smoke detector    | Test                 | 90 days  | 7 days  |
+| Emergency binder  | Review               | 180 days | 14 days |
+| Household drill   | Full exercise        | 180 days | 30 days |
 
 All intervals are editable per schedule.
 
@@ -241,12 +247,12 @@ All intervals are editable per schedule.
 
 The maintenance queue (accessible from the dashboard and `Maintenance` nav item) shows:
 
-| Queue | Filter |
-|-------|--------|
-| **Overdue** | `next_due_at` < today − grace_days |
-| **Due today** | `next_due_at` = today |
-| **Due this week** | `next_due_at` within 7 days |
-| **Upcoming** | `next_due_at` within `alert_upcoming_days` |
+| Queue             | Filter                                     |
+| ----------------- | ------------------------------------------ |
+| **Overdue**       | `next_due_at` < today − grace_days         |
+| **Due today**     | `next_due_at` = today                      |
+| **Due this week** | `next_due_at` within 7 days                |
+| **Upcoming**      | `next_due_at` within `alert_upcoming_days` |
 
 Each queue item shows: equipment name, schedule name, due date, days overdue/remaining, and a one-click "Record Event" button.
 
@@ -254,4 +260,4 @@ Each queue item shows: equipment name, schedule name, due date, days overdue/rem
 
 ---
 
-*Content licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) · bePrepared Disaster Preparedness System*
+_Content licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) · bePrepared Disaster Preparedness System_

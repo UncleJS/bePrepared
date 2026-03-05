@@ -39,7 +39,8 @@ export async function seedInventoryCategories() {
     });
 
     if (existing) {
-      await db.update(inventoryCategories)
+      await db
+        .update(inventoryCategories)
         .set({ name: c.name, sortOrder: c.sortOrder })
         .where(eq(inventoryCategories.id, existing.id));
       continue;

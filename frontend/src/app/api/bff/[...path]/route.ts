@@ -1,7 +1,11 @@
 import { getToken } from "next-auth/jwt";
 import type { NextRequest } from "next/server";
 
-const API_BASE = (process.env.NEXTAUTH_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001").replace(/\/$/, "");
+const API_BASE = (
+  process.env.NEXTAUTH_API_URL ??
+  process.env.NEXT_PUBLIC_API_URL ??
+  "http://localhost:3001"
+).replace(/\/$/, "");
 
 const HOP_BY_HOP_HEADERS = new Set([
   "connection",

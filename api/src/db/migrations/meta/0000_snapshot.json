@@ -88,9 +88,7 @@
       "compositePrimaryKeys": {
         "household_people_profiles_id": {
           "name": "household_people_profiles_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -173,9 +171,7 @@
       "compositePrimaryKeys": {
         "households_id": {
           "name": "households_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -254,9 +250,7 @@
       "compositePrimaryKeys": {
         "audit_log_id": {
           "name": "audit_log_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -337,9 +331,7 @@
       "compositePrimaryKeys": {
         "household_policies_id": {
           "name": "household_policies_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -398,9 +390,7 @@
       "compositePrimaryKeys": {
         "policy_defaults_key": {
           "name": "policy_defaults_key",
-          "columns": [
-            "key"
-          ]
+          "columns": ["key"]
         }
       },
       "uniqueConstraints": {},
@@ -488,9 +478,7 @@
       "compositePrimaryKeys": {
         "scenario_policies_id": {
           "name": "scenario_policies_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -572,9 +560,7 @@
       "compositePrimaryKeys": {
         "guidance_docs_id": {
           "name": "guidance_docs_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -664,17 +650,13 @@
       "compositePrimaryKeys": {
         "modules_id": {
           "name": "modules_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "modules_slug_unique": {
           "name": "modules_slug_unique",
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "checkConstraint": {}
@@ -748,9 +730,7 @@
       "compositePrimaryKeys": {
         "sections_id": {
           "name": "sections_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -794,9 +774,7 @@
       "compositePrimaryKeys": {
         "task_dependencies_id": {
           "name": "task_dependencies_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -892,9 +870,7 @@
       "compositePrimaryKeys": {
         "task_progress_id": {
           "name": "task_progress_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -1022,9 +998,7 @@
       "compositePrimaryKeys": {
         "tasks_id": {
           "name": "tasks_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -1082,17 +1056,13 @@
       "compositePrimaryKeys": {
         "inventory_categories_id": {
           "name": "inventory_categories_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "inventory_categories_slug_unique": {
           "name": "inventory_categories_slug_unique",
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "checkConstraint": {}
@@ -1216,9 +1186,7 @@
       "compositePrimaryKeys": {
         "inventory_items_id": {
           "name": "inventory_items_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -1334,9 +1302,7 @@
       "compositePrimaryKeys": {
         "inventory_lots_id": {
           "name": "inventory_lots_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -1414,9 +1380,7 @@
       "compositePrimaryKeys": {
         "battery_profiles_id": {
           "name": "battery_profiles_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -1526,9 +1490,7 @@
       "compositePrimaryKeys": {
         "equipment_items_id": {
           "name": "equipment_items_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -1614,9 +1576,7 @@
       "compositePrimaryKeys": {
         "maintenance_events_id": {
           "name": "maintenance_events_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -1748,9 +1708,7 @@
       "compositePrimaryKeys": {
         "maintenance_schedules_id": {
           "name": "maintenance_schedules_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -1837,9 +1795,7 @@
       "compositePrimaryKeys": {
         "maintenance_templates_id": {
           "name": "maintenance_templates_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -1965,9 +1921,7 @@
       "compositePrimaryKeys": {
         "alerts_id": {
           "name": "alerts_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},

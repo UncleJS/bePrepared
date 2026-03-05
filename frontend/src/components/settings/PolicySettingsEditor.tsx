@@ -32,7 +32,9 @@ export function PolicySettingsEditor({ householdId, defaults, overrides }: Props
     const seeded: Record<string, string> = {};
     for (const d of defaults) {
       const ov = overrides.find((o) => o.key === d.key);
-      seeded[d.key] = String(ov?.valueDecimal ?? ov?.valueInt ?? d.valueDecimal ?? d.valueInt ?? "");
+      seeded[d.key] = String(
+        ov?.valueDecimal ?? ov?.valueInt ?? d.valueDecimal ?? d.valueInt ?? ""
+      );
     }
     return seeded;
   });
@@ -134,7 +136,9 @@ export function PolicySettingsEditor({ householdId, defaults, overrides }: Props
           <thead className="bg-muted/50">
             <tr>
               <th className="text-left px-4 py-2 font-medium text-muted-foreground">Key</th>
-              <th className="text-left px-4 py-2 font-medium text-muted-foreground">System Default</th>
+              <th className="text-left px-4 py-2 font-medium text-muted-foreground">
+                System Default
+              </th>
               <th className="text-left px-4 py-2 font-medium text-muted-foreground">Value</th>
               <th className="text-left px-4 py-2 font-medium text-muted-foreground">Unit</th>
               <th className="text-left px-4 py-2 font-medium text-muted-foreground">Description</th>
@@ -153,7 +157,9 @@ export function PolicySettingsEditor({ householdId, defaults, overrides }: Props
                   <td className="px-4 py-2.5 font-mono">{defaultVal}</td>
                   <td className="px-4 py-2.5">
                     <label className="space-y-1">
-                      <span className="block text-xs font-bold uppercase tracking-wide text-primary">Override Value</span>
+                      <span className="block text-xs font-bold uppercase tracking-wide text-primary">
+                        Override Value
+                      </span>
                       <input
                         id={`policy-${d.key}`}
                         aria-label={`Override value for ${d.key}`}
@@ -171,7 +177,9 @@ export function PolicySettingsEditor({ householdId, defaults, overrides }: Props
                     </label>
                   </td>
                   <td className="px-4 py-2.5 text-muted-foreground text-xs">{d.unit}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground text-xs">{d.description ?? "—"}</td>
+                  <td className="px-4 py-2.5 text-muted-foreground text-xs">
+                    {d.description ?? "—"}
+                  </td>
                   <td className="px-4 py-2.5">
                     <div className="flex items-center gap-2">
                       <button

@@ -7,14 +7,14 @@ import { ShieldCheck, LogIn, Loader2 } from "lucide-react";
 import { Suspense } from "react";
 
 function LoginForm() {
-  const router       = useRouter();
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl  = searchParams.get("callbackUrl") ?? "/dashboard";
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error,    setError]    = useState<string | null>(null);
-  const [loading,  setLoading]  = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -40,7 +40,10 @@ function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-1">
-        <label htmlFor="username" className="block text-xs font-bold uppercase tracking-wide text-primary">
+        <label
+          htmlFor="username"
+          className="block text-xs font-bold uppercase tracking-wide text-primary"
+        >
           Account Username
         </label>
         <input
@@ -56,7 +59,10 @@ function LoginForm() {
       </div>
 
       <div className="space-y-1">
-        <label htmlFor="password" className="block text-xs font-bold uppercase tracking-wide text-primary">
+        <label
+          htmlFor="password"
+          className="block text-xs font-bold uppercase tracking-wide text-primary"
+        >
           Account Password
         </label>
         <input
@@ -71,20 +77,14 @@ function LoginForm() {
         />
       </div>
 
-      {error && (
-        <p className="text-sm text-destructive">{error}</p>
-      )}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       <button
         type="submit"
         disabled={loading}
         className="w-full flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
       >
-        {loading ? (
-          <Loader2 size={16} className="animate-spin" />
-        ) : (
-          <LogIn size={16} />
-        )}
+        {loading ? <Loader2 size={16} className="animate-spin" /> : <LogIn size={16} />}
         {loading ? "Signing in…" : "Sign in"}
       </button>
     </form>

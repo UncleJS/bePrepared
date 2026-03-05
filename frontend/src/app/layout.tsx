@@ -17,9 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <TopBar />
           <div className="flex flex-1">
             <SideNav />
-            <main className="flex-1 p-6 overflow-auto">
-              {children}
-            </main>
+            <main className="flex-1 p-6 overflow-auto">{children}</main>
           </div>
           <footer className="border-t border-border px-6 py-2 text-xs text-muted-foreground text-center">
             Content licensed under CC BY-NC-SA 4.0

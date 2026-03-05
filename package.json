@@ -3,7 +3,11 @@
   "private": true,
   "version": "0.1.0",
   "description": "Disaster preparedness system — household readiness from 72h to 90-day self-sufficiency",
-  "workspaces": ["frontend", "api", "worker"],
+  "workspaces": [
+    "frontend",
+    "api",
+    "worker"
+  ],
   "scripts": {
     "dev:api": "bun run --cwd api dev",
     "dev:worker": "bun run --cwd worker dev",
@@ -13,10 +17,15 @@
     "typecheck": "bun run --cwd api typecheck && bun run --cwd frontend typecheck",
     "lint:mermaid": "bun run scripts/lint-mermaid.js",
     "lint": "bun run --cwd frontend lint && bun run lint:mermaid",
+    "format": "bunx prettier --write .",
+    "format:check": "bunx prettier --check .",
     "db:push": "bun run --cwd api db:push",
     "db:migrate": "bun run --cwd api db:migrate",
     "db:seed": "bun run --cwd api db:seed",
     "test": "bun run --cwd api test && bun run --cwd frontend test"
   },
-  "license": "CC-BY-NC-SA-4.0"
+  "license": "CC-BY-NC-SA-4.0",
+  "devDependencies": {
+    "prettier": "^3.6.2"
+  }
 }

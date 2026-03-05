@@ -42,32 +42,28 @@ export interface PlanningTotals {
   people: EffectivePeople;
   policy: EffectivePolicy;
   totals: {
-    h72:  { water: number; calories: number };
-    d14:  { water: number; calories: number };
-    d30:  { water: number; calories: number };
-    d90:  { water: number; calories: number };
+    h72: { water: number; calories: number };
+    d14: { water: number; calories: number };
+    d30: { water: number; calories: number };
+    d90: { water: number; calories: number };
   };
 }
 
 const POLICY_KEYS = {
-  WATER:           "water_liters_per_person_per_day",
-  CALORIES:        "calories_kcal_per_person_per_day",
-  ALERT_UPCOMING:  "alert_upcoming_days",
-  ALERT_GRACE:     "alert_grace_days",
+  WATER: "water_liters_per_person_per_day",
+  CALORIES: "calories_kcal_per_person_per_day",
+  ALERT_UPCOMING: "alert_upcoming_days",
+  ALERT_GRACE: "alert_grace_days",
 } as const;
 
 const SYSTEM_DEFAULTS: Record<string, number> = {
-  [POLICY_KEYS.WATER]:           4.0,
-  [POLICY_KEYS.CALORIES]:        2200,
-  [POLICY_KEYS.ALERT_UPCOMING]:  14,
-  [POLICY_KEYS.ALERT_GRACE]:     3,
+  [POLICY_KEYS.WATER]: 4.0,
+  [POLICY_KEYS.CALORIES]: 2200,
+  [POLICY_KEYS.ALERT_UPCOMING]: 14,
+  [POLICY_KEYS.ALERT_GRACE]: 3,
 };
 
-async function resolveKey(
-  householdId: string,
-  scenario: Scenario,
-  key: string
-): Promise<number> {
+async function resolveKey(householdId: string, scenario: Scenario, key: string): Promise<number> {
   // 1. Scenario override
   const scenarioRow = await db.query.scenarioPolicies.findFirst({
     where: and(
@@ -116,10 +112,10 @@ export async function resolvePolicy(
     resolveKey(householdId, scenario, POLICY_KEYS.ALERT_GRACE),
   ]);
   return {
-    waterLitersPerPersonPerDay:  water,
+    waterLitersPerPersonPerDay: water,
     caloriesKcalPerPersonPerDay: calories,
-    alertUpcomingDays:           alertUpcoming,
-    alertGraceDays:              alertGrace,
+    alertUpcomingDays: alertUpcoming,
+    alertGraceDays: alertGrace,
   };
 }
 
@@ -148,8 +144,8 @@ export async function resolveEffectivePeople(
   });
   if (scenarioProfile) {
     return {
-      count:       scenarioProfile.peopleCount,
-      source:      "scenario_profile",
+      count: scenarioProfile.peopleCount,
+      source: "scenario_profile",
       profileName: scenarioProfile.name,
     };
   }
@@ -164,8 +160,8 @@ export async function resolveEffectivePeople(
     });
     if (activeProfile) {
       return {
-        count:       activeProfile.peopleCount,
-        source:      "default_profile",
+        count: activeProfile.peopleCount,
+        source: "default_profile",
         profileName: activeProfile.name,
       };
     }
@@ -177,7 +173,7 @@ export async function resolveEffectivePeople(
 
 function calcTotals(people: number, policy: EffectivePolicy) {
   const calc = (days: number) => ({
-    water:    Math.ceil(policy.waterLitersPerPersonPerDay * people * days * 100) / 100,
+    water: Math.ceil(policy.waterLitersPerPersonPerDay * people * days * 100) / 100,
     calories: Math.ceil(policy.caloriesKcalPerPersonPerDay * people * days),
   });
   return { h72: calc(3), d14: calc(14), d30: calc(30), d90: calc(90) };

@@ -1,0 +1,9 @@
+node_modules/
+.next/
+dist/
+coverage/
+.git/
+deploy/data/
+frontend/.next/
+api/dist/
+worker/dist/

@@ -85,6 +85,7 @@ The `pod-start.sh` script in `deploy/` wraps steps 4–6 for convenience.
 All unit files live in `deploy/quadlet/`. After copying to `~/.config/containers/systemd/`, systemd generates `.service` files automatically on `daemon-reload`.
 
 ### `beprepared.pod`
+
 ```ini
 [Pod]
 PodName=beprepared
@@ -95,6 +96,7 @@ WantedBy=default.target
 ```
 
 ### `beprepared-db.container`
+
 ```ini
 [Unit]
 Description=bePrepared MariaDB
@@ -119,6 +121,7 @@ WantedBy=beprepared-pod.service
 ```
 
 ### `beprepared-api.container`
+
 ```ini
 [Unit]
 Description=bePrepared API
@@ -138,6 +141,7 @@ WantedBy=beprepared-pod.service
 ```
 
 ### `beprepared-worker.container`
+
 ```ini
 [Unit]
 Description=bePrepared Worker (hourly scheduler)
@@ -157,6 +161,7 @@ WantedBy=beprepared-pod.service
 ```
 
 ### `beprepared-frontend.container`
+
 ```ini
 [Unit]
 Description=bePrepared Frontend
@@ -234,22 +239,26 @@ journalctl --user -u beprepared-api -n 100
 [↑ TOC](#table-of-contents)
 
 ### Run migrations
+
 ```bash
 podman exec -it beprepared-api bun run db:migrate
 ```
 
 ### Run seeds (idempotent)
+
 ```bash
 podman exec -it beprepared-api bun run db:seed
 ```
 
 ### Open a MariaDB shell
+
 ```bash
 podman exec -it beprepared-db mariadb \
   -u $DB_USER -p$DB_PASSWORD $DB_NAME
 ```
 
 ### Check table row counts
+
 ```sql
 SELECT table_name, table_rows
 FROM information_schema.tables
@@ -290,6 +299,7 @@ Images are tagged `:latest` locally — no registry required.
 [↑ TOC](#table-of-contents)
 
 ### Backup (MariaDB dump)
+
 ```bash
 # Full dump
 podman exec beprepared-db mariadb-dump \
@@ -301,6 +311,7 @@ gzip backup-*.sql
 ```
 
 ### Restore
+
 ```bash
 # Stop API and worker first to prevent writes
 systemctl --user stop beprepared-api beprepared-worker
@@ -315,6 +326,7 @@ systemctl --user start beprepared-api beprepared-worker
 ```
 
 ### Data volume location
+
 MariaDB data is stored in `~/bePrepared/data/mariadb/`. This directory persists across container restarts and rebuilds. Back up this directory for a raw data backup (stop DB first).
 
 ---
@@ -325,20 +337,20 @@ MariaDB data is stored in `~/bePrepared/data/mariadb/`. This directory persists 
 
 Copy `deploy/.env.example` to `deploy/.env` and fill in values.
 
-| Variable | Required | Default | Notes |
-|----------|----------|---------|-------|
-| `DB_HOST` | yes | `127.0.0.1` | Inside pod: use `127.0.0.1` (shared pod network) |
-| `DB_PORT` | no | `3306` | |
-| `DB_NAME` | yes | `beprepared` | |
-| `DB_USER` | yes | — | |
-| `DB_PASSWORD` | yes | — | |
-| `DB_ROOT_PASSWORD` | yes | — | MariaDB container only |
-| `DATABASE_URL` | yes | — | `mysql://user:pass@host:3306/dbname` |
-| `PORT` | no | `3001` | API listen port (internal) |
-| `NEXT_PUBLIC_API_URL` | yes | `http://localhost:3001` | Browser API base URL (`/api` rewrite in frontend proxy) |
-| `CORS_ORIGINS` | yes | `http://localhost:9999` | Comma-separated allowed browser origins |
-| `ALLOW_LOCALHOST_CORS_IN_PRODUCTION` | no | `false` | Production guard override for localhost origins |
-| `NODE_ENV` | no | `production` | |
+| Variable                             | Required | Default                 | Notes                                                   |
+| ------------------------------------ | -------- | ----------------------- | ------------------------------------------------------- |
+| `DB_HOST`                            | yes      | `127.0.0.1`             | Inside pod: use `127.0.0.1` (shared pod network)        |
+| `DB_PORT`                            | no       | `3306`                  |                                                         |
+| `DB_NAME`                            | yes      | `beprepared`            |                                                         |
+| `DB_USER`                            | yes      | —                       |                                                         |
+| `DB_PASSWORD`                        | yes      | —                       |                                                         |
+| `DB_ROOT_PASSWORD`                   | yes      | —                       | MariaDB container only                                  |
+| `DATABASE_URL`                       | yes      | —                       | `mysql://user:pass@host:3306/dbname`                    |
+| `PORT`                               | no       | `3001`                  | API listen port (internal)                              |
+| `NEXT_PUBLIC_API_URL`                | yes      | `http://localhost:3001` | Browser API base URL (`/api` rewrite in frontend proxy) |
+| `CORS_ORIGINS`                       | yes      | `http://localhost:9999` | Comma-separated allowed browser origins                 |
+| `ALLOW_LOCALHOST_CORS_IN_PRODUCTION` | no       | `false`                 | Production guard override for localhost origins         |
+| `NODE_ENV`                           | no       | `production`            |                                                         |
 
 ---
 
@@ -347,6 +359,7 @@ Copy `deploy/.env.example` to `deploy/.env` and fill in values.
 [↑ TOC](#table-of-contents)
 
 ### API won't start — "Can't connect to DB"
+
 ```bash
 # Check DB is up
 systemctl --user status beprepared-db
@@ -357,6 +370,7 @@ systemctl --user restart beprepared-api
 ```
 
 ### Port 9999 already in use
+
 ```bash
 # Find conflicting process
 ss -tlnp | grep 9999
@@ -365,6 +379,7 @@ systemctl --user daemon-reload && systemctl --user restart beprepared-pod
 ```
 
 ### Quadlet units not found by systemd
+
 ```bash
 # Verify files are in the right place
 ls ~/.config/containers/systemd/
@@ -374,6 +389,7 @@ systemctl --user status beprepared-pod
 ```
 
 ### Worker not generating alerts
+
 ```bash
 # Check worker logs
 journalctl --user -u beprepared-worker -n 50
@@ -382,6 +398,7 @@ systemctl --user restart beprepared-worker
 ```
 
 ### Container image outdated after code change
+
 ```bash
 # Rebuild the specific image
 podman build -f deploy/Containerfile.api -t beprepared-api:latest .
@@ -390,4 +407,4 @@ systemctl --user restart beprepared-api
 
 ---
 
-*Content licensed under CC BY-NC-SA 4.0*
+_Content licensed under CC BY-NC-SA 4.0_

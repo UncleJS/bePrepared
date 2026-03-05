@@ -67,11 +67,7 @@ function badgeUrl(b: BadgeConfig): string {
 // ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
-export default async function ModuleDetailPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function ModuleDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const mod = await getModule(slug);
 
@@ -94,9 +90,7 @@ export default async function ModuleDetailPage({
           <BookOpen size={22} className="text-primary" />
           <h1 className="text-2xl font-bold">{mod.title}</h1>
         </div>
-        {mod.description && (
-          <p className="text-muted-foreground text-sm">{mod.description}</p>
-        )}
+        {mod.description && <p className="text-muted-foreground text-sm">{mod.description}</p>}
         <p className="text-xs text-muted-foreground capitalize">
           Category: <span className="text-foreground">{mod.category}</span>
           {" · "}
@@ -106,9 +100,7 @@ export default async function ModuleDetailPage({
 
       {/* Sections */}
       {mod.sections.length === 0 ? (
-        <p className="text-muted-foreground text-sm">
-          No sections in this module yet.
-        </p>
+        <p className="text-muted-foreground text-sm">No sections in this module yet.</p>
       ) : (
         <div className="space-y-8">
           {mod.sections.map((section) => (
@@ -141,12 +133,7 @@ export default async function ModuleDetailPage({
                           <div className="flex flex-wrap gap-2">
                             {badges.map((b, i) =>
                               b.url ? (
-                                <a
-                                  key={i}
-                                  href={b.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                >
+                                <a key={i} href={b.url} target="_blank" rel="noopener noreferrer">
                                   {/* eslint-disable-next-line @next/next/no-img-element */}
                                   <img
                                     src={badgeUrl(b)}

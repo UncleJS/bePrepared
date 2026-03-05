@@ -13,7 +13,9 @@ type Household = {
 
 export function HouseholdSettingsEditor({ household }: { household: Household }) {
   const [targetPeople, setTargetPeople] = useState(String(household.targetPeople));
-  const [activeScenario, setActiveScenario] = useState<"shelter_in_place" | "evacuation">(household.activeScenario);
+  const [activeScenario, setActiveScenario] = useState<"shelter_in_place" | "evacuation">(
+    household.activeScenario
+  );
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +51,9 @@ export function HouseholdSettingsEditor({ household }: { household: Household })
     <div className="rounded-lg border border-border bg-card p-4 space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
         <label className="space-y-1">
-          <span className="block text-xs font-bold uppercase tracking-wide text-primary">Family Size (People)</span>
+          <span className="block text-xs font-bold uppercase tracking-wide text-primary">
+            Family Size (People)
+          </span>
           <input
             type="number"
             min={1}
@@ -61,7 +65,9 @@ export function HouseholdSettingsEditor({ household }: { household: Household })
         </label>
 
         <label className="space-y-1">
-          <span className="block text-xs font-bold uppercase tracking-wide text-primary">Active Scenario</span>
+          <span className="block text-xs font-bold uppercase tracking-wide text-primary">
+            Active Scenario
+          </span>
           <select
             value={activeScenario}
             onChange={(e) => setActiveScenario(e.target.value as "shelter_in_place" | "evacuation")}

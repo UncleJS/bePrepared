@@ -45,7 +45,8 @@ export async function getSessionHouseholdId(): Promise<string | null> {
 }
 
 export function setActiveHouseholdId(householdId: string) {
-  const secure = typeof window !== "undefined" && window.location.protocol === "https:" ? "; secure" : "";
+  const secure =
+    typeof window !== "undefined" && window.location.protocol === "https:" ? "; secure" : "";
   document.cookie = `${ACTIVE_HOUSEHOLD_COOKIE}=${encodeURIComponent(householdId)}; path=/; max-age=2592000; samesite=lax${secure}`;
   window.dispatchEvent(new CustomEvent<string>(ACTIVE_HOUSEHOLD_EVENT, { detail: householdId }));
 }
@@ -60,7 +61,10 @@ export function onActiveHouseholdChange(callback: (householdId: string) => void)
   return () => window.removeEventListener(ACTIVE_HOUSEHOLD_EVENT, handler);
 }
 
-export function resolveClientHouseholdId(user?: { householdId?: string; isAdmin?: boolean }): string | null {
+export function resolveClientHouseholdId(user?: {
+  householdId?: string;
+  isAdmin?: boolean;
+}): string | null {
   if (!user) return null;
   if (user.isAdmin) {
     const cookieId = readActiveHouseholdCookie();
@@ -70,9 +74,8 @@ export function resolveClientHouseholdId(user?: { householdId?: string; isAdmin?
 }
 
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
-  const base = typeof window === "undefined"
-    ? `${await resolveServerOrigin()}/api/bff`
-    : "/api/bff";
+  const base =
+    typeof window === "undefined" ? `${await resolveServerOrigin()}/api/bff` : "/api/bff";
   const url = path.startsWith("http") ? path : `${base}${path}`;
 
   const headers = new Headers(options?.headers ?? undefined);

@@ -68,9 +68,10 @@ export function ScenarioPolicySettingsEditor({
 
     setSavingKey(valueKey);
     try {
-      const payload = d.valueInt !== undefined && d.valueDecimal === undefined
-        ? { unit: d.unit, valueInt: Math.round(parsed) }
-        : { unit: d.unit, valueDecimal: parsed };
+      const payload =
+        d.valueInt !== undefined && d.valueDecimal === undefined
+          ? { unit: d.unit, valueInt: Math.round(parsed) }
+          : { unit: d.unit, valueDecimal: parsed };
 
       await apiFetch(`/settings/${householdId}/scenario/${scenario}/${d.key}`, {
         method: "PUT",
@@ -99,18 +100,28 @@ export function ScenarioPolicySettingsEditor({
       {error && <p className="text-sm text-destructive">{error}</p>}
 
       {SCENARIOS.map((scenario) => (
-        <section key={scenario.key} className="rounded-lg border border-border bg-card p-4 space-y-3">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{scenario.label}</h3>
+        <section
+          key={scenario.key}
+          className="rounded-lg border border-border bg-card p-4 space-y-3"
+        >
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            {scenario.label}
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {focusKeys.map((d) => {
               const valueKey = `${scenario.key}:${d.key}`;
               const busy = savingKey === valueKey;
               return (
-                <div key={valueKey} className="rounded-md border border-border bg-muted/40 p-3 space-y-2">
+                <div
+                  key={valueKey}
+                  className="rounded-md border border-border bg-muted/40 p-3 space-y-2"
+                >
                   <p className="text-xs font-mono text-primary">{d.key}</p>
                   <div className="flex items-center gap-2">
                     <label className="space-y-1 w-full">
-                      <span className="block text-xs font-bold uppercase tracking-wide text-primary">Override Value</span>
+                      <span className="block text-xs font-bold uppercase tracking-wide text-primary">
+                        Override Value
+                      </span>
                       <input
                         id={`scenario-${valueKey}`}
                         aria-label={`Override value for ${d.key} in ${scenario.label}`}
@@ -126,7 +137,9 @@ export function ScenarioPolicySettingsEditor({
                         className="w-full rounded-md border border-border bg-card px-2 py-1 text-sm"
                       />
                     </label>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">{d.unit}</span>
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {d.unit}
+                    </span>
                     <button
                       type="button"
                       disabled={busy}
@@ -136,7 +149,9 @@ export function ScenarioPolicySettingsEditor({
                       Save
                     </button>
                   </div>
-                  <p className="text-xs text-muted-foreground">{d.description ?? "Scenario override"}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {d.description ?? "Scenario override"}
+                  </p>
                 </div>
               );
             })}

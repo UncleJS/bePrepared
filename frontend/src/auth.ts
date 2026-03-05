@@ -9,7 +9,8 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 
-const API_BASE = process.env.NEXTAUTH_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const API_BASE =
+  process.env.NEXTAUTH_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
@@ -36,7 +37,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           if (!res.ok) return null;
 
-          const user = await res.json() as {
+          const user = (await res.json()) as {
             token: string;
             id: string;
             username: string;
@@ -46,12 +47,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           };
 
           return {
-            id:          user.id,
-            name:        user.username,
-            email:       user.email ?? undefined,
+            id: user.id,
+            name: user.username,
+            email: user.email ?? undefined,
             householdId: user.householdId,
-            isAdmin:     user.isAdmin,
-            apiToken:    user.token,
+            isAdmin: user.isAdmin,
+            apiToken: user.token,
           };
         } catch {
           return null;
@@ -65,8 +66,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // Persist extra fields from user → token on initial sign-in
       if (user) {
         token.householdId = (user as { householdId?: string }).householdId;
-        token.isAdmin     = (user as { isAdmin?: boolean }).isAdmin;
-        token.apiToken    = (user as { apiToken?: string }).apiToken;
+        token.isAdmin = (user as { isAdmin?: boolean }).isAdmin;
+        token.apiToken = (user as { apiToken?: string }).apiToken;
       }
       return token;
     },
@@ -87,6 +88,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
   session: {
     strategy: "jwt",
-    maxAge:   60 * 60 * 24 * 30, // 30 days
+    maxAge: 60 * 60 * 24 * 30, // 30 days
   },
 });

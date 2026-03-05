@@ -31,7 +31,8 @@ export async function seedGuidanceDocs() {
     ].join("\n");
 
     if (existing) {
-      await db.update(guidanceDocs)
+      await db
+        .update(guidanceDocs)
         .set({ body, sortOrder: 1 })
         .where(eq(guidanceDocs.id, existing.id));
       count++;

@@ -65,16 +65,16 @@ Complete these steps in order on your first login:
 
 The dashboard shows:
 
-| Element | Description |
-|---------|-------------|
+| Element             | Description                                                                        |
+| ------------------- | ---------------------------------------------------------------------------------- |
 | **Readiness Score** | % of tasks completed across all levels, weighted by level and life-safety category |
-| **Active Scenario** | Current scenario (shelter/evacuation) with quick-switch button |
-| **People in Use** | Which profile is active and its source (auto/manual/baseline) |
-| **Planning Totals** | Water and calorie requirements for 72h / 14d / 30d / 90d |
-| **Stock vs Target** | Current inventory vs required totals for active scenario |
-| **Alert Summary** | Overdue → Due → Upcoming counts, with priority items listed |
-| **Next Actions** | Top 5 most impactful incomplete tasks |
-| **Level Progress** | L1/L2/L3/L4 completion bars |
+| **Active Scenario** | Current scenario (shelter/evacuation) with quick-switch button                     |
+| **People in Use**   | Which profile is active and its source (auto/manual/baseline)                      |
+| **Planning Totals** | Water and calorie requirements for 72h / 14d / 30d / 90d                           |
+| **Stock vs Target** | Current inventory vs required totals for active scenario                           |
+| **Alert Summary**   | Overdue → Due → Upcoming counts, with priority items listed                        |
+| **Next Actions**    | Top 5 most impactful incomplete tasks                                              |
+| **Level Progress**  | L1/L2/L3/L4 completion bars                                                        |
 
 [↑ Go to TOC](#table-of-contents)
 
@@ -92,6 +92,7 @@ Estimated time: **2–5 minutes**
 ```
 
 **Alert triage priority order:**
+
 1. Medical (expired medications, overdue kit inspection)
 2. Water (expired treatment supplies, low stock)
 3. Power (overdue battery recharge, generator check)
@@ -175,10 +176,12 @@ Switching scenario changes the following **immediately**:
 4. Which tasks are shown (scenario-specific tasks filter in/out)
 
 **To switch scenario:**
+
 - Dashboard: click the scenario badge/button
 - Settings → Household → Active Scenario dropdown
 
 **Manual profile override:**
+
 - Dashboard: click the people count → "Override" → enter number
 - Active until you clear it or switch scenarios
 
@@ -212,6 +215,7 @@ flowchart LR
 ```
 
 **Practical pacing:**
+
 - L1: 1–2 weekends to complete for most households
 - L2: 2–4 weeks of incremental stocking and setup
 - L3: 1–3 months to fully build out
@@ -224,6 +228,7 @@ flowchart LR
 ## 8. Responding to Alerts
 
 ### Expiry Alert
+
 1. Locate the lot in Inventory
 2. If usable — consume or rotate into daily use
 3. Purchase replacement and add as new lot
@@ -231,6 +236,7 @@ flowchart LR
 5. Resolve the alert
 
 ### Replacement Cycle Alert
+
 1. Locate the lot
 2. Purchase new replacement stock
 3. Add new lot with fresh `acquiredAt` and `nextReplaceAt`
@@ -238,6 +244,7 @@ flowchart LR
 5. Resolve the alert
 
 ### Maintenance Due Alert
+
 1. Locate the equipment item
 2. Perform the maintenance task described
 3. In Maintenance → Events → "Record Event"
@@ -245,6 +252,7 @@ flowchart LR
 5. Alert auto-resolves
 
 ### Low Stock Alert
+
 1. Review current lot totals vs target qty
 2. Purchase and add new lot(s)
 3. Alert auto-resolves when total meets threshold
@@ -283,4 +291,4 @@ See [Quickstart Operator Checklist](./13-quickstart-operator-checklist.md) for t
 
 ---
 
-*Content licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) · bePrepared Disaster Preparedness System*
+_Content licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) · bePrepared Disaster Preparedness System_

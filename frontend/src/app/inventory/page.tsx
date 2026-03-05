@@ -165,7 +165,8 @@ export default function InventoryPage() {
     [categories, archiveCategoryId]
   );
   const archiveInUseCount = useMemo(
-    () => (archiveCategoryId ? items.filter((item) => item.categoryId === archiveCategoryId).length : 0),
+    () =>
+      archiveCategoryId ? items.filter((item) => item.categoryId === archiveCategoryId).length : 0,
     [items, archiveCategoryId]
   );
   const archiveCategoryCandidates = useMemo(
@@ -194,8 +195,10 @@ export default function InventoryPage() {
     void loadData(householdId);
   }, [householdId]);
 
-  if (status === "loading") return <p className="text-muted-foreground text-sm">Loading session...</p>;
-  if (!householdId) return <p className="text-muted-foreground text-sm">No household in session.</p>;
+  if (status === "loading")
+    return <p className="text-muted-foreground text-sm">Loading session...</p>;
+  if (!householdId)
+    return <p className="text-muted-foreground text-sm">No household in session.</p>;
   if (loading) return <p className="text-muted-foreground text-sm">Loading inventory...</p>;
 
   async function createItem() {
@@ -455,7 +458,9 @@ export default function InventoryPage() {
     setError(null);
     setMessage(null);
     try {
-      await apiFetch(`/inventory/${householdId}/items/${selectedItemId}/lots/${lotId}`, { method: "DELETE" });
+      await apiFetch(`/inventory/${householdId}/items/${selectedItemId}/lots/${lotId}`, {
+        method: "DELETE",
+      });
       setMessage("Lot archived.");
       await loadData(householdId);
     } catch (e) {
@@ -482,55 +487,136 @@ export default function InventoryPage() {
       </section>
 
       <section className="rounded-lg border border-border bg-card p-4 space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Add Inventory Item</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          Add Inventory Item
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div className="space-y-1">
-            <label className="block text-xs font-bold uppercase tracking-wide text-primary">Item Name *</label>
-            <input className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm" placeholder="Water bottle" value={createForm.name} onChange={(e) => setCreateForm((f) => ({ ...f, name: e.target.value }))} />
+            <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+              Item Name *
+            </label>
+            <input
+              className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+              placeholder="Water bottle"
+              value={createForm.name}
+              onChange={(e) => setCreateForm((f) => ({ ...f, name: e.target.value }))}
+            />
           </div>
           <div className="space-y-1">
-            <label className="block text-xs font-bold uppercase tracking-wide text-primary">Unit</label>
-            <input className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm" placeholder="L, kg, each" value={createForm.unit} onChange={(e) => setCreateForm((f) => ({ ...f, unit: e.target.value }))} />
+            <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+              Unit
+            </label>
+            <input
+              className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+              placeholder="L, kg, each"
+              value={createForm.unit}
+              onChange={(e) => setCreateForm((f) => ({ ...f, unit: e.target.value }))}
+            />
           </div>
           <div className="space-y-1">
-            <label className="block text-xs font-bold uppercase tracking-wide text-primary">Storage Location</label>
-            <input className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm" placeholder="Basement shelf A" value={createForm.location} onChange={(e) => setCreateForm((f) => ({ ...f, location: e.target.value }))} />
+            <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+              Storage Location
+            </label>
+            <input
+              className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+              placeholder="Basement shelf A"
+              value={createForm.location}
+              onChange={(e) => setCreateForm((f) => ({ ...f, location: e.target.value }))}
+            />
           </div>
           <div className="space-y-1">
-            <label className="block text-xs font-bold uppercase tracking-wide text-primary">Item Category</label>
-            <select className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm" value={createForm.categoryId} onChange={(e) => setCreateForm((f) => ({ ...f, categoryId: e.target.value }))}>
+            <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+              Item Category
+            </label>
+            <select
+              className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+              value={createForm.categoryId}
+              onChange={(e) => setCreateForm((f) => ({ ...f, categoryId: e.target.value }))}
+            >
               <option value="">Optional</option>
-              {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
             </select>
           </div>
           <div className="space-y-1">
-            <label className="block text-xs font-bold uppercase tracking-wide text-primary">Target Quantity</label>
-            <input className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm" placeholder="100" value={createForm.targetQty} onChange={(e) => setCreateForm((f) => ({ ...f, targetQty: e.target.value }))} />
+            <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+              Target Quantity
+            </label>
+            <input
+              className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+              placeholder="100"
+              value={createForm.targetQty}
+              onChange={(e) => setCreateForm((f) => ({ ...f, targetQty: e.target.value }))}
+            />
           </div>
           <div className="space-y-1">
-            <label className="block text-xs font-bold uppercase tracking-wide text-primary">Low-Stock Threshold</label>
-            <input className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm" placeholder="20" value={createForm.lowStockThreshold} onChange={(e) => setCreateForm((f) => ({ ...f, lowStockThreshold: e.target.value }))} />
+            <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+              Low-Stock Threshold
+            </label>
+            <input
+              className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+              placeholder="20"
+              value={createForm.lowStockThreshold}
+              onChange={(e) => setCreateForm((f) => ({ ...f, lowStockThreshold: e.target.value }))}
+            />
           </div>
           <div className="space-y-1">
-            <label className="block text-xs font-bold uppercase tracking-wide text-primary">Expiry Tracking</label>
+            <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+              Expiry Tracking
+            </label>
             <label className="rounded-md border border-border bg-muted px-3 py-2 text-sm flex items-center gap-2">
-              <input type="checkbox" checked={createForm.isTrackedByExpiry} onChange={(e) => setCreateForm((f) => ({ ...f, isTrackedByExpiry: e.target.checked }))} />
+              <input
+                type="checkbox"
+                checked={createForm.isTrackedByExpiry}
+                onChange={(e) =>
+                  setCreateForm((f) => ({ ...f, isTrackedByExpiry: e.target.checked }))
+                }
+              />
               Track by expiry
             </label>
           </div>
           <div className="space-y-1">
-            <label className="block text-xs font-bold uppercase tracking-wide text-primary">Initial Lot Quantity</label>
-            <input className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm" placeholder="Optional" value={createForm.initialLotQty} onChange={(e) => setCreateForm((f) => ({ ...f, initialLotQty: e.target.value }))} />
+            <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+              Initial Lot Quantity
+            </label>
+            <input
+              className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+              placeholder="Optional"
+              value={createForm.initialLotQty}
+              onChange={(e) => setCreateForm((f) => ({ ...f, initialLotQty: e.target.value }))}
+            />
           </div>
           <div className="space-y-1">
-            <label className="block text-xs font-bold uppercase tracking-wide text-primary">Initial Acquired Date</label>
-            <input type="date" className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm" value={createForm.initialAcquiredAt} onChange={(e) => setCreateForm((f) => ({ ...f, initialAcquiredAt: e.target.value }))} />
+            <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+              Initial Acquired Date
+            </label>
+            <input
+              type="date"
+              className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+              value={createForm.initialAcquiredAt}
+              onChange={(e) => setCreateForm((f) => ({ ...f, initialAcquiredAt: e.target.value }))}
+            />
           </div>
           <div className="space-y-1">
-            <label className="block text-xs font-bold uppercase tracking-wide text-primary">Initial Expiry Date</label>
-            <input type="date" className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm" value={createForm.initialExpiresAt} onChange={(e) => setCreateForm((f) => ({ ...f, initialExpiresAt: e.target.value }))} />
+            <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+              Initial Expiry Date
+            </label>
+            <input
+              type="date"
+              className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+              value={createForm.initialExpiresAt}
+              onChange={(e) => setCreateForm((f) => ({ ...f, initialExpiresAt: e.target.value }))}
+            />
           </div>
-          <button type="button" onClick={createItem} disabled={saving} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 inline-flex items-center justify-center gap-2">
+          <button
+            type="button"
+            onClick={createItem}
+            disabled={saving}
+            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 inline-flex items-center justify-center gap-2"
+          >
             <Plus size={14} /> Add Item
           </button>
         </div>
@@ -547,7 +633,9 @@ export default function InventoryPage() {
               <th className="text-left px-4 py-2 font-medium text-muted-foreground">Location</th>
               <th className="text-right px-4 py-2 font-medium text-muted-foreground">Qty</th>
               <th className="text-right px-4 py-2 font-medium text-muted-foreground">Target</th>
-              <th className="text-left px-4 py-2 font-medium text-muted-foreground">Expiry / Replace</th>
+              <th className="text-left px-4 py-2 font-medium text-muted-foreground">
+                Expiry / Replace
+              </th>
               <th className="text-right px-4 py-2 font-medium text-muted-foreground">Actions</th>
             </tr>
           </thead>
@@ -555,31 +643,72 @@ export default function InventoryPage() {
             {items.map((item) => {
               const totalQty = item.lots.reduce((s, l) => s + Number(l.qty), 0);
               const threshold = Number(item.lowStockThreshold ?? item.targetQty ?? 0);
-              const belowTarget = (item.lowStockThreshold != null || item.targetQty != null) && totalQty < threshold;
-              const earliestExpiry = item.lots.map((l) => l.expiresAt).filter(Boolean).sort()[0];
-              const earliestReplace = item.lots.map((l) => l.nextReplaceAt).filter(Boolean).sort()[0];
+              const belowTarget =
+                (item.lowStockThreshold != null || item.targetQty != null) && totalQty < threshold;
+              const earliestExpiry = item.lots
+                .map((l) => l.expiresAt)
+                .filter(Boolean)
+                .sort()[0];
+              const earliestReplace = item.lots
+                .map((l) => l.nextReplaceAt)
+                .filter(Boolean)
+                .sort()[0];
               const dueDays = daysUntil(earliestExpiry ?? earliestReplace);
 
               return (
                 <tr key={item.id} className="hover:bg-accent/30 transition-colors">
                   <td className="px-4 py-2.5">
                     <div className="flex items-center gap-2">
-                      {belowTarget && <AlertTriangle size={13} className="text-yellow-400 shrink-0" />}
+                      {belowTarget && (
+                        <AlertTriangle size={13} className="text-yellow-400 shrink-0" />
+                      )}
                       <span className="font-medium">{item.name}</span>
                       <span className="text-muted-foreground text-xs">({item.unit || "each"})</span>
                     </div>
                   </td>
                   <td className="px-4 py-2.5 text-muted-foreground">{item.location ?? "-"}</td>
                   <td className="px-4 py-2.5 text-right font-mono">{totalQty}</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-muted-foreground">{item.targetQty ?? "-"}</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-muted-foreground">
+                    {item.targetQty ?? "-"}
+                  </td>
                   <td className="px-4 py-2.5 text-xs">
-                    {dueDays == null ? <span className="text-muted-foreground">-</span> : dueDays < 0 ? <span className="text-destructive font-medium">Overdue</span> : <span className={dueDays <= 30 ? "text-yellow-400" : "text-muted-foreground"}>{earliestExpiry ? fmtDate(earliestExpiry) : fmtDate(earliestReplace)}{dueDays <= 30 ? ` (${dueDays}d)` : ""}</span>}
+                    {dueDays == null ? (
+                      <span className="text-muted-foreground">-</span>
+                    ) : dueDays < 0 ? (
+                      <span className="text-destructive font-medium">Overdue</span>
+                    ) : (
+                      <span className={dueDays <= 30 ? "text-yellow-400" : "text-muted-foreground"}>
+                        {earliestExpiry ? fmtDate(earliestExpiry) : fmtDate(earliestReplace)}
+                        {dueDays <= 30 ? ` (${dueDays}d)` : ""}
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-2.5 text-right">
                     <div className="inline-flex items-center gap-2">
-                      <button type="button" onClick={() => { setEditingId(item.id); setEditForm(itemToForm(item)); }} className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"><Pencil size={12} /> Edit</button>
-                      <button type="button" onClick={() => setSelectedItemId(item.id)} className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground">Lots</button>
-                      <button type="button" onClick={() => archiveItem(item.id)} className="rounded-md border border-border px-2 py-1 text-xs text-destructive hover:bg-destructive/10 inline-flex items-center gap-1"><Trash2 size={12} /> Archive</button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingId(item.id);
+                          setEditForm(itemToForm(item));
+                        }}
+                        className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+                      >
+                        <Pencil size={12} /> Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedItemId(item.id)}
+                        className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        Lots
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => archiveItem(item.id)}
+                        className="rounded-md border border-border px-2 py-1 text-xs text-destructive hover:bg-destructive/10 inline-flex items-center gap-1"
+                      >
+                        <Trash2 size={12} /> Archive
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -591,40 +720,108 @@ export default function InventoryPage() {
 
       {editingId && (
         <section className="rounded-lg border border-border bg-card p-4 space-y-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Edit Inventory Item</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Edit Inventory Item
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             <div className="space-y-1">
-              <label className="block text-xs font-bold uppercase tracking-wide text-primary">Item Name *</label>
-              <input className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm" value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} />
+              <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+                Item Name *
+              </label>
+              <input
+                className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+                value={editForm.name}
+                onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
+              />
             </div>
             <div className="space-y-1">
-              <label className="block text-xs font-bold uppercase tracking-wide text-primary">Unit</label>
-              <input className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm" value={editForm.unit} onChange={(e) => setEditForm((f) => ({ ...f, unit: e.target.value }))} />
+              <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+                Unit
+              </label>
+              <input
+                className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+                value={editForm.unit}
+                onChange={(e) => setEditForm((f) => ({ ...f, unit: e.target.value }))}
+              />
             </div>
             <div className="space-y-1">
-              <label className="block text-xs font-bold uppercase tracking-wide text-primary">Storage Location</label>
-              <input className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm" value={editForm.location} onChange={(e) => setEditForm((f) => ({ ...f, location: e.target.value }))} />
+              <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+                Storage Location
+              </label>
+              <input
+                className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+                value={editForm.location}
+                onChange={(e) => setEditForm((f) => ({ ...f, location: e.target.value }))}
+              />
             </div>
             <div className="space-y-1">
-              <label className="block text-xs font-bold uppercase tracking-wide text-primary">Item Category</label>
-              <select className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm" value={editForm.categoryId} onChange={(e) => setEditForm((f) => ({ ...f, categoryId: e.target.value }))}>
+              <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+                Item Category
+              </label>
+              <select
+                className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+                value={editForm.categoryId}
+                onChange={(e) => setEditForm((f) => ({ ...f, categoryId: e.target.value }))}
+              >
                 <option value="">Optional</option>
-                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="space-y-1">
-              <label className="block text-xs font-bold uppercase tracking-wide text-primary">Target Quantity</label>
-              <input className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm" value={editForm.targetQty} onChange={(e) => setEditForm((f) => ({ ...f, targetQty: e.target.value }))} />
+              <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+                Target Quantity
+              </label>
+              <input
+                className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+                value={editForm.targetQty}
+                onChange={(e) => setEditForm((f) => ({ ...f, targetQty: e.target.value }))}
+              />
             </div>
             <div className="space-y-1">
-              <label className="block text-xs font-bold uppercase tracking-wide text-primary">Low-Stock Threshold</label>
-              <input className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm" value={editForm.lowStockThreshold} onChange={(e) => setEditForm((f) => ({ ...f, lowStockThreshold: e.target.value }))} />
+              <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+                Low-Stock Threshold
+              </label>
+              <input
+                className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+                value={editForm.lowStockThreshold}
+                onChange={(e) => setEditForm((f) => ({ ...f, lowStockThreshold: e.target.value }))}
+              />
             </div>
             <div className="space-y-1">
-              <label className="block text-xs font-bold uppercase tracking-wide text-primary">Expiry Tracking</label>
-              <label className="rounded-md border border-border bg-muted px-3 py-2 text-sm flex items-center gap-2"><input type="checkbox" checked={editForm.isTrackedByExpiry} onChange={(e) => setEditForm((f) => ({ ...f, isTrackedByExpiry: e.target.checked }))} /> Track by expiry</label>
+              <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+                Expiry Tracking
+              </label>
+              <label className="rounded-md border border-border bg-muted px-3 py-2 text-sm flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={editForm.isTrackedByExpiry}
+                  onChange={(e) =>
+                    setEditForm((f) => ({ ...f, isTrackedByExpiry: e.target.checked }))
+                  }
+                />{" "}
+                Track by expiry
+              </label>
             </div>
-            <div className="flex gap-2"><button type="button" onClick={saveItemEdit} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Save</button><button type="button" onClick={() => setEditingId(null)} className="rounded-md border border-border px-4 py-2 text-sm text-muted-foreground">Cancel</button></div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={saveItemEdit}
+                className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingId(null)}
+                className="rounded-md border border-border px-4 py-2 text-sm text-muted-foreground"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </section>
       )}
@@ -632,32 +829,84 @@ export default function InventoryPage() {
       {selectedItem && (
         <section className="rounded-lg border border-border bg-card p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Lot Management: {selectedItem.name}</h2>
-            <button type="button" onClick={() => { setSelectedItemId(null); setEditingLotId(null); }} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Lot Management: {selectedItem.name}
+            </h2>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedItemId(null);
+                setEditingLotId(null);
+              }}
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              Close
+            </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
             <div className="space-y-1">
-              <label className="block text-xs font-bold uppercase tracking-wide text-primary">Lot Quantity *</label>
-              <input className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm" placeholder="10" value={lotCreateForm.qty} onChange={(e) => setLotCreateForm((f) => ({ ...f, qty: e.target.value }))} />
+              <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+                Lot Quantity *
+              </label>
+              <input
+                className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+                placeholder="10"
+                value={lotCreateForm.qty}
+                onChange={(e) => setLotCreateForm((f) => ({ ...f, qty: e.target.value }))}
+              />
             </div>
             <div className="space-y-1">
-              <label className="block text-xs font-bold uppercase tracking-wide text-primary">Lot Acquired Date</label>
-              <input type="date" className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm" value={lotCreateForm.acquiredAt} onChange={(e) => setLotCreateForm((f) => ({ ...f, acquiredAt: e.target.value }))} />
+              <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+                Lot Acquired Date
+              </label>
+              <input
+                type="date"
+                className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+                value={lotCreateForm.acquiredAt}
+                onChange={(e) => setLotCreateForm((f) => ({ ...f, acquiredAt: e.target.value }))}
+              />
             </div>
             <div className="space-y-1">
-              <label className="block text-xs font-bold uppercase tracking-wide text-primary">Lot Expiry Date</label>
-              <input type="date" className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm" value={lotCreateForm.expiresAt} onChange={(e) => setLotCreateForm((f) => ({ ...f, expiresAt: e.target.value }))} />
+              <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+                Lot Expiry Date
+              </label>
+              <input
+                type="date"
+                className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+                value={lotCreateForm.expiresAt}
+                onChange={(e) => setLotCreateForm((f) => ({ ...f, expiresAt: e.target.value }))}
+              />
             </div>
             <div className="space-y-1">
-              <label className="block text-xs font-bold uppercase tracking-wide text-primary">Replace Interval (days)</label>
-              <input className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm" placeholder="30" value={lotCreateForm.replaceDays} onChange={(e) => setLotCreateForm((f) => ({ ...f, replaceDays: e.target.value }))} />
+              <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+                Replace Interval (days)
+              </label>
+              <input
+                className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+                placeholder="30"
+                value={lotCreateForm.replaceDays}
+                onChange={(e) => setLotCreateForm((f) => ({ ...f, replaceDays: e.target.value }))}
+              />
             </div>
             <div className="space-y-1">
-              <label className="block text-xs font-bold uppercase tracking-wide text-primary">Batch Reference</label>
-              <input className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm" placeholder="LOT-2026-03" value={lotCreateForm.batchRef} onChange={(e) => setLotCreateForm((f) => ({ ...f, batchRef: e.target.value }))} />
+              <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+                Batch Reference
+              </label>
+              <input
+                className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+                placeholder="LOT-2026-03"
+                value={lotCreateForm.batchRef}
+                onChange={(e) => setLotCreateForm((f) => ({ ...f, batchRef: e.target.value }))}
+              />
             </div>
-            <button type="button" onClick={addLot} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground inline-flex items-center justify-center gap-2"><Plus size={14} /> Add Lot</button>
+            <button
+              type="button"
+              onClick={addLot}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground inline-flex items-center justify-center gap-2"
+            >
+              <Plus size={14} /> Add Lot
+            </button>
           </div>
 
           <div className="rounded-lg border border-border overflow-hidden">
@@ -665,11 +914,19 @@ export default function InventoryPage() {
               <thead className="bg-muted/50">
                 <tr>
                   <th className="text-left px-4 py-2 font-medium text-muted-foreground">Qty</th>
-                  <th className="text-left px-4 py-2 font-medium text-muted-foreground">Acquired</th>
+                  <th className="text-left px-4 py-2 font-medium text-muted-foreground">
+                    Acquired
+                  </th>
                   <th className="text-left px-4 py-2 font-medium text-muted-foreground">Expires</th>
-                  <th className="text-left px-4 py-2 font-medium text-muted-foreground">Replace Days</th>
-                  <th className="text-left px-4 py-2 font-medium text-muted-foreground">Batch Ref</th>
-                  <th className="text-right px-4 py-2 font-medium text-muted-foreground">Actions</th>
+                  <th className="text-left px-4 py-2 font-medium text-muted-foreground">
+                    Replace Days
+                  </th>
+                  <th className="text-left px-4 py-2 font-medium text-muted-foreground">
+                    Batch Ref
+                  </th>
+                  <th className="text-right px-4 py-2 font-medium text-muted-foreground">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -680,7 +937,27 @@ export default function InventoryPage() {
                     <td className="px-4 py-2.5 text-muted-foreground">{fmtDate(lot.expiresAt)}</td>
                     <td className="px-4 py-2.5 text-muted-foreground">{lot.replaceDays ?? "-"}</td>
                     <td className="px-4 py-2.5 text-muted-foreground">{lot.batchRef ?? "-"}</td>
-                    <td className="px-4 py-2.5 text-right"><div className="inline-flex gap-2"><button type="button" onClick={() => { setEditingLotId(lot.id); setLotEditForm(lotToForm(lot)); }} className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"><Pencil size={12} /> Edit</button><button type="button" onClick={() => archiveLot(lot.id)} className="rounded-md border border-border px-2 py-1 text-xs text-destructive hover:bg-destructive/10 inline-flex items-center gap-1"><Trash2 size={12} /> Archive</button></div></td>
+                    <td className="px-4 py-2.5 text-right">
+                      <div className="inline-flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingLotId(lot.id);
+                            setLotEditForm(lotToForm(lot));
+                          }}
+                          className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+                        >
+                          <Pencil size={12} /> Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => archiveLot(lot.id)}
+                          className="rounded-md border border-border px-2 py-1 text-xs text-destructive hover:bg-destructive/10 inline-flex items-center gap-1"
+                        >
+                          <Trash2 size={12} /> Archive
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -690,26 +967,73 @@ export default function InventoryPage() {
           {editingLotId && (
             <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
               <div className="space-y-1">
-                <label className="block text-xs font-bold uppercase tracking-wide text-primary">Lot Quantity *</label>
-                <input className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm" value={lotEditForm.qty} onChange={(e) => setLotEditForm((f) => ({ ...f, qty: e.target.value }))} />
+                <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+                  Lot Quantity *
+                </label>
+                <input
+                  className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+                  value={lotEditForm.qty}
+                  onChange={(e) => setLotEditForm((f) => ({ ...f, qty: e.target.value }))}
+                />
               </div>
               <div className="space-y-1">
-                <label className="block text-xs font-bold uppercase tracking-wide text-primary">Lot Acquired Date</label>
-                <input type="date" className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm" value={lotEditForm.acquiredAt} onChange={(e) => setLotEditForm((f) => ({ ...f, acquiredAt: e.target.value }))} />
+                <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+                  Lot Acquired Date
+                </label>
+                <input
+                  type="date"
+                  className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+                  value={lotEditForm.acquiredAt}
+                  onChange={(e) => setLotEditForm((f) => ({ ...f, acquiredAt: e.target.value }))}
+                />
               </div>
               <div className="space-y-1">
-                <label className="block text-xs font-bold uppercase tracking-wide text-primary">Lot Expiry Date</label>
-                <input type="date" className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm" value={lotEditForm.expiresAt} onChange={(e) => setLotEditForm((f) => ({ ...f, expiresAt: e.target.value }))} />
+                <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+                  Lot Expiry Date
+                </label>
+                <input
+                  type="date"
+                  className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+                  value={lotEditForm.expiresAt}
+                  onChange={(e) => setLotEditForm((f) => ({ ...f, expiresAt: e.target.value }))}
+                />
               </div>
               <div className="space-y-1">
-                <label className="block text-xs font-bold uppercase tracking-wide text-primary">Replace Interval (days)</label>
-                <input className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm" value={lotEditForm.replaceDays} onChange={(e) => setLotEditForm((f) => ({ ...f, replaceDays: e.target.value }))} />
+                <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+                  Replace Interval (days)
+                </label>
+                <input
+                  className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+                  value={lotEditForm.replaceDays}
+                  onChange={(e) => setLotEditForm((f) => ({ ...f, replaceDays: e.target.value }))}
+                />
               </div>
               <div className="space-y-1">
-                <label className="block text-xs font-bold uppercase tracking-wide text-primary">Batch Reference</label>
-                <input className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm" value={lotEditForm.batchRef} onChange={(e) => setLotEditForm((f) => ({ ...f, batchRef: e.target.value }))} />
+                <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+                  Batch Reference
+                </label>
+                <input
+                  className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+                  value={lotEditForm.batchRef}
+                  onChange={(e) => setLotEditForm((f) => ({ ...f, batchRef: e.target.value }))}
+                />
               </div>
-              <div className="flex gap-2"><button type="button" onClick={saveLotEdit} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Save</button><button type="button" onClick={() => setEditingLotId(null)} className="rounded-md border border-border px-4 py-2 text-sm text-muted-foreground">Cancel</button></div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={saveLotEdit}
+                  className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+                >
+                  Save
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingLotId(null)}
+                  className="rounded-md border border-border px-4 py-2 text-sm text-muted-foreground"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           )}
         </section>

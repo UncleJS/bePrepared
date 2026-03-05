@@ -52,7 +52,8 @@ export default async function ModulesPage() {
 
         {!error && modules.length === 0 && (
           <p className="text-muted-foreground text-sm col-span-2">
-            No modules found. Run <code className="bg-muted px-1 rounded">bun run db:seed</code> to populate seed data.
+            No modules found. Run <code className="bg-muted px-1 rounded">bun run db:seed</code> to
+            populate seed data.
           </p>
         )}
       </div>

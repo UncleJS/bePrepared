@@ -22,7 +22,7 @@ export default function MaintenancePage() {
   const { householdId, status } = useActiveHouseholdId();
 
   const [schedules, setSchedules] = useState<Schedule[]>([]);
-  const [loading, setLoading]     = useState(true);
+  const [loading, setLoading] = useState(true);
   const [equipment, setEquipment] = useState<EquipmentItem[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [saving, setSaving] = useState(false);
@@ -54,8 +54,10 @@ export default function MaintenancePage() {
       .finally(() => setLoading(false));
   }, [householdId]);
 
-  if (status === "loading") return <p className="text-muted-foreground text-sm">Loading session…</p>;
-  if (!householdId) return <p className="text-muted-foreground text-sm">No household in session.</p>;
+  if (status === "loading")
+    return <p className="text-muted-foreground text-sm">Loading session…</p>;
+  if (!householdId)
+    return <p className="text-muted-foreground text-sm">No household in session.</p>;
   if (loading) return <p className="text-muted-foreground text-sm">Loading maintenance…</p>;
 
   const sorted = [...schedules].sort((a, b) => {
@@ -85,7 +87,14 @@ export default function MaintenancePage() {
           nextDueAt: form.nextDueAt || undefined,
         }),
       });
-      setForm({ equipmentItemId: "", templateId: "", name: "", calDays: "", graceDays: "7", nextDueAt: "" });
+      setForm({
+        equipmentItemId: "",
+        templateId: "",
+        name: "",
+        calDays: "",
+        graceDays: "7",
+        nextDueAt: "",
+      });
       setMessage("Maintenance schedule created.");
       const rows = await apiFetch<Schedule[]>(`/maintenance/${householdId}/schedules`);
       setSchedules(rows);
@@ -104,10 +113,14 @@ export default function MaintenancePage() {
       </div>
 
       <section className="rounded-lg border border-border bg-card p-4 space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Define Maintenance Schedule</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          Define Maintenance Schedule
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="space-y-1">
-            <label className="block text-xs font-bold uppercase tracking-wide text-primary">Equipment Item</label>
+            <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+              Equipment Item
+            </label>
             <select
               value={form.equipmentItemId}
               onChange={(e) => setForm((f) => ({ ...f, equipmentItemId: e.target.value }))}
@@ -115,12 +128,16 @@ export default function MaintenancePage() {
             >
               <option value="">Select equipment</option>
               {equipment.map((e) => (
-                <option key={e.id} value={e.id}>{e.name}</option>
+                <option key={e.id} value={e.id}>
+                  {e.name}
+                </option>
               ))}
             </select>
           </div>
           <div className="space-y-1">
-            <label className="block text-xs font-bold uppercase tracking-wide text-primary">Maintenance Template</label>
+            <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+              Maintenance Template
+            </label>
             <select
               value={form.templateId}
               onChange={(e) => {
@@ -138,12 +155,16 @@ export default function MaintenancePage() {
             >
               <option value="">Select template (optional)</option>
               {templates.map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
               ))}
             </select>
           </div>
           <div className="space-y-1">
-            <label className="block text-xs font-bold uppercase tracking-wide text-primary">Schedule Name</label>
+            <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+              Schedule Name
+            </label>
             <input
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
@@ -152,7 +173,9 @@ export default function MaintenancePage() {
             />
           </div>
           <div className="space-y-1">
-            <label className="block text-xs font-bold uppercase tracking-wide text-primary">Interval (days)</label>
+            <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+              Interval (days)
+            </label>
             <input
               value={form.calDays}
               onChange={(e) => setForm((f) => ({ ...f, calDays: e.target.value }))}
@@ -161,7 +184,9 @@ export default function MaintenancePage() {
             />
           </div>
           <div className="space-y-1">
-            <label className="block text-xs font-bold uppercase tracking-wide text-primary">Grace Period (days)</label>
+            <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+              Grace Period (days)
+            </label>
             <input
               value={form.graceDays}
               onChange={(e) => setForm((f) => ({ ...f, graceDays: e.target.value }))}
@@ -170,7 +195,9 @@ export default function MaintenancePage() {
             />
           </div>
           <div className="space-y-1">
-            <label className="block text-xs font-bold uppercase tracking-wide text-primary">Next Due Date</label>
+            <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+              Next Due Date
+            </label>
             <input
               type="date"
               value={form.nextDueAt}

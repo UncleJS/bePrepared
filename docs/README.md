@@ -41,22 +41,22 @@
 
 Source of truth note: for persisted enums, field names, and API payload semantics, treat [Data Model](./09-data-model.md) and [API Contract](./10-api-contract.md) as canonical. Narrative docs explain behavior and examples, but should defer to those two specs when wording differs.
 
-| # | File | Purpose |
-|---|------|---------|
-| 01 | [Theory and Figures](./01-theory-and-figures.md) | Planning assumptions, default values, and the reasoning behind them |
-| 02 | [Usage Guide](./02-usage-guide.md) | Daily, weekly, and monthly operational workflows |
-| 03 | [Ticksheets and Progression](./03-ticksheets-and-progression.md) | Level model, task types, dependency logic, and scoring |
-| 04 | [Settings and Overrides](./04-settings-and-overrides.md) | Household policy system, profiles, and scenario binding |
-| 05 | [Inventory, Replacement, Expiry](./05-inventory-replacement-expiry.md) | Stock management, rotation, and lifecycle rules |
-| 06 | [Maintenance Management](./06-maintenance-management.md) | Equipment and battery maintenance scheduling |
-| 07 | [Alerting and Prioritization](./07-alerting-and-prioritization.md) | Alert severity model and triage logic |
-| 08 | [Architecture](./08-architecture.md) | Full system topology and data flow |
-| 09 | [Data Model](./09-data-model.md) | Entity definitions and relationships |
-| 10 | [API Contract](./10-api-contract.md) | Endpoint groups and payload shapes |
-| 11 | [Operations — Podman](./11-operations-podman.md) | Pod deployment, startup, and maintenance |
-| 12 | [Governance and License](./12-governance-license.md) | CC BY-NC-SA rules, contribution standards |
-| 13 | [Quickstart Operator Checklist](./13-quickstart-operator-checklist.md) | One-page printable runbook |
-| 14 | [Project Review and Remediation Backlog](./14-project-review-and-remediation-backlog.md) | Prioritized findings checklist for deep-dive follow-up |
+| #   | File                                                                                     | Purpose                                                             |
+| --- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| 01  | [Theory and Figures](./01-theory-and-figures.md)                                         | Planning assumptions, default values, and the reasoning behind them |
+| 02  | [Usage Guide](./02-usage-guide.md)                                                       | Daily, weekly, and monthly operational workflows                    |
+| 03  | [Ticksheets and Progression](./03-ticksheets-and-progression.md)                         | Level model, task types, dependency logic, and scoring              |
+| 04  | [Settings and Overrides](./04-settings-and-overrides.md)                                 | Household policy system, profiles, and scenario binding             |
+| 05  | [Inventory, Replacement, Expiry](./05-inventory-replacement-expiry.md)                   | Stock management, rotation, and lifecycle rules                     |
+| 06  | [Maintenance Management](./06-maintenance-management.md)                                 | Equipment and battery maintenance scheduling                        |
+| 07  | [Alerting and Prioritization](./07-alerting-and-prioritization.md)                       | Alert severity model and triage logic                               |
+| 08  | [Architecture](./08-architecture.md)                                                     | Full system topology and data flow                                  |
+| 09  | [Data Model](./09-data-model.md)                                                         | Entity definitions and relationships                                |
+| 10  | [API Contract](./10-api-contract.md)                                                     | Endpoint groups and payload shapes                                  |
+| 11  | [Operations — Podman](./11-operations-podman.md)                                         | Pod deployment, startup, and maintenance                            |
+| 12  | [Governance and License](./12-governance-license.md)                                     | CC BY-NC-SA rules, contribution standards                           |
+| 13  | [Quickstart Operator Checklist](./13-quickstart-operator-checklist.md)                   | One-page printable runbook                                          |
+| 14  | [Project Review and Remediation Backlog](./14-project-review-and-remediation-backlog.md) | Prioritized findings checklist for deep-dive follow-up              |
 
 [↑ Go to TOC](#table-of-contents)
 
@@ -95,17 +95,17 @@ http://localhost:9999/api/bff/docs
 
 ## 4. Core Concepts at a Glance
 
-| Concept | Description |
-|---------|-------------|
-| **Readiness Level** | L1=72h, L2=14d, L3=30d, L4=90d |
-| **Scenario** | `shelter_in_place` or `evacuation` |
-| **Household Profile** | Named people-count that auto-switches by scenario |
-| **Policy** | Configurable per-person/day targets (water, calories, alert windows) |
-| **Effective value** | Scenario override → global override → system default |
-| **Ticksheet** | Checklist of tasks at a readiness level, with dependency tracking |
-| **Inventory lot** | Physical batch of a consumable with qty, expiry, and replacement date |
-| **Maintenance schedule** | Calendar and/or usage-based service interval for equipment |
-| **Alert** | Upcoming / due / overdue notification generated by the worker |
+| Concept                  | Description                                                           |
+| ------------------------ | --------------------------------------------------------------------- |
+| **Readiness Level**      | L1=72h, L2=14d, L3=30d, L4=90d                                        |
+| **Scenario**             | `shelter_in_place` or `evacuation`                                    |
+| **Household Profile**    | Named people-count that auto-switches by scenario                     |
+| **Policy**               | Configurable per-person/day targets (water, calories, alert windows)  |
+| **Effective value**      | Scenario override → global override → system default                  |
+| **Ticksheet**            | Checklist of tasks at a readiness level, with dependency tracking     |
+| **Inventory lot**        | Physical batch of a consumable with qty, expiry, and replacement date |
+| **Maintenance schedule** | Calendar and/or usage-based service interval for equipment            |
+| **Alert**                | Upcoming / due / overdue notification generated by the worker         |
 
 [↑ Go to TOC](#table-of-contents)
 
@@ -163,4 +163,4 @@ See [Governance and License](./12-governance-license.md) for full usage rules an
 
 ---
 
-*Content licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) · bePrepared Disaster Preparedness System*
+_Content licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) · bePrepared Disaster Preparedness System_

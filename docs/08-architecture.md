@@ -27,11 +27,11 @@
 
 **bePrepared** is a three-process web platform deployed as a single rootless Podman pod:
 
-| Process | Stack | Role |
-|---------|-------|------|
+| Process    | Stack                           | Role                                                        |
+| ---------- | ------------------------------- | ----------------------------------------------------------- |
 | `frontend` | Next.js 15, Tailwind, shadcn/ui | User interface — ticksheets, dashboard, inventory, settings |
-| `api` | Bun + Elysia, Drizzle ORM | REST API, OpenAPI/Swagger at `/docs` |
-| `worker` | Bun (cron) | Hourly alert generation — expiry, replacement, maintenance |
+| `api`      | Bun + Elysia, Drizzle ORM       | REST API, OpenAPI/Swagger at `/docs`                        |
+| `worker`   | Bun (cron)                      | Hourly alert generation — expiry, replacement, maintenance  |
 
 All three share a single MariaDB database. No direct DB access from the frontend — everything goes through the API.
 
@@ -174,12 +174,12 @@ Located at `api/src/lib/policyEngine.ts`. Implements two resolution chains:
 
 Supported policy keys:
 
-| Key | Default | Unit |
-|-----|---------|------|
-| `water_liters_per_person_per_day` | 4.0 | liters/person/day |
-| `calories_kcal_per_person_per_day` | 2200 | kcal/person/day |
-| `alert_upcoming_days` | 14 | days |
-| `alert_grace_days` | 3 | days |
+| Key                                | Default | Unit              |
+| ---------------------------------- | ------- | ----------------- |
+| `water_liters_per_person_per_day`  | 4.0     | liters/person/day |
+| `calories_kcal_per_person_per_day` | 2200    | kcal/person/day   |
+| `alert_upcoming_days`              | 14      | days              |
+| `alert_grace_days`                 | 3       | days              |
 
 ### People count (four-tier)
 
@@ -241,6 +241,7 @@ Everything runs as a **rootless Podman pod** managed by **systemd user services*
 ```
 
 Commands:
+
 ```bash
 systemctl --user daemon-reload
 systemctl --user start beprepared-pod
@@ -258,19 +259,19 @@ See `docs/11-operations-podman.md` for full operational runbook.
 
 [↑ TOC](#table-of-contents)
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Runtime | Bun | Fast startup, native TypeScript, built-in test runner |
-| API framework | Elysia | Native Bun, type-safe, built-in Swagger plugin |
-| ORM | Drizzle | Type-safe, no magic, SQL-close, drizzle-kit migrations |
-| DB | MariaDB | Open-source, battle-tested, Drizzle support, simple for self-hosting |
-| Deletion policy | Archive-only | Audit trail, accidental-delete safety, restore flows |
-| Auth | NextAuth + API bearer tokens | Credentials login at `/auth/login`; household/admin scope checks on API routes |
-| Container runtime | Podman rootless | No root daemon, systemd-native, RHEL 10 compatible |
-| Frontend | Next.js App Router | File-based routing, RSC, strong ecosystem |
-| ID type | UUID v4 string | No integer sequence leakage, safe for future federation |
-| Timestamps | UTC in DB, ISO-8601 on wire | Portable, unambiguous, display-locale handled in UI |
+| Decision          | Choice                       | Rationale                                                                      |
+| ----------------- | ---------------------------- | ------------------------------------------------------------------------------ |
+| Runtime           | Bun                          | Fast startup, native TypeScript, built-in test runner                          |
+| API framework     | Elysia                       | Native Bun, type-safe, built-in Swagger plugin                                 |
+| ORM               | Drizzle                      | Type-safe, no magic, SQL-close, drizzle-kit migrations                         |
+| DB                | MariaDB                      | Open-source, battle-tested, Drizzle support, simple for self-hosting           |
+| Deletion policy   | Archive-only                 | Audit trail, accidental-delete safety, restore flows                           |
+| Auth              | NextAuth + API bearer tokens | Credentials login at `/auth/login`; household/admin scope checks on API routes |
+| Container runtime | Podman rootless              | No root daemon, systemd-native, RHEL 10 compatible                             |
+| Frontend          | Next.js App Router           | File-based routing, RSC, strong ecosystem                                      |
+| ID type           | UUID v4 string               | No integer sequence leakage, safe for future federation                        |
+| Timestamps        | UTC in DB, ISO-8601 on wire  | Portable, unambiguous, display-locale handled in UI                            |
 
 ---
 
-*Content licensed under CC BY-NC-SA 4.0*
+_Content licensed under CC BY-NC-SA 4.0_

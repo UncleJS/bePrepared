@@ -14,7 +14,9 @@ export function HouseholdManager() {
   const [households, setHouseholds] = useState<Household[]>([]);
   const [name, setName] = useState("");
   const [targetPeople, setTargetPeople] = useState("2");
-  const [activeScenario, setActiveScenario] = useState<"shelter_in_place" | "evacuation">("shelter_in_place");
+  const [activeScenario, setActiveScenario] = useState<"shelter_in_place" | "evacuation">(
+    "shelter_in_place"
+  );
   const [visible, setVisible] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -65,10 +67,14 @@ export function HouseholdManager() {
 
   return (
     <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-      <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Families (Admin)</h3>
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+        Families (Admin)
+      </h3>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         <label className="space-y-1">
-          <span className="block text-xs font-bold uppercase tracking-wide text-primary">Family Name</span>
+          <span className="block text-xs font-bold uppercase tracking-wide text-primary">
+            Family Name
+          </span>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -77,7 +83,9 @@ export function HouseholdManager() {
           />
         </label>
         <label className="space-y-1">
-          <span className="block text-xs font-bold uppercase tracking-wide text-primary">Family Size (People)</span>
+          <span className="block text-xs font-bold uppercase tracking-wide text-primary">
+            Family Size (People)
+          </span>
           <input
             type="number"
             min={1}
@@ -87,7 +95,9 @@ export function HouseholdManager() {
           />
         </label>
         <label className="space-y-1">
-          <span className="block text-xs font-bold uppercase tracking-wide text-primary">Default Scenario</span>
+          <span className="block text-xs font-bold uppercase tracking-wide text-primary">
+            Default Scenario
+          </span>
           <select
             value={activeScenario}
             onChange={(e) => setActiveScenario(e.target.value as "shelter_in_place" | "evacuation")}

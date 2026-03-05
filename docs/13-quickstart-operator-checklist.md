@@ -111,41 +111,49 @@ Open http://localhost:9999 — UI and API docs proxy at http://localhost:9999/ap
 After deploy, follow these steps in the UI (or via Swagger at `/api/bff/docs` through the frontend proxy):
 
 ### Step 1 — Create your household
+
 - Name it something meaningful
 - Set `target_people` to your baseline household size
 - Leave `active_scenario` as `shelter_in_place`
 
 ### Step 2 — Create people profiles (optional)
+
 - Create a "Full household" profile with actual count
 - If you have an evacuation group (e.g., just 2 people leaving by car), create a `shelter_in_place`-bound and `evacuation`-bound profile
 - Set one as `is_default = true`
 
 ### Step 3 — Review planning targets
+
 - Go to Settings → Planning Targets
 - Review water (default 4.0 L/person/day) and calories (default 2200 kcal/person/day)
 - Override if your household has different needs
 
 ### Step 4 — Work through ticksheets
+
 - Start at Level 1 (72h) — Water module first
 - Tick tasks as you acquire/prepare items
 - Add evidence notes (optional but recommended)
 
 **Admin note — add/edit task definitions:**
+
 - Open `Ticksheets` as an admin user.
 - **Add task**: complete the **Add Task** form (title, module/section, class, level, scenario, recurrence) and click **Create Task**.
 - **Edit task**: locate the task in its level panel, click **Edit**, update fields, then click **Save Changes**.
 - Refresh the page to confirm the task appears with updated metadata and ordering.
 
 ### Step 5 — Log your inventory
+
 - Add items to inventory as you acquire them
 - Always add lots with an `acquired_at` date
 - Add `expires_at` for perishables; add `replace_days` for rotation items
 
 ### Step 6 — Register equipment
+
 - Add critical equipment (radios, generators, water filters)
 - Create maintenance schedules for each item
 
 ### Step 7 — Review the alert queue
+
 - Alerts auto-generate hourly
 - Check and resolve any seeded or generated alerts
 
@@ -167,6 +175,7 @@ curl -s http://localhost:9999/api/bff/health | jq .
 ```
 
 In the UI:
+
 - [ ] Review new alerts (bell icon on dashboard)
 - [ ] Check for any `overdue` severity alerts and act on them
 
@@ -184,6 +193,7 @@ podman exec beprepared-db mariadb-dump \
 ```
 
 In the UI:
+
 - [ ] Review expiring lots (Inventory → Expiring)
 - [ ] Check maintenance due queue (Maintenance → Due)
 - [ ] Log any completed maintenance tasks
@@ -209,15 +219,15 @@ In the UI:
 
 [↑ TOC](#table-of-contents)
 
-| Problem | Quick fix |
-|---------|-----------|
-| API not responding | `systemctl --user restart beprepared-api` |
-| No alerts generating | `systemctl --user restart beprepared-worker` |
-| Frontend shows blank | `systemctl --user restart beprepared-frontend` |
-| DB connection refused | `systemctl --user status beprepared-db` — check logs for init state |
-| Port 9999 taken | Check `.env` for `FRONTEND_PORT` or use `ss -tlnp | grep 9999` |
-| Migrations fail | Check `DATABASE_URL` in `.env`; ensure DB is up first |
-| Old image still running | Rebuild image then `systemctl --user restart <service>` |
+| Problem                 | Quick fix                                                           |
+| ----------------------- | ------------------------------------------------------------------- | ---------- |
+| API not responding      | `systemctl --user restart beprepared-api`                           |
+| No alerts generating    | `systemctl --user restart beprepared-worker`                        |
+| Frontend shows blank    | `systemctl --user restart beprepared-frontend`                      |
+| DB connection refused   | `systemctl --user status beprepared-db` — check logs for init state |
+| Port 9999 taken         | Check `.env` for `FRONTEND_PORT` or use `ss -tlnp                   | grep 9999` |
+| Migrations fail         | Check `DATABASE_URL` in `.env`; ensure DB is up first               |
+| Old image still running | Rebuild image then `systemctl --user restart <service>`             |
 
 Full troubleshooting guide: `docs/11-operations-podman.md` Section 10.
 
@@ -260,4 +270,4 @@ podman exec beprepared-db mariadb \
 
 ---
 
-*Content licensed under CC BY-NC-SA 4.0*
+_Content licensed under CC BY-NC-SA 4.0_

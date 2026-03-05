@@ -34,7 +34,7 @@ async function getData(householdId: string) {
 
   return {
     household: household.status === "fulfilled" ? household.value : null,
-    defaults:  defaults.status  === "fulfilled" ? defaults.value  : [],
+    defaults: defaults.status === "fulfilled" ? defaults.value : [],
     overrides: overrides.status === "fulfilled" ? overrides.value : [],
     scenarioPolicies: {
       shelter_in_place: sip.status === "fulfilled" ? sip.value : [],
@@ -45,7 +45,8 @@ async function getData(householdId: string) {
 
 export default async function SettingsPage() {
   const householdId = await getSessionHouseholdId();
-  if (!householdId) return <p className="text-sm text-muted-foreground">No household in session.</p>;
+  if (!householdId)
+    return <p className="text-sm text-muted-foreground">No household in session.</p>;
 
   const { household, defaults, overrides, scenarioPolicies } = await getData(householdId);
 
@@ -70,10 +71,16 @@ export default async function SettingsPage() {
       <section>
         <h2 className="text-lg font-semibold mb-3">Category Management</h2>
         <div className="flex flex-wrap gap-3">
-          <Link href="/settings/inventory-categories" className="rounded-md border border-border px-3 py-2 text-sm hover:bg-accent">
+          <Link
+            href="/settings/inventory-categories"
+            className="rounded-md border border-border px-3 py-2 text-sm hover:bg-accent"
+          >
             Inventory Categories
           </Link>
-          <Link href="/settings/equipment-categories" className="rounded-md border border-border px-3 py-2 text-sm hover:bg-accent">
+          <Link
+            href="/settings/equipment-categories"
+            className="rounded-md border border-border px-3 py-2 text-sm hover:bg-accent"
+          >
             Equipment Categories
           </Link>
         </div>
@@ -86,13 +93,16 @@ export default async function SettingsPage() {
 
       <section>
         <h2 className="text-lg font-semibold mb-3">Scenario Overrides</h2>
-        <ScenarioPolicySettingsEditor householdId={householdId} defaults={defaults} scenarioPolicies={scenarioPolicies} />
+        <ScenarioPolicySettingsEditor
+          householdId={householdId}
+          defaults={defaults}
+          scenarioPolicies={scenarioPolicies}
+        />
       </section>
 
       <section>
         <HouseholdManager />
       </section>
-
     </div>
   );
 }

@@ -13,18 +13,24 @@ export function HouseholdSwitcher({
   isAdmin?: boolean;
 }) {
   const [households, setHouseholds] = useState<Household[]>([]);
-  const [selected, setSelected] = useState(() =>
-    resolveClientHouseholdId({ householdId: sessionHouseholdId, isAdmin }) ?? sessionHouseholdId ?? ""
+  const [selected, setSelected] = useState(
+    () =>
+      resolveClientHouseholdId({ householdId: sessionHouseholdId, isAdmin }) ??
+      sessionHouseholdId ??
+      ""
   );
 
   useEffect(() => {
     void apiFetch<Household[]>("/households")
       .then((rows) => {
         setHouseholds(rows);
-        if (!selected && rows[0]) {
-          setSelected(rows[0].id);
-          setActiveHouseholdId(rows[0].id);
-        }
+        setSelected((prev) => {
+          if (!prev && rows[0]) {
+            setActiveHouseholdId(rows[0].id);
+            return rows[0].id;
+          }
+          return prev;
+        });
       })
       .catch(() => {});
   }, []);
@@ -35,8 +41,12 @@ export function HouseholdSwitcher({
 
   return (
     <label className="flex items-center gap-2">
-      <span className="block text-xs font-bold uppercase tracking-wide text-primary">Active Family</span>
-      <span className="rounded border border-border px-2 py-0.5 text-foreground">{active?.name ?? "Unknown"}</span>
+      <span className="block text-xs font-bold uppercase tracking-wide text-primary">
+        Active Family
+      </span>
+      <span className="rounded border border-border px-2 py-0.5 text-foreground">
+        {active?.name ?? "Unknown"}
+      </span>
       <select
         aria-label="Active family"
         value={selected}

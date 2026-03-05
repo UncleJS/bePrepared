@@ -1,6 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+} from "react";
 import { apiFetch } from "@/lib/api";
 import { useActiveHouseholdId } from "@/lib/useActiveHouseholdId";
 import { CheckSquare, Square, ChevronDown, ChevronRight, Pencil } from "lucide-react";
@@ -109,10 +117,10 @@ function toPayload(form: TaskForm) {
 export default function TasksPage() {
   const { householdId, status, user } = useActiveHouseholdId();
 
-  const [tasks, setTasks]       = useState<Task[]>([]);
-  const [modules, setModules]   = useState<Module[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [modules, setModules] = useState<Module[]>([]);
   const [progress, setProgress] = useState<Record<string, Progress>>({});
-  const [loading, setLoading]   = useState(true);
+  const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({ l1_72h: true });
   const [error, setError] = useState<string | null>(null);
 
@@ -143,7 +151,9 @@ export default function TasksPage() {
       setTasks(Array.from(deduped.values()));
 
       const map: Record<string, Progress> = {};
-      p.forEach((pr) => { map[pr.taskId] = pr; });
+      p.forEach((pr) => {
+        map[pr.taskId] = pr;
+      });
       setProgress(map);
 
       setModules(m);
@@ -172,7 +182,13 @@ export default function TasksPage() {
     // Optimistic update
     setProgress((prev) => ({
       ...prev,
-      [task.id]: { ...existing, id: existing?.id ?? "", taskId: task.id, status: newStatus, completedAt },
+      [task.id]: {
+        ...existing,
+        id: existing?.id ?? "",
+        taskId: task.id,
+        status: newStatus,
+        completedAt,
+      },
     }));
 
     try {
@@ -195,7 +211,9 @@ export default function TasksPage() {
 
   const moduleById = useMemo(() => {
     const map: Record<string, Module> = {};
-    modules.forEach((m) => { map[m.id] = m; });
+    modules.forEach((m) => {
+      map[m.id] = m;
+    });
     return map;
   }, [modules]);
 
@@ -255,8 +273,10 @@ export default function TasksPage() {
     }
   }
 
-  if (status === "loading") return <p className="text-muted-foreground text-sm">Loading session…</p>;
-  if (!householdId) return <p className="text-muted-foreground text-sm">No household in session.</p>;
+  if (status === "loading")
+    return <p className="text-muted-foreground text-sm">Loading session…</p>;
+  if (!householdId)
+    return <p className="text-muted-foreground text-sm">No household in session.</p>;
   if (loading) return <p className="text-muted-foreground text-sm">Loading ticksheets…</p>;
 
   return (
@@ -268,16 +288,16 @@ export default function TasksPage() {
         </p>
       </div>
 
-      {error && <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
+      {error && (
+        <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {error}
+        </p>
+      )}
 
       {isAdmin && (
         <section className="rounded-lg border border-border bg-card p-4 space-y-4">
           <h2 className="text-sm font-semibold uppercase tracking-wide">Add Task</h2>
-          <TaskFormFields
-            form={createForm}
-            setForm={setCreateForm}
-            modules={modules}
-          />
+          <TaskFormFields form={createForm} setForm={setCreateForm} modules={modules} />
           <button
             type="button"
             onClick={createTask}
@@ -292,11 +312,7 @@ export default function TasksPage() {
       {isAdmin && editingTask && (
         <section className="rounded-lg border border-border bg-card p-4 space-y-4">
           <h2 className="text-sm font-semibold uppercase tracking-wide">Edit Task</h2>
-          <TaskFormFields
-            form={editForm}
-            setForm={setEditForm}
-            modules={modules}
-          />
+          <TaskFormFields form={editForm} setForm={setEditForm} modules={modules} />
           <div className="flex gap-2">
             <button
               type="button"
@@ -318,10 +334,10 @@ export default function TasksPage() {
       )}
 
       {byLevel.map(({ level, tasks: lvlTasks }) => {
-        const done  = lvlTasks.filter((t) => progress[t.id]?.status === "completed").length;
+        const done = lvlTasks.filter((t) => progress[t.id]?.status === "completed").length;
         const total = lvlTasks.length;
-        const pct   = total > 0 ? Math.round((done / total) * 100) : 0;
-        const open  = expanded[level] ?? false;
+        const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+        const open = expanded[level] ?? false;
 
         return (
           <section key={level} className="rounded-lg border border-border bg-card overflow-hidden">
@@ -338,10 +354,7 @@ export default function TasksPage() {
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-24 h-1.5 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className="h-full bg-primary rounded-full"
-                    style={{ width: `${pct}%` }}
-                  />
+                  <div className="h-full bg-primary rounded-full" style={{ width: `${pct}%` }} />
                 </div>
                 <span className="text-xs text-muted-foreground w-8 text-right">{pct}%</span>
               </div>
@@ -352,7 +365,9 @@ export default function TasksPage() {
                 {lvlTasks.map((task) => {
                   const done = progress[task.id]?.status === "completed";
                   const moduleTitle = moduleById[task.moduleId]?.title ?? "Unknown module";
-                  const sectionTitle = moduleById[task.moduleId]?.sections.find((s) => s.id === task.sectionId)?.title;
+                  const sectionTitle = moduleById[task.moduleId]?.sections.find(
+                    (s) => s.id === task.sectionId
+                  )?.title;
                   return (
                     <li key={task.id} className="px-4 py-3 hover:bg-accent transition-colors">
                       <div className="flex items-start justify-between gap-3">
@@ -366,17 +381,23 @@ export default function TasksPage() {
                             <Square size={18} className="text-muted-foreground mt-0.5 shrink-0" />
                           )}
                           <div>
-                            <p className={`text-sm font-medium ${done ? "line-through text-muted-foreground" : ""}`}>
+                            <p
+                              className={`text-sm font-medium ${done ? "line-through text-muted-foreground" : ""}`}
+                            >
                               {task.title}
                             </p>
                             {task.description && (
-                              <p className="text-xs text-muted-foreground mt-0.5">{task.description}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {task.description}
+                              </p>
                             )}
                             <div className="flex gap-2 mt-1 flex-wrap">
                               <Badge>{task.taskClass}</Badge>
                               <Badge variant="outline">{moduleTitle}</Badge>
                               {sectionTitle && <Badge variant="outline">{sectionTitle}</Badge>}
-                              {task.scenario !== "both" && <Badge variant="outline">{task.scenario}</Badge>}
+                              {task.scenario !== "both" && (
+                                <Badge variant="outline">{task.scenario}</Badge>
+                              )}
                             </div>
                           </div>
                         </button>
@@ -399,7 +420,9 @@ export default function TasksPage() {
                   );
                 })}
                 {lvlTasks.length === 0 && (
-                  <li className="px-4 py-3 text-sm text-muted-foreground">No tasks for this level.</li>
+                  <li className="px-4 py-3 text-sm text-muted-foreground">
+                    No tasks for this level.
+                  </li>
                 )}
               </ul>
             )}
@@ -450,11 +473,15 @@ function TaskFormFields({
         <select
           className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
           value={form.moduleId}
-          onChange={(e) => setForm((prev) => ({ ...prev, moduleId: e.target.value, sectionId: "" }))}
+          onChange={(e) =>
+            setForm((prev) => ({ ...prev, moduleId: e.target.value, sectionId: "" }))
+          }
         >
           <option value="">Select module</option>
           {modules.map((m) => (
-            <option key={m.id} value={m.id}>{m.title}</option>
+            <option key={m.id} value={m.id}>
+              {m.title}
+            </option>
           ))}
         </select>
       </div>
@@ -469,7 +496,9 @@ function TaskFormFields({
         >
           <option value="">None</option>
           {sections.map((s) => (
-            <option key={s.id} value={s.id}>{s.title}</option>
+            <option key={s.id} value={s.id}>
+              {s.title}
+            </option>
           ))}
         </select>
       </div>
@@ -481,7 +510,11 @@ function TaskFormFields({
           value={form.taskClass}
           onChange={(e) => setForm((prev) => ({ ...prev, taskClass: e.target.value }))}
         >
-          {TASK_CLASSES.map((v) => <option key={v} value={v}>{v}</option>)}
+          {TASK_CLASSES.map((v) => (
+            <option key={v} value={v}>
+              {v}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -492,7 +525,11 @@ function TaskFormFields({
           value={form.readinessLevel}
           onChange={(e) => setForm((prev) => ({ ...prev, readinessLevel: e.target.value }))}
         >
-          {LEVEL_ORDER.map((v) => <option key={v} value={v}>{LEVEL_LABELS[v]}</option>)}
+          {LEVEL_ORDER.map((v) => (
+            <option key={v} value={v}>
+              {LEVEL_LABELS[v]}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -503,7 +540,11 @@ function TaskFormFields({
           value={form.scenario}
           onChange={(e) => setForm((prev) => ({ ...prev, scenario: e.target.value }))}
         >
-          {SCENARIOS.map((v) => <option key={v} value={v}>{v}</option>)}
+          {SCENARIOS.map((v) => (
+            <option key={v} value={v}>
+              {v}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -530,11 +571,13 @@ function TaskFormFields({
         <input
           type="checkbox"
           checked={form.isRecurring}
-          onChange={(e) => setForm((prev) => ({
-            ...prev,
-            isRecurring: e.target.checked,
-            recurDays: e.target.checked ? prev.recurDays : "",
-          }))}
+          onChange={(e) =>
+            setForm((prev) => ({
+              ...prev,
+              isRecurring: e.target.checked,
+              recurDays: e.target.checked ? prev.recurDays : "",
+            }))
+          }
         />
         Recurring task
       </label>
@@ -553,7 +596,13 @@ function TaskFormFields({
   );
 }
 
-function Badge({ children, variant = "default" }: { children: ReactNode; variant?: "default" | "outline" }) {
+function Badge({
+  children,
+  variant = "default",
+}: {
+  children: ReactNode;
+  variant?: "default" | "outline";
+}) {
   return (
     <span
       className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${

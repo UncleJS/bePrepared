@@ -7,7 +7,8 @@ const EXTRA_FILES = ["README.md"];
 
 const HEADER_RE = /^```mermaid\s*$/;
 const FOOTER_RE = /^```\s*$/;
-const FIRST_DIRECTIVE_RE = /^(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram(?:-v2)?|erDiagram|journey|gantt|pie|mindmap|timeline|gitGraph|quadrantChart|requirementDiagram|C4Context|C4Container|C4Component|C4Dynamic|C4Deployment|sankey-beta|xychart-beta|block-beta)\b/;
+const FIRST_DIRECTIVE_RE =
+  /^(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram(?:-v2)?|erDiagram|journey|gantt|pie|mindmap|timeline|gitGraph|quadrantChart|requirementDiagram|C4Context|C4Container|C4Component|C4Dynamic|C4Deployment|sankey-beta|xychart-beta|block-beta)\b/;
 
 function listMarkdownFiles(dirPath) {
   const abs = join(ROOT, dirPath);
@@ -85,10 +86,7 @@ function existsPath(relPath) {
   }
 }
 
-const markdownFiles = [
-  ...DOC_DIRS.flatMap(listMarkdownFiles),
-  ...EXTRA_FILES.filter(existsPath),
-];
+const markdownFiles = [...DOC_DIRS.flatMap(listMarkdownFiles), ...EXTRA_FILES.filter(existsPath)];
 
 const errors = markdownFiles.flatMap(lintFile);
 
