@@ -1,0 +1,36 @@
+# bePrepared — phpMyAdmin container
+# Quadlet file: ~/.config/containers/systemd/beprepared-phpmyadmin.container
+#
+# Auth mode: cookie — phpMyAdmin presents a login form.
+# Credentials are passed directly to MariaDB; nothing is stored in the container.
+# Access: http://localhost:9998
+#
+# Recommended: restrict access with a firewall rule or reverse-proxy allow-list.
+# Do NOT expose port 9998 publicly without additional protection.
+
+[Unit]
+Description=bePrepared phpMyAdmin
+After=beprepared-db.container
+
+[Container]
+Image=docker.io/phpmyadmin/phpmyadmin:latest
+Pod=beprepared.pod
+ContainerName=beprepared-phpmyadmin
+
+# MariaDB host is loopback inside the shared pod network namespace
+Environment=PMA_HOST=127.0.0.1
+Environment=PMA_PORT=3306
+# Cookie auth: login form required — no embedded credentials
+Environment=PMA_AUTH_TYPE=cookie
+# Blowfish secret for cookie encryption — MUST be 32+ random chars
+# Generate: openssl rand -base64 32
+Environment=PMA_BLOWFISH_SECRET=${PMA_BLOWFISH_SECRET}
+# Absolute URI for correct link generation (update if behind a proxy)
+Environment=PMA_ABSOLUTE_URI=http://localhost:9998/
+
+[Service]
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=beprepared-pod.service

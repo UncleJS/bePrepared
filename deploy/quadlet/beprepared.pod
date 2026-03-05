@@ -1,0 +1,11 @@
+# bePrepared — Podman Pod definition
+# Quadlet file: ~/.config/containers/systemd/beprepared.pod
+
+[Pod]
+PodName=beprepared
+# Publish frontend and phpMyAdmin ports to the host
+PublishPort=9999:9999
+PublishPort=9998:9998
+
+[Install]
+WantedBy=default.target

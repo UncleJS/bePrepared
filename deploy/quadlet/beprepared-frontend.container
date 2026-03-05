@@ -1,0 +1,20 @@
+# bePrepared — Frontend container (Next.js)
+# Quadlet file: ~/.config/containers/systemd/beprepared-frontend.container
+
+[Unit]
+Description=bePrepared frontend (Next.js)
+After=beprepared-api.container
+
+[Container]
+Image=localhost/beprepared-frontend:latest
+Pod=beprepared.pod
+ContainerName=beprepared-frontend
+
+EnvironmentFile=%h/bePrepared/deploy/.env
+
+[Service]
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=beprepared-pod.service

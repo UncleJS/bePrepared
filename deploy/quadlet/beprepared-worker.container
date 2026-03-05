@@ -1,0 +1,20 @@
+# bePrepared — Worker container (hourly alert scheduler)
+# Quadlet file: ~/.config/containers/systemd/beprepared-worker.container
+
+[Unit]
+Description=bePrepared background worker (alert scheduler)
+After=beprepared-api.container
+
+[Container]
+Image=localhost/beprepared-worker:latest
+Pod=beprepared.pod
+ContainerName=beprepared-worker
+
+EnvironmentFile=%h/bePrepared/deploy/.env
+
+[Service]
+Restart=on-failure
+RestartSec=10s
+
+[Install]
+WantedBy=beprepared-pod.service

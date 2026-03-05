@@ -1,0 +1,26 @@
+# bePrepared — MariaDB container
+# Quadlet file: ~/.config/containers/systemd/beprepared-db.container
+
+[Unit]
+Description=bePrepared MariaDB database
+After=beprepared-pod.service
+
+[Container]
+Image=docker.io/library/mariadb:11
+Pod=beprepared.pod
+ContainerName=beprepared-db
+
+EnvironmentFile=%h/bePrepared/deploy/.env
+Environment=MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+Environment=MARIADB_DATABASE=${DB_NAME}
+Environment=MARIADB_USER=${DB_USER}
+Environment=MARIADB_PASSWORD=${DB_PASSWORD}
+
+Volume=%h/bePrepared/data/mariadb:/var/lib/mysql:Z
+
+[Service]
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=beprepared-pod.service

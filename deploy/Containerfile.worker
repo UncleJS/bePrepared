@@ -1,0 +1,28 @@
+# Containerfile.worker — bePrepared background worker
+FROM docker.io/oven/bun:1.1-alpine AS builder
+
+WORKDIR /app
+
+# Copy workspace root + api schema + worker
+COPY package.json bun.lockb* ./
+COPY api/package.json ./api/
+COPY api/src/db ./api/src/db
+COPY worker/package.json ./worker/
+COPY worker/src ./worker/src
+
+RUN bun install --frozen-lockfile
+
+WORKDIR /app/worker
+RUN bun build src/index.ts --outdir dist --target bun --minify
+
+# ---- Runtime stage ----
+FROM docker.io/oven/bun:1.1-alpine
+
+WORKDIR /app/worker
+
+COPY --from=builder /app/worker/dist ./dist
+COPY --from=builder /app/node_modules /app/node_modules
+
+ENV NODE_ENV=production
+
+CMD ["bun", "run", "dist/index.js"]

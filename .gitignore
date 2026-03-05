@@ -1,0 +1,64 @@
+# -----------------------------------------------------------------------
+# bePrepared — .gitignore
+# -----------------------------------------------------------------------
+
+# --- Dependencies ---
+node_modules/
+.pnp
+.pnp.js
+
+# --- Build outputs ---
+dist/
+build/
+.next/
+out/
+
+# --- Bun ---
+bun.lockb
+
+# --- Environment / secrets ---
+.env
+.env.local
+.env.*.local
+deploy/.env
+
+# --- Database data volume ---
+data/
+
+# --- Drizzle generated migrations (keep the folder, ignore nothing here)
+# migrations are intentionally committed — remove this section if you prefer
+# api/src/db/migrations/
+
+# --- Logs ---
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# --- OS ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# --- Editor ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- TypeScript ---
+*.tsbuildinfo
+next-env.d.ts
+
+# --- Testing ---
+coverage/
+.nyc_output/
+
+# --- Podman / container artefacts ---
+# (quadlet units and Containerfiles are intentionally committed)

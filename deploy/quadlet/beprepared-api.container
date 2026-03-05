@@ -1,0 +1,20 @@
+# bePrepared — API container
+# Quadlet file: ~/.config/containers/systemd/beprepared-api.container
+
+[Unit]
+Description=bePrepared REST API (Bun + Elysia)
+After=beprepared-db.container
+
+[Container]
+Image=localhost/beprepared-api:latest
+Pod=beprepared.pod
+ContainerName=beprepared-api
+
+EnvironmentFile=%h/bePrepared/deploy/.env
+
+[Service]
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=beprepared-pod.service
