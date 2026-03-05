@@ -70,7 +70,8 @@ systemctl --user daemon-reload
 systemctl --user start beprepared-pod
 
 # 6. Wait ~5s for MariaDB to initialise, then run migrations + seed
-systemctl --user start beprepared-migrate
+podman exec beprepared-api bun run db:migrate
+podman exec beprepared-api bun run db:seed
 ```
 
 The `pod-start.sh` script in `deploy/` wraps steps 4–6 for convenience.

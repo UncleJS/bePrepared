@@ -121,7 +121,7 @@ After deploy, follow these steps in the UI (or via Swagger at `/docs`):
 - Set one as `is_default = true`
 
 ### Step 3 — Review planning targets
-- Go to Settings → Policies
+- Go to Settings → Planning Targets
 - Review water (default 4.0 L/person/day) and calories (default 2200 kcal/person/day)
 - Override if your household has different needs
 
@@ -222,6 +222,9 @@ Full troubleshooting guide: `docs/11-operations-podman.md` Section 10.
 [↑ TOC](#table-of-contents)
 
 ```bash
+# Replace with your real household id from setup (example shown below)
+HOUSEHOLD_ID="demo-household-001"
+
 # All service statuses at once
 systemctl --user status 'beprepared*' --no-pager
 
@@ -229,16 +232,16 @@ systemctl --user status 'beprepared*' --no-pager
 journalctl --user -u 'beprepared*' -f
 
 # Count active alerts via API
-curl -s http://localhost:3001/alerts/demo-household-001 | jq length
+curl -s "http://localhost:3001/alerts/${HOUSEHOLD_ID}" | jq length
 
 # Get current planning totals (shelter_in_place, 4 people)
-curl -s "http://localhost:3001/planning/demo-household-001/shelter_in_place?people=4" | jq .
+curl -s "http://localhost:3001/planning/${HOUSEHOLD_ID}/shelter_in_place?people=4" | jq .
 
 # Get lots expiring in 90 days
-curl -s "http://localhost:3001/inventory/demo-household-001/expiring?days=90" | jq length
+curl -s "http://localhost:3001/inventory/${HOUSEHOLD_ID}/expiring?days=90" | jq length
 
 # List due maintenance tasks
-curl -s "http://localhost:3001/maintenance/demo-household-001/due?days=30" | jq .
+curl -s "http://localhost:3001/maintenance/${HOUSEHOLD_ID}/due?days=30" | jq .
 
 # Open Swagger in browser (Linux)
 xdg-open http://localhost:3001/docs

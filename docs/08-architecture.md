@@ -145,12 +145,20 @@ Worker (every ~1 hour)
   │     SELECT inventory_lots WHERE expires_at < now() + alert_upcoming_days
   │     INSERT alerts (upsert on duplicate)
   │
-  ├── checkReplacementAlerts()
+  ├── checkReplacementDueAlerts()
   │     SELECT inventory_lots WHERE next_replace_at < cutoff
   │     INSERT alerts (upsert on duplicate)
   │
-  └── checkMaintenanceAlerts()
-        SELECT maintenance_schedules WHERE next_due_at < cutoff
+  ├── checkMaintenanceDueAlerts()
+  │     SELECT maintenance_schedules WHERE next_due_at < cutoff
+  │     INSERT alerts (upsert on duplicate)
+  │
+  ├── checkLowStockAlerts()
+  │     SELECT items WHERE SUM(lot_qty) < low_stock_threshold
+  │     INSERT alerts (upsert on duplicate)
+  │
+  └── checkTaskOverdueAlerts()
+        SELECT recurring task_progress WHERE next_due_at < cutoff
         INSERT alerts (upsert on duplicate)
 ```
 
@@ -178,8 +186,8 @@ Supported policy keys:
 |-----|---------|------|
 | `water_liters_per_person_per_day` | 4.0 | liters/person/day |
 | `calories_kcal_per_person_per_day` | 2200 | kcal/person/day |
-| `alert_upcoming_days` | 30 | days |
-| `alert_grace_days` | 7 | days |
+| `alert_upcoming_days` | 14 | days |
+| `alert_grace_days` | 3 | days |
 
 ### People count (four-tier)
 
@@ -204,7 +212,7 @@ Supported policy keys:
 `worker/src/index.ts` runs on startup and then on a 1-hour interval (using `setInterval`). It:
 
 - Queries all active households
-- For each household, checks three alert categories with deduplication (`onDuplicateKeyUpdate`)
+- For each household, checks five alert categories with deduplication (`onDuplicateKeyUpdate`)
 - Alert records have a `dedupeKey` (`VARCHAR(255) UNIQUE`) to prevent duplicate rows per item+type+window
 
 The worker shares the same Drizzle schema (imported from `../../api/src/db/schema`) — intentional cross-workspace reference in the monorepo.

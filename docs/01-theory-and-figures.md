@@ -226,14 +226,14 @@ Both scenarios can have **independent policy overrides** so your planning target
 
 | Parameter | Default | Meaning |
 |-----------|---------|---------|
-| `alert_upcoming_days` | 14 days | Generate "upcoming" alert this many days before due date |
-| `alert_grace_days` | 3 days | Allow this many days past due before escalating to "overdue" |
+| `alert_upcoming_days` | 14 days | Mark as upcoming this many days before due date |
+| `alert_grace_days` | 3 days | Keep alert in due window this many days past due date |
 
 ### Alert Lifecycle
 
 ```
 [ today ]----[upcoming window]----[ due date ]----[grace]----[ overdue ]
-              14 days ahead         0 days          3 days      escalate
+              14 days ahead         0 days          3 days      critical
 ```
 
 Both values are configurable household-level overrides via Settings.

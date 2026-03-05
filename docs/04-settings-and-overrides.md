@@ -132,8 +132,8 @@ Global overrides apply to **all scenarios** unless a scenario-specific override 
 |-----|---------|------|----------|
 | `water_liters_per_person_per_day` | 4.0 | L/person/day | Water target |
 | `calories_kcal_per_person_per_day` | 2200 | kcal/person/day | Calorie target |
-| `alert_upcoming_days` | 14 | days | Alert lead time |
-| `alert_grace_days` | 3 | days | Grace window |
+| `alert_upcoming_days` | 14 | days | Upcoming window |
+| `alert_grace_days` | 3 | days | Due grace window |
 
 ### UI Behaviour
 

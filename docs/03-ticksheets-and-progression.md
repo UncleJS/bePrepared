@@ -101,14 +101,12 @@ stateDiagram-v2
   [*]        --> Pending    : Task created / available
   Pending    --> InProgress : User starts working on it
   InProgress --> Completed  : Check with evidence note
-  InProgress --> Blocked    : Dependency not met
-  Blocked    --> InProgress : Dependency resolved
   Completed  --> Overdue    : Recurring task interval passes without renewal
   Overdue    --> Completed  : Renewed / re-completed
   Completed  --> [*]        : Non-recurring task — done permanently
 ```
 
-**Blocked** tasks surface in the UI with a link to the dependency task. You cannot check a blocked task.
+**Blocked** is a derived UI state (not a persisted `task_progress.status` value): when dependencies are unmet, the task appears blocked and cannot be checked.
 
 [↑ Go to TOC](#table-of-contents)
 
@@ -181,7 +179,7 @@ Tasks marked `isRecurring = true` automatically create a new `Pending` progress 
 | Battery storage recharge | 90 days |
 | Full household drill | 180 days |
 
-Overdue recurring tasks appear in the alert queue with `severity: overdue`.
+Overdue recurring tasks appear in the alert queue with overdue timing and default `severity: critical`.
 
 [↑ Go to TOC](#table-of-contents)
 

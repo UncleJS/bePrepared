@@ -38,6 +38,8 @@
 
 ## 2. Documentation Map
 
+Source of truth note: for persisted enums, field names, and API payload semantics, treat [Data Model](./09-data-model.md) and [API Contract](./10-api-contract.md) as canonical. Narrative docs explain behavior and examples, but should defer to those two specs when wording differs.
+
 | # | File | Purpose |
 |---|------|---------|
 | 01 | [Theory and Figures](./01-theory-and-figures.md) | Planning assumptions, default values, and the reasoning behind them |
