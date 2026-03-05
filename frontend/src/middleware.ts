@@ -3,9 +3,14 @@
  */
 import { auth } from "@/auth";
 import { shouldRedirectToLogin } from "@/lib/authGuard";
+import { isProtectedPath } from "@/lib/routeProtection";
 import { NextResponse } from "next/server";
 
 export default auth((req) => {
+  if (!isProtectedPath(req.nextUrl.pathname)) {
+    return NextResponse.next();
+  }
+
   if (shouldRedirectToLogin(req.auth)) {
     return NextResponse.redirect(new URL("/login", req.nextUrl));
   }

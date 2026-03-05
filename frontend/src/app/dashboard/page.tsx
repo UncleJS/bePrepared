@@ -117,7 +117,7 @@ export default async function DashboardPage() {
         { key: "evac", label: "Evacuation", planning: evacPlanning },
       ].map(({ key, label, planning }) => (
       planning?.horizons && (
-        <section>
+        <section key={key}>
           <h2 className="text-lg font-semibold mb-3">Planning Targets ({label})</h2>
           <div className="flex items-center gap-3 text-sm text-muted-foreground mb-3">
             <span>{planning.effectivePeople} people</span>
