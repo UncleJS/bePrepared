@@ -41,13 +41,13 @@
 
 ### P0
 
-- [~] **Create baseline API tests**: auth token + route scope coverage and planning calculation tests added; critical CRUD tests still pending.
+- [x] **Create baseline API tests**: added auth token/scope tests, planning calculation tests, and critical CRUD coverage for tasks route create/update/progress validation.
 - [x] **Create baseline frontend tests**: added utility tests (household/session helpers, timestamp/date behavior), middleware auth/path guards, and page-render smoke coverage for login/dashboard/tasks routes.
 
 ### P1
 
-- [ ] **Add CI pipeline**: lint, type-check, and tests on pull requests.
-- [ ] **Standardize lint/format config**: repository-wide rules and scripts.
+- [x] **Add CI pipeline**: GitHub Actions workflow added for pull requests/main push (lint, type-check, build, tests).
+- [~] **Standardize lint/format config**: workspace lint/typecheck scripts are now standardized; formatter policy/config still pending.
 
 ---
 

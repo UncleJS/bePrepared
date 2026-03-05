@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --port 9999",
     "build": "next build",
+    "typecheck": "bunx tsc --noEmit -p tsconfig.json",
     "start": "next start --port 9999",
     "lint": "next lint",
     "test": "bun test"
@@ -35,6 +36,8 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "autoprefixer": "^10.4.20",
+    "eslint": "9.19.0",
+    "eslint-config-next": "15.5.12",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.14",
     "typescript": "^5.6.3"

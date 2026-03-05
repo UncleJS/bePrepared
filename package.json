@@ -10,6 +10,8 @@
     "dev:frontend": "bun run --cwd frontend dev",
     "build:api": "bun run --cwd api build",
     "build:frontend": "bun run --cwd frontend build",
+    "typecheck": "bun run --cwd api typecheck && bun run --cwd frontend typecheck",
+    "lint": "bun run --cwd frontend lint",
     "db:push": "bun run --cwd api db:push",
     "db:migrate": "bun run --cwd api db:migrate",
     "db:seed": "bun run --cwd api db:seed",
