@@ -152,6 +152,10 @@ Image=localhost/beprepared-worker:latest
 Pod=beprepared.pod
 ContainerName=beprepared-worker
 EnvironmentFile=%h/bePrepared/deploy/.env
+PodmanArgs=--read-only
+PodmanArgs=--tmpfs=/tmp:rw,nosuid,nodev,noexec,size=64m
+PodmanArgs=--security-opt=no-new-privileges
+PodmanArgs=--cap-drop=all
 
 [Service]
 Restart=on-failure
@@ -172,6 +176,10 @@ Image=localhost/beprepared-frontend:latest
 Pod=beprepared.pod
 ContainerName=beprepared-frontend
 EnvironmentFile=%h/bePrepared/deploy/.env
+PodmanArgs=--read-only
+PodmanArgs=--tmpfs=/tmp:rw,nosuid,nodev,noexec,size=64m
+PodmanArgs=--security-opt=no-new-privileges
+PodmanArgs=--cap-drop=all
 
 [Service]
 Restart=on-failure
@@ -288,6 +296,9 @@ systemctl --user restart beprepared-frontend
 
 # 4. Run any new migrations
 podman exec -it beprepared-api bun run db:migrate
+
+# 5. Run post-restart verification checks
+./deploy/post-restart-check.sh
 ```
 
 Images are tagged `:latest` locally — no registry required.
@@ -328,6 +339,35 @@ systemctl --user start beprepared-api beprepared-worker
 ### Data volume location
 
 MariaDB data is stored in `~/bePrepared/data/mariadb/`. This directory persists across container restarts and rebuilds. Back up this directory for a raw data backup (stop DB first).
+
+### Restore drill cadence (recommended)
+
+Run a restore drill on a regular schedule (for example, monthly) to confirm backups are actually recoverable.
+
+Suggested drill process:
+
+1. Pick a recent compressed dump (`backup-*.sql.gz`) and record its filename.
+2. Stop write-producing services:
+   - `systemctl --user stop beprepared-api beprepared-worker`
+3. Restore the selected dump using the restore command above.
+4. Start services:
+   - `systemctl --user start beprepared-api beprepared-worker`
+5. Run verification checks:
+   - `./deploy/post-restart-check.sh`
+6. Confirm data sanity with a small query set (example: key table counts, latest alerts/tasks rows).
+
+Pass/fail criteria:
+
+- Pass: restore completes without SQL errors, services are healthy, and core tables are readable.
+- Fail: restore aborts, services fail checks, or critical tables are missing/inconsistent.
+
+Record for each drill:
+
+- dump filename and timestamp
+- operator name
+- duration
+- result (pass/fail)
+- follow-up actions for any failures
 
 ---
 

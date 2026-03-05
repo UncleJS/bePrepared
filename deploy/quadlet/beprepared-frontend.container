@@ -12,6 +12,10 @@ ContainerName=beprepared-frontend
 
 EnvironmentFile=%h/bePrepared/deploy/.env
 Environment=PORT=9999
+PodmanArgs=--read-only
+PodmanArgs=--tmpfs=/tmp:rw,nosuid,nodev,noexec,size=64m
+PodmanArgs=--security-opt=no-new-privileges
+PodmanArgs=--cap-drop=all
 
 [Service]
 Restart=on-failure

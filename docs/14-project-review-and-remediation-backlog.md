@@ -93,6 +93,21 @@
 
 ---
 
+## F) Post Deep-Dive Implementation Queue
+
+### P1
+
+- [x] **Add alert severity/escalation unit coverage** in worker (`computeAlertSeverity`, monotonic escalation checks).
+
+### P2
+
+- [x] **Add worker-level idempotency/escalation test coverage** for repeated candidate runs against fixture sequences.
+- [x] **Add worker run metrics counters** (inserted/escalated/skipped/errors per category) to support operations visibility.
+- [x] **Add deployment post-restart verification script** for service status and basic endpoint checks.
+- [x] **Document recurring backup-restore drill cadence** with pass/fail criteria in operations docs.
+
+---
+
 ## Notes
 
 - This backlog intentionally separates discovery from implementation.

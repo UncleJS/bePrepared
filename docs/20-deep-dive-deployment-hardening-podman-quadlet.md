@@ -114,10 +114,10 @@ Primary external exposure is the frontend host port (`9999`). API and DB remain 
 
 ## 6. Prioritized Next Actions
 
-1. Implement minimal-risk Quadlet hardening flags for frontend and worker first.
+1. [x] Implement minimal-risk Quadlet hardening flags for frontend and worker (`--read-only`, tmpfs `/tmp`, `no-new-privileges`, `--cap-drop=all`).
 2. Introduce scoped env files to reduce secret sprawl.
-3. Add an operations check script for post-deploy health verification.
-4. Run and document a full backup-restore drill in staging/local ops.
+3. [x] Add an operations check script for post-deploy health verification (`deploy/post-restart-check.sh`).
+4. [x] Document recurring backup-restore drill cadence and pass/fail criteria in operations runbook.
 
 ---
 

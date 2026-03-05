@@ -14,6 +14,11 @@ import mysql from "mysql2/promise";
 import * as schema from "../../api/src/db/schema";
 import { eq, isNull, and, lte, isNotNull } from "drizzle-orm";
 import { randomUUID } from "crypto";
+import {
+  computeAlertSeverity,
+  resolveAlertUpsertResult,
+  type AlertUpsertResult,
+} from "./lib/alertSeverity";
 
 const {
   inventoryLots,
@@ -41,9 +46,34 @@ const db = drizzle(pool, { schema, mode: "default" });
 
 const INTERVAL_MS = Number(process.env.WORKER_INTERVAL_MS ?? 3600000); // 1 hour
 
+type JobCounters = {
+  inserted: number;
+  escalated: number;
+  skipped: number;
+  errors: number;
+};
+
+type RunMetrics = {
+  expiry: JobCounters;
+  replacement: JobCounters;
+  maintenance: JobCounters;
+};
+
+function emptyCounters(): JobCounters {
+  return { inserted: 0, escalated: 0, skipped: 0, errors: 0 };
+}
+
+function createRunMetrics(): RunMetrics {
+  return {
+    expiry: emptyCounters(),
+    replacement: emptyCounters(),
+    maintenance: emptyCounters(),
+  };
+}
+
 async function getUpcomingDays(householdId: string): Promise<number> {
   // Resolve alert_upcoming_days from policy (simplified, direct query)
-  const scenario = await db.query.households.findFirst({
+  await db.query.households.findFirst({
     where: and(eq(households.id, householdId), isNull(households.archivedAt)),
   });
   const row = await db.query.householdPolicies.findFirst({
@@ -69,7 +99,7 @@ async function upsertAlert(data: {
   title: string;
   detail?: string;
   dueAt?: Date;
-}) {
+}): Promise<AlertUpsertResult> {
   // Avoid duplicate active alerts for same entity
   const existing = await db.query.alerts.findFirst({
     where: and(
@@ -81,17 +111,15 @@ async function upsertAlert(data: {
     ),
   });
   if (existing) {
-    // Update severity if escalated
-    if (
-      (existing.severity === "upcoming" && data.severity !== "upcoming") ||
-      (existing.severity === "due" && data.severity === "overdue")
-    ) {
+    const decision = resolveAlertUpsertResult(existing.severity, data.severity);
+    if (decision === "escalated") {
       await db
         .update(alerts)
         .set({ severity: data.severity, updatedAt: new Date() })
         .where(eq(alerts.id, existing.id));
+      return decision;
     }
-    return;
+    return decision;
   }
   await db.insert(alerts).values({
     id: randomUUID(),
@@ -104,9 +132,10 @@ async function upsertAlert(data: {
     detail: data.detail,
     dueAt: data.dueAt,
   });
+  return "inserted";
 }
 
-async function processInventoryExpiry() {
+async function processInventoryExpiry(metrics: JobCounters) {
   console.log("[worker] Processing inventory expiry...");
   const allHouseholds = await db.query.households.findMany({
     where: isNull(households.archivedAt),
@@ -117,8 +146,6 @@ async function processInventoryExpiry() {
     const upcomingDays = await getUpcomingDays(hh.id);
     const upcoming = new Date(today);
     upcoming.setDate(upcoming.getDate() + upcomingDays);
-    const upcomingStr = upcoming.toISOString().slice(0, 10);
-    const todayStr = today.toISOString().slice(0, 10);
 
     const lots = await db.query.inventoryLots.findMany({
       where: and(
@@ -130,35 +157,45 @@ async function processInventoryExpiry() {
     });
 
     for (const lot of lots) {
-      if (!lot.expiresAt) continue;
-      const expStr = lot.expiresAt.toString().slice(0, 10);
-      const severity = expStr < todayStr ? "overdue" : expStr === todayStr ? "due" : "upcoming";
-      await upsertAlert({
-        householdId: hh.id,
-        severity,
-        category: "expiry",
-        entityType: "inventory_lot",
-        entityId: lot.id,
-        title: `Lot expiring: ${lot.batchRef ?? lot.id}`,
-        detail: `Expires: ${expStr}`,
-        dueAt: new Date(expStr),
-      });
+      if (!lot.expiresAt) {
+        metrics.skipped += 1;
+        continue;
+      }
+      try {
+        const expStr = lot.expiresAt.toString().slice(0, 10);
+        const severity = computeAlertSeverity(lot.expiresAt, today);
+        const result = await upsertAlert({
+          householdId: hh.id,
+          severity,
+          category: "expiry",
+          entityType: "inventory_lot",
+          entityId: lot.id,
+          title: `Lot expiring: ${lot.batchRef ?? lot.id}`,
+          detail: `Expires: ${expStr}`,
+          dueAt: new Date(expStr),
+        });
+        if (result === "inserted") metrics.inserted += 1;
+        else if (result === "escalated") metrics.escalated += 1;
+        else metrics.skipped += 1;
+      } catch (err) {
+        metrics.errors += 1;
+        console.error("[worker] Expiry alert upsert failed", { lotId: lot.id, err });
+      }
     }
   }
 }
 
-async function processInventoryReplacement() {
+async function processInventoryReplacement(metrics: JobCounters) {
   console.log("[worker] Processing inventory replacement cycles...");
   const allHouseholds = await db.query.households.findMany({
     where: isNull(households.archivedAt),
   });
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const today = new Date();
 
   for (const hh of allHouseholds) {
     const upcomingDays = await getUpcomingDays(hh.id);
-    const upcoming = new Date();
+    const upcoming = new Date(today);
     upcoming.setDate(upcoming.getDate() + upcomingDays);
-    const upcomingStr = upcoming.toISOString().slice(0, 10);
 
     const lots = await db.query.inventoryLots.findMany({
       where: and(
@@ -170,35 +207,45 @@ async function processInventoryReplacement() {
     });
 
     for (const lot of lots) {
-      if (!lot.nextReplaceAt) continue;
-      const repStr = lot.nextReplaceAt.toString().slice(0, 10);
-      const severity = repStr < todayStr ? "overdue" : repStr === todayStr ? "due" : "upcoming";
-      await upsertAlert({
-        householdId: hh.id,
-        severity,
-        category: "replacement",
-        entityType: "inventory_lot",
-        entityId: lot.id,
-        title: `Lot replacement due: ${lot.batchRef ?? lot.id}`,
-        detail: `Replace by: ${repStr}`,
-        dueAt: new Date(repStr),
-      });
+      if (!lot.nextReplaceAt) {
+        metrics.skipped += 1;
+        continue;
+      }
+      try {
+        const repStr = lot.nextReplaceAt.toString().slice(0, 10);
+        const severity = computeAlertSeverity(lot.nextReplaceAt, today);
+        const result = await upsertAlert({
+          householdId: hh.id,
+          severity,
+          category: "replacement",
+          entityType: "inventory_lot",
+          entityId: lot.id,
+          title: `Lot replacement due: ${lot.batchRef ?? lot.id}`,
+          detail: `Replace by: ${repStr}`,
+          dueAt: new Date(repStr),
+        });
+        if (result === "inserted") metrics.inserted += 1;
+        else if (result === "escalated") metrics.escalated += 1;
+        else metrics.skipped += 1;
+      } catch (err) {
+        metrics.errors += 1;
+        console.error("[worker] Replacement alert upsert failed", { lotId: lot.id, err });
+      }
     }
   }
 }
 
-async function processMaintenanceSchedules() {
+async function processMaintenanceSchedules(metrics: JobCounters) {
   console.log("[worker] Processing maintenance schedules...");
   const allHouseholds = await db.query.households.findMany({
     where: isNull(households.archivedAt),
   });
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const today = new Date();
 
   for (const hh of allHouseholds) {
     const upcomingDays = await getUpcomingDays(hh.id);
-    const upcoming = new Date();
+    const upcoming = new Date(today);
     upcoming.setDate(upcoming.getDate() + upcomingDays);
-    const upcomingStr = upcoming.toISOString().slice(0, 10);
 
     const scheduleRows = await db
       .select({
@@ -219,30 +266,43 @@ async function processMaintenanceSchedules() {
       );
 
     for (const { schedule: sched } of scheduleRows) {
-      if (!sched.nextDueAt) continue;
-      const dueStr = sched.nextDueAt.toString().slice(0, 10);
-      const severity = dueStr < todayStr ? "overdue" : dueStr === todayStr ? "due" : "upcoming";
-      await upsertAlert({
-        householdId: hh.id,
-        severity,
-        category: "maintenance",
-        entityType: "maintenance_schedule",
-        entityId: sched.id,
-        title: `Maintenance due: ${sched.name}`,
-        detail: `Due: ${dueStr}`,
-        dueAt: new Date(dueStr),
-      });
+      if (!sched.nextDueAt) {
+        metrics.skipped += 1;
+        continue;
+      }
+      try {
+        const dueStr = sched.nextDueAt.toString().slice(0, 10);
+        const severity = computeAlertSeverity(sched.nextDueAt, today);
+        const result = await upsertAlert({
+          householdId: hh.id,
+          severity,
+          category: "maintenance",
+          entityType: "maintenance_schedule",
+          entityId: sched.id,
+          title: `Maintenance due: ${sched.name}`,
+          detail: `Due: ${dueStr}`,
+          dueAt: new Date(dueStr),
+        });
+        if (result === "inserted") metrics.inserted += 1;
+        else if (result === "escalated") metrics.escalated += 1;
+        else metrics.skipped += 1;
+      } catch (err) {
+        metrics.errors += 1;
+        console.error("[worker] Maintenance alert upsert failed", { scheduleId: sched.id, err });
+      }
     }
   }
 }
 
 async function runAllJobs() {
   const start = Date.now();
+  const metrics = createRunMetrics();
   console.log(`[worker] Run started at ${new Date().toISOString()}`);
   try {
-    await processInventoryExpiry();
-    await processInventoryReplacement();
-    await processMaintenanceSchedules();
+    await processInventoryExpiry(metrics.expiry);
+    await processInventoryReplacement(metrics.replacement);
+    await processMaintenanceSchedules(metrics.maintenance);
+    console.log("[worker] Run metrics", metrics);
     console.log(`[worker] Run complete in ${Date.now() - start}ms`);
   } catch (err) {
     console.error("[worker] Error during job run:", err);

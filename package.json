@@ -22,7 +22,7 @@
     "db:push": "bun run --cwd api db:push",
     "db:migrate": "bun run --cwd api db:migrate",
     "db:seed": "bun run --cwd api db:seed",
-    "test": "bun run --cwd api test && bun run --cwd frontend test"
+    "test": "bun run --cwd api test && bun run --cwd worker test && bun run --cwd frontend test"
   },
   "license": "CC-BY-NC-SA-4.0",
   "devDependencies": {
