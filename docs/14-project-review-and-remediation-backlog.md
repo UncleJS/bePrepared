@@ -47,7 +47,7 @@
 ### P1
 
 - [x] **Add CI pipeline**: GitHub Actions workflow added for pull requests/main push (lint, type-check, build, tests).
-- [~] **Standardize lint/format config**: workspace lint/typecheck scripts are now standardized; formatter policy/config still pending.
+- [~] **Standardize lint/format config**: workspace lint/typecheck scripts are standardized and include Mermaid markdown linting; formatter policy/config still pending.
 
 ---
 
