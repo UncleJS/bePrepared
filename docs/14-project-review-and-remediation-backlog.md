@@ -86,8 +86,8 @@
 
 - [x] **Deep dive #1: Authentication and session architecture** (documented in `docs/15-deep-dive-auth-session-architecture.md`)
 - [x] **Deep dive #2: API authorization and household scoping** (documented in `docs/16-deep-dive-api-authorization-household-scoping.md`)
-- [ ] **Deep dive #3: Alert generation logic and escalation correctness**
-- [ ] **Deep dive #4: Data model constraints, indexes, and FK strategy**
+- [x] **Deep dive #3: Alert generation logic and escalation correctness** (documented in `docs/17-deep-dive-alert-generation-escalation.md`)
+- [x] **Deep dive #4: Data model constraints, indexes, and FK strategy** (documented in `docs/18-deep-dive-data-model-indexes-fk-strategy.md`)
 - [ ] **Deep dive #5: Frontend maintainability refactor plan**
 - [ ] **Deep dive #6: Deployment hardening with Podman/Quadlet**
 
