@@ -4,7 +4,7 @@
 ![Status](https://img.shields.io/badge/status-active-brightgreen?style=flat-square)
 ![Stack](https://img.shields.io/badge/stack-Next.js%20%7C%20Elysia%20%7C%20MariaDB-blue?style=flat-square)
 ![Deploy](https://img.shields.io/badge/deploy-Podman_Pod-orange?style=flat-square)
-![Docs](https://img.shields.io/badge/docs-15_pages-informational?style=flat-square)
+![Docs](https://img.shields.io/badge/docs-16_pages-informational?style=flat-square)
 
 > A database-driven household preparedness platform — from 72-hour readiness to 90-day self-sufficiency.
 
@@ -57,6 +57,7 @@ Source of truth note: for persisted enums, field names, and API payload semantic
 | 12  | [Governance and License](./12-governance-license.md)                                     | CC BY-NC-SA rules, contribution standards                           |
 | 13  | [Quickstart Operator Checklist](./13-quickstart-operator-checklist.md)                   | One-page printable runbook                                          |
 | 14  | [Project Review and Remediation Backlog](./14-project-review-and-remediation-backlog.md) | Prioritized findings checklist for deep-dive follow-up              |
+| 15  | [Deep Dive: Auth and Session Architecture](./15-deep-dive-auth-session-architecture.md)  | Detailed auth flow, trust boundaries, and hardening posture         |
 
 [↑ Go to TOC](#table-of-contents)
 

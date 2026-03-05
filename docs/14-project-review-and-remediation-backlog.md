@@ -84,7 +84,7 @@
 
 ## E) Deep-Dive Queue (for future sessions)
 
-- [ ] **Deep dive #1: Authentication and session architecture**
+- [x] **Deep dive #1: Authentication and session architecture** (documented in `docs/15-deep-dive-auth-session-architecture.md`)
 - [ ] **Deep dive #2: API authorization and household scoping**
 - [ ] **Deep dive #3: Alert generation logic and escalation correctness**
 - [ ] **Deep dive #4: Data model constraints, indexes, and FK strategy**
