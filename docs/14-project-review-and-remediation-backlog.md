@@ -42,7 +42,7 @@
 ### P0
 
 - [~] **Create baseline API tests**: auth token + route scope coverage added; critical CRUD and planning calculation tests still pending.
-- [ ] **Create baseline frontend tests**: smoke tests for protected routes and core page rendering.
+- [~] **Create baseline frontend tests**: utility-level tests added for household/session helpers, timestamp/date behavior, and middleware auth guard logic; page-render smoke tests still pending.
 
 ### P1
 

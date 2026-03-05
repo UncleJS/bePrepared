@@ -2,15 +2,11 @@
  * middleware.ts — protect all app routes except auth/static internals.
  */
 import { auth } from "@/auth";
+import { shouldRedirectToLogin } from "@/lib/authGuard";
 import { NextResponse } from "next/server";
 
 export default auth((req) => {
-  if (!req.auth?.user) {
-    return NextResponse.redirect(new URL("/login", req.nextUrl));
-  }
-
-  const apiToken = (req.auth.user as { apiToken?: string }).apiToken;
-  if (!apiToken) {
+  if (shouldRedirectToLogin(req.auth)) {
     return NextResponse.redirect(new URL("/login", req.nextUrl));
   }
 
