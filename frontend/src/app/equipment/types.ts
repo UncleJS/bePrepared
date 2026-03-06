@@ -18,6 +18,7 @@ export type Equipment = {
   location?: string;
   acquiredAt?: string;
   notes?: string;
+  archivedAt?: string | null;
 };
 
 export type EquipmentForm = {

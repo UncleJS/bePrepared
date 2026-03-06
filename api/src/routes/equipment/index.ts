@@ -1,7 +1,7 @@
 import { Elysia, t } from "elysia";
 import { db } from "../../db/client";
 import { equipmentItems, batteryProfiles, equipmentCategories } from "../../db/schema";
-import { eq, isNull, and } from "drizzle-orm";
+import { eq, isNull, isNotNull, and } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { requireAdmin, requireHouseholdScope } from "../../lib/routeAuth";
 import {
@@ -248,18 +248,56 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
 
   .get(
     "/:householdId",
+    async ({ request, set, params, query }) => {
+      const claims = requireHouseholdScope(request, set, params.householdId);
+      if (!claims) return { error: "Forbidden" };
+
+      const archivedFilter = query.archived
+        ? isNotNull(equipmentItems.archivedAt)
+        : isNull(equipmentItems.archivedAt);
+
+      return db.query.equipmentItems.findMany({
+        where: and(eq(equipmentItems.householdId, params.householdId), archivedFilter),
+      });
+    },
+    {
+      query: t.Object({ archived: t.Optional(t.BooleanString()) }),
+      detail: {
+        summary: "List equipment items for a household (pass ?archived=true for archived)",
+      },
+    }
+  )
+
+  .post(
+    "/:householdId/:itemId/restore",
     async ({ request, set, params }) => {
       const claims = requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
-      return db.query.equipmentItems.findMany({
+      const item = await db.query.equipmentItems.findFirst({
         where: and(
+          eq(equipmentItems.id, params.itemId),
           eq(equipmentItems.householdId, params.householdId),
-          isNull(equipmentItems.archivedAt)
+          isNotNull(equipmentItems.archivedAt)
         ),
       });
+      if (!item) {
+        set.status = 404;
+        return { error: "Archived equipment item not found" };
+      }
+
+      await db
+        .update(equipmentItems)
+        .set({ archivedAt: null })
+        .where(
+          and(
+            eq(equipmentItems.id, params.itemId),
+            eq(equipmentItems.householdId, params.householdId)
+          )
+        );
+      return db.query.equipmentItems.findFirst({ where: eq(equipmentItems.id, params.itemId) });
     },
-    { detail: { summary: "List equipment items for a household" } }
+    { detail: { summary: "Restore an archived equipment item" } }
   )
 
   .post(

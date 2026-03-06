@@ -10,17 +10,6 @@ function readActiveHouseholdCookie(): string | null {
   return cookieId ? decodeURIComponent(cookieId) : null;
 }
 
-async function resolveServerOrigin(): Promise<string> {
-  const configured = process.env.NEXTAUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL;
-  if (configured) return configured.replace(/\/$/, "");
-
-  const { headers } = await import("next/headers");
-  const incoming = await headers();
-  const proto = incoming.get("x-forwarded-proto") ?? "http";
-  const host = incoming.get("x-forwarded-host") ?? incoming.get("host") ?? "localhost:9999";
-  return `${proto}://${host}`;
-}
-
 export async function getSessionHouseholdId(): Promise<string | null> {
   if (typeof window === "undefined") {
     const { auth } = await import("@/auth");
@@ -74,17 +63,44 @@ export function resolveClientHouseholdId(user?: {
 }
 
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
-  const base =
-    typeof window === "undefined" ? `${await resolveServerOrigin()}/api/bff` : "/api/bff";
-  const url = path.startsWith("http") ? path : `${base}${path}`;
-
+  let url: string;
   const headers = new Headers(options?.headers ?? undefined);
   if (!headers.has("Content-Type")) headers.set("Content-Type", "application/json");
-  if (typeof window === "undefined" && !headers.has("cookie")) {
-    const { headers: nextHeaders } = await import("next/headers");
-    const incoming = await nextHeaders();
-    const cookie = incoming.get("cookie");
-    if (cookie) headers.set("cookie", cookie);
+
+  if (typeof window === "undefined") {
+    // Server-side: call the API directly with the session's apiToken.
+    // Avoids a self-loop through the BFF (Next.js may not bind to localhost).
+    const apiBase = (
+      process.env.NEXTAUTH_API_URL ??
+      process.env.NEXT_PUBLIC_API_URL ??
+      "http://localhost:3001"
+    ).replace(/\/$/, "");
+    url = path.startsWith("http") ? path : `${apiBase}${path}`;
+
+    if (!headers.has("authorization")) {
+      const { getToken } = await import("next-auth/jwt");
+      const { headers: nextHeaders, cookies } = await import("next/headers");
+      // Build a minimal request-like object that getToken can read
+      const incoming = await nextHeaders();
+      const cookieStore = await cookies();
+      const cookieHeader = cookieStore
+        .getAll()
+        .map((c) => `${c.name}=${c.value}`)
+        .join("; ");
+      const mockReq = {
+        headers: Object.fromEntries([...incoming.entries(), ["cookie", cookieHeader]]),
+        cookies: Object.fromEntries(cookieStore.getAll().map((c) => [c.name, c.value])),
+      };
+      const token = await getToken({
+        req: mockReq as Parameters<typeof getToken>[0]["req"],
+        secret: process.env.AUTH_SECRET,
+      });
+      const apiToken = typeof token?.apiToken === "string" ? token.apiToken : null;
+      if (apiToken) headers.set("authorization", `Bearer ${apiToken}`);
+    }
+  } else {
+    // Client-side: go through the BFF proxy (adds auth automatically).
+    url = path.startsWith("http") ? path : `/api/bff${path}`;
   }
 
   const res = await fetch(url, {

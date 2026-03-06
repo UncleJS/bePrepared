@@ -5,7 +5,7 @@ import type { InventoryCategory, InventoryItem } from "./types";
 export function useInventoryData() {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [categories, setCategories] = useState<InventoryCategory[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadData = useCallback(async (householdId: string) => {

@@ -13,7 +13,7 @@ export const planningRoute = new Elysia({ prefix: "/planning", tags: ["planning"
   },
   {
     params: t.Object({
-      householdId: t.String({ minLength: 36, maxLength: 36 }),
+      householdId: t.String({ minLength: 1, maxLength: 64 }),
       scenario: t.Union([t.Literal("shelter_in_place"), t.Literal("evacuation")]),
     }),
     query: t.Object({

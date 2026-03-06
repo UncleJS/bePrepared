@@ -6,5 +6,8 @@ PodName=beprepared
 # Publish frontend port to the host
 PublishPort=9999:9999
 
+[Service]
+ExecStartPre=/bin/sleep 60
+
 [Install]
 WantedBy=default.target

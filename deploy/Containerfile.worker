@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package.json bun.lock* ./
 COPY api/package.json ./api/
 COPY frontend/package.json ./frontend/
-COPY api/src/db ./api/src/db
+COPY api/src ./api/src
 COPY worker/package.json ./worker/
 COPY worker/src ./worker/src
 

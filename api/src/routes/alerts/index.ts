@@ -2,7 +2,8 @@ import { Elysia, t } from "elysia";
 import { db } from "../../db/client";
 import { alerts } from "../../db/schema";
 import { eq, isNull, and } from "drizzle-orm";
-import { requireHouseholdScope } from "../../lib/routeAuth";
+import { requireHouseholdScope, requireAdmin } from "../../lib/routeAuth";
+import { runAllJobs } from "../../lib/alertJobs";
 
 export const alertsRoute = new Elysia({ prefix: "/alerts", tags: ["alerts"] })
 
@@ -75,4 +76,16 @@ export const alertsRoute = new Elysia({ prefix: "/alerts", tags: ["alerts"] })
       return { archived: true };
     },
     { detail: { summary: "Archive (dismiss) an alert" } }
+  )
+
+  .post(
+    "/run-job",
+    async ({ request, set }) => {
+      const claims = requireAdmin(request, set);
+      if (!claims) return { error: "Forbidden" };
+
+      const metrics = await runAllJobs();
+      return { ok: true, metrics };
+    },
+    { detail: { summary: "Manually trigger alert job run (admin only)" } }
   );

@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { apiFetch, fmtTs } from "@/lib/api";
 import { useActiveHouseholdId } from "@/lib/useActiveHouseholdId";
-import { CheckCircle2, AlertTriangle } from "lucide-react";
+import { CheckCircle2, AlertTriangle, RefreshCw } from "lucide-react";
 
 type Alert = {
   id: string;
@@ -31,9 +32,12 @@ const SEVERITY_BORDER: Record<string, string> = {
 
 export default function AlertsPage() {
   const { householdId, status } = useActiveHouseholdId();
+  const { data: session } = useSession();
+  const isAdmin = (session?.user as { isAdmin?: boolean } | undefined)?.isAdmin ?? false;
 
   const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(() => {
     if (!householdId) return;
@@ -59,6 +63,18 @@ export default function AlertsPage() {
     load();
   }
 
+  async function runJob() {
+    setRefreshing(true);
+    try {
+      await apiFetch("/alerts/run-job", { method: "POST" });
+      load();
+    } catch (err) {
+      console.error("[alerts] run-job failed", err);
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
   if (status === "loading")
     return <p className="text-muted-foreground text-sm">Loading session…</p>;
   if (!householdId)
@@ -70,11 +86,23 @@ export default function AlertsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Alerts</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          {active.length} active · {resolved.length} resolved
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Alerts</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            {active.length} active · {resolved.length} resolved
+          </p>
+        </div>
+        {isAdmin && (
+          <button
+            onClick={runJob}
+            disabled={refreshing}
+            className="flex items-center gap-2 text-sm px-3 py-1.5 rounded border border-border hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+          >
+            <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
+            {refreshing ? "Refreshing…" : "Refresh Alerts"}
+          </button>
+        )}
       </div>
 
       {active.length === 0 && (
@@ -99,12 +127,18 @@ export default function AlertsPage() {
                 <span>{a.category.replace("_", " ")}</span>
                 {a.dueAt && <span>Due: {a.dueAt.slice(0, 10)}</span>}
                 <span>{fmtTs(a.createdAt)}</span>
+                {a.isRead && (
+                  <span className="border border-border rounded px-1 text-muted-foreground/60">
+                    read
+                  </span>
+                )}
               </div>
             </div>
             <div className="flex gap-2 shrink-0">
               <button
                 onClick={() => markRead(a.id)}
-                className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded border border-border hover:bg-accent transition-colors"
+                disabled={a.isRead}
+                className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded border border-border hover:bg-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Read
               </button>

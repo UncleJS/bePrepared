@@ -15,7 +15,7 @@ export function UserMenu({ name }: UserMenuProps) {
         <span className="hidden sm:inline">{name ?? "user"}</span>
       </div>
       <button
-        onClick={() => signOut({ callbackUrl: "/login" })}
+        onClick={() => signOut({ callbackUrl: `${window.location.origin}/login` })}
         className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
         title="Sign out"
       >

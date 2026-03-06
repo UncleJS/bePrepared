@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch, fmtDate, daysUntil } from "@/lib/api";
 import { useActiveHouseholdId } from "@/lib/useActiveHouseholdId";
+import { Pencil } from "lucide-react";
 
 type Schedule = {
   id: string;
@@ -15,19 +16,50 @@ type Schedule = {
   isActive: boolean;
 };
 
+type ScheduleEditForm = {
+  name: string;
+  calDays: string;
+  graceDays: string;
+  nextDueAt: string;
+  lastDoneAt: string;
+  isActive: boolean;
+};
+
 type EquipmentItem = { id: string; name: string; categorySlug?: string };
 type Template = { id: string; name: string; defaultCalDays?: number; graceDays?: number };
+
+const EMPTY_EDIT_FORM: ScheduleEditForm = {
+  name: "",
+  calDays: "",
+  graceDays: "7",
+  nextDueAt: "",
+  lastDoneAt: "",
+  isActive: true,
+};
+
+function scheduleToForm(s: Schedule): ScheduleEditForm {
+  return {
+    name: s.name,
+    calDays: s.calDays != null ? String(s.calDays) : "",
+    graceDays: String(s.graceDays),
+    nextDueAt: s.nextDueAt ? s.nextDueAt.slice(0, 10) : "",
+    lastDoneAt: s.lastDoneAt ? s.lastDoneAt.slice(0, 10) : "",
+    isActive: s.isActive,
+  };
+}
 
 export default function MaintenancePage() {
   const { householdId, status } = useActiveHouseholdId();
 
   const [schedules, setSchedules] = useState<Schedule[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [equipment, setEquipment] = useState<EquipmentItem[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Create form
   const [form, setForm] = useState({
     equipmentItemId: "",
     templateId: "",
@@ -36,6 +68,18 @@ export default function MaintenancePage() {
     graceDays: "7",
     nextDueAt: "",
   });
+
+  // Edit state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<ScheduleEditForm>(EMPTY_EDIT_FORM);
+
+  const equipmentMap = Object.fromEntries(equipment.map((e) => [e.id, e.name]));
+
+  async function loadSchedules() {
+    if (!householdId) return;
+    const rows = await apiFetch<Schedule[]>(`/maintenance/${householdId}/schedules`);
+    setSchedules(rows);
+  }
 
   useEffect(() => {
     if (!householdId) return;
@@ -96,10 +140,52 @@ export default function MaintenancePage() {
         nextDueAt: "",
       });
       setMessage("Maintenance schedule created.");
-      const rows = await apiFetch<Schedule[]>(`/maintenance/${householdId}/schedules`);
-      setSchedules(rows);
+      await loadSchedules();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to create maintenance schedule.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function startEdit(s: Schedule) {
+    setEditingId(s.id);
+    setEditForm(scheduleToForm(s));
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditForm(EMPTY_EDIT_FORM);
+  }
+
+  async function saveScheduleEdit() {
+    if (!householdId || !editingId) return;
+    if (!editForm.name.trim()) {
+      setError("Schedule name is required.");
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    setMessage(null);
+    try {
+      await apiFetch(`/maintenance/${householdId}/schedules/${editingId}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          name: editForm.name.trim(),
+          calDays: editForm.calDays ? Number(editForm.calDays) : undefined,
+          graceDays: editForm.graceDays ? Number(editForm.graceDays) : undefined,
+          nextDueAt: editForm.nextDueAt || undefined,
+          lastDoneAt: editForm.lastDoneAt || undefined,
+          isActive: editForm.isActive,
+        }),
+      });
+      setEditingId(null);
+      setEditForm(EMPTY_EDIT_FORM);
+      setMessage("Maintenance schedule updated.");
+      await loadSchedules();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to update maintenance schedule.");
     } finally {
       setSaving(false);
     }
@@ -223,11 +309,13 @@ export default function MaintenancePage() {
         <table className="w-full text-sm">
           <thead className="bg-muted/50">
             <tr>
+              <th className="text-left px-4 py-2 font-medium text-muted-foreground">Equipment</th>
               <th className="text-left px-4 py-2 font-medium text-muted-foreground">Schedule</th>
               <th className="text-left px-4 py-2 font-medium text-muted-foreground">Interval</th>
               <th className="text-left px-4 py-2 font-medium text-muted-foreground">Last Done</th>
               <th className="text-left px-4 py-2 font-medium text-muted-foreground">Next Due</th>
               <th className="text-left px-4 py-2 font-medium text-muted-foreground">Status</th>
+              <th className="text-right px-4 py-2 font-medium text-muted-foreground">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -236,7 +324,10 @@ export default function MaintenancePage() {
               let statusLabel = "OK";
               let statusClass = "text-primary";
 
-              if (days !== null) {
+              if (!s.isActive) {
+                statusLabel = "Inactive";
+                statusClass = "text-muted-foreground";
+              } else if (days !== null) {
                 if (days < 0) {
                   statusLabel = `Overdue ${Math.abs(days)}d`;
                   statusClass = "text-destructive font-semibold";
@@ -250,7 +341,13 @@ export default function MaintenancePage() {
               }
 
               return (
-                <tr key={s.id} className="hover:bg-accent/30 transition-colors">
+                <tr
+                  key={s.id}
+                  className={`hover:bg-accent/30 transition-colors ${!s.isActive ? "opacity-60" : ""}`}
+                >
+                  <td className="px-4 py-2.5 text-muted-foreground">
+                    {equipmentMap[s.equipmentItemId] ?? "—"}
+                  </td>
                   <td className="px-4 py-2.5 font-medium">{s.name}</td>
                   <td className="px-4 py-2.5 text-muted-foreground">
                     {s.calDays ? `${s.calDays}d` : "—"}
@@ -258,12 +355,21 @@ export default function MaintenancePage() {
                   <td className="px-4 py-2.5 text-muted-foreground">{fmtDate(s.lastDoneAt)}</td>
                   <td className="px-4 py-2.5 text-muted-foreground">{fmtDate(s.nextDueAt)}</td>
                   <td className={`px-4 py-2.5 ${statusClass}`}>{statusLabel}</td>
+                  <td className="px-4 py-2.5 text-right">
+                    <button
+                      type="button"
+                      onClick={() => startEdit(s)}
+                      className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      <Pencil size={12} /> Edit
+                    </button>
+                  </td>
                 </tr>
               );
             })}
             {schedules.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
                   No maintenance schedules configured.
                 </td>
               </tr>
@@ -271,6 +377,112 @@ export default function MaintenancePage() {
           </tbody>
         </table>
       </div>
+
+      {editingId && (
+        <section className="rounded-lg border border-border bg-card p-4 space-y-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Edit Maintenance Schedule
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="space-y-1">
+              <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+                Schedule Name
+              </label>
+              <input
+                value={editForm.name}
+                onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
+                className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+                Interval (days)
+              </label>
+              <input
+                value={editForm.calDays}
+                onChange={(e) => setEditForm((f) => ({ ...f, calDays: e.target.value }))}
+                className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+                placeholder="30"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+                Grace Period (days)
+              </label>
+              <input
+                value={editForm.graceDays}
+                onChange={(e) => setEditForm((f) => ({ ...f, graceDays: e.target.value }))}
+                className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+                placeholder="7"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+                Last Done Date
+              </label>
+              <input
+                type="date"
+                value={editForm.lastDoneAt}
+                onChange={(e) => setEditForm((f) => ({ ...f, lastDoneAt: e.target.value }))}
+                className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+                Next Due Date
+              </label>
+              <input
+                type="date"
+                value={editForm.nextDueAt}
+                onChange={(e) => setEditForm((f) => ({ ...f, nextDueAt: e.target.value }))}
+                className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+                Active
+              </label>
+              <div className="flex items-center h-[38px]">
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={editForm.isActive}
+                  onClick={() => setEditForm((f) => ({ ...f, isActive: !f.isActive }))}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                    editForm.isActive ? "bg-primary" : "bg-muted-foreground/30"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      editForm.isActive ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+                <span className="ml-2 text-sm text-muted-foreground">
+                  {editForm.isActive ? "Active" : "Inactive"}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={saveScheduleEdit}
+              disabled={saving}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Save"}
+            </button>
+            <button
+              type="button"
+              onClick={cancelEdit}
+              className="rounded-md border border-border px-4 py-2 text-sm text-muted-foreground"
+            >
+              Cancel
+            </button>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

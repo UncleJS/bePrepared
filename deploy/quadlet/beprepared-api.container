@@ -10,7 +10,7 @@ Image=localhost/beprepared-api:latest
 Pod=beprepared.pod
 ContainerName=beprepared-api
 
-EnvironmentFile=%h/bePrepared/deploy/.env
+EnvironmentFile=%h/0_opencode/bePrepared/deploy/.env
 
 [Service]
 Restart=on-failure

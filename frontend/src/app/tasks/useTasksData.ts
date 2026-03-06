@@ -7,7 +7,7 @@ export function useTasksData(householdId: string | null) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [modules, setModules] = useState<Module[]>([]);
   const [progress, setProgress] = useState<Record<string, Progress>>({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {

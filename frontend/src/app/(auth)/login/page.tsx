@@ -1,97 +1,33 @@
-"use client";
+import { signIn } from "@/auth";
+import { ShieldCheck, LogIn } from "lucide-react";
+import { AuthError } from "next-auth";
+import { redirect } from "next/navigation";
 
-import { useState, FormEvent } from "react";
-import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { ShieldCheck, LogIn, Loader2 } from "lucide-react";
-import { Suspense } from "react";
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ callbackUrl?: string; error?: string }>;
+}) {
+  const { callbackUrl, error } = await searchParams;
+  const destination = callbackUrl ?? "/dashboard";
 
-function LoginForm() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
-
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    const result = await signIn("credentials", {
-      username,
-      password,
-      redirect: false,
-    });
-
-    setLoading(false);
-
-    if (result?.error) {
-      setError("Invalid username or password.");
-    } else {
-      router.push(callbackUrl);
-      router.refresh();
+  async function doLogin(formData: FormData) {
+    "use server";
+    try {
+      await signIn("credentials", {
+        username: formData.get("username") as string,
+        password: formData.get("password") as string,
+        redirectTo: destination,
+      });
+    } catch (err) {
+      if (err instanceof AuthError) {
+        redirect(`/login?error=CredentialsSignin&callbackUrl=${encodeURIComponent(destination)}`);
+      }
+      // signIn throws a NEXT_REDIRECT on success — re-throw it
+      throw err;
     }
   }
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-1">
-        <label
-          htmlFor="username"
-          className="block text-xs font-bold uppercase tracking-wide text-primary"
-        >
-          Account Username
-        </label>
-        <input
-          id="username"
-          type="text"
-          autoComplete="username"
-          required
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-          placeholder="admin"
-        />
-      </div>
-
-      <div className="space-y-1">
-        <label
-          htmlFor="password"
-          className="block text-xs font-bold uppercase tracking-wide text-primary"
-        >
-          Account Password
-        </label>
-        <input
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-          placeholder="••••••••"
-        />
-      </div>
-
-      {error && <p className="text-sm text-destructive">{error}</p>}
-
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
-      >
-        {loading ? <Loader2 size={16} className="animate-spin" /> : <LogIn size={16} />}
-        {loading ? "Signing in…" : "Sign in"}
-      </button>
-    </form>
-  );
-}
-
-export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm space-y-6">
@@ -106,9 +42,55 @@ export default function LoginPage() {
 
         {/* Card */}
         <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-          <Suspense>
-            <LoginForm />
-          </Suspense>
+          <form action={doLogin} className="space-y-4">
+            <div className="space-y-1">
+              <label
+                htmlFor="username"
+                className="block text-xs font-bold uppercase tracking-wide text-primary"
+              >
+                Account Username
+              </label>
+              <input
+                id="username"
+                name="username"
+                type="text"
+                autoComplete="username"
+                required
+                className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="admin"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label
+                htmlFor="password"
+                className="block text-xs font-bold uppercase tracking-wide text-primary"
+              >
+                Account Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="••••••••"
+              />
+            </div>
+
+            {error === "CredentialsSignin" && (
+              <p className="text-sm text-destructive">Invalid username or password.</p>
+            )}
+
+            <button
+              type="submit"
+              className="w-full flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
+            >
+              <LogIn size={16} />
+              Sign in
+            </button>
+          </form>
         </div>
 
         {/* Footer */}

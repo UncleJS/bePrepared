@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { apiFetch, resolveClientHouseholdId, setActiveHouseholdId } from "@/lib/api";
 
 type Household = { id: string; name: string };
@@ -12,6 +13,7 @@ export function HouseholdSwitcher({
   sessionHouseholdId?: string;
   isAdmin?: boolean;
 }) {
+  const router = useRouter();
   const [households, setHouseholds] = useState<Household[]>([]);
   const [selected, setSelected] = useState(
     () =>
@@ -54,6 +56,7 @@ export function HouseholdSwitcher({
           const id = e.target.value;
           setSelected(id);
           setActiveHouseholdId(id);
+          router.refresh();
         }}
         className="rounded-md border border-border bg-muted px-2 py-1 text-xs text-foreground"
       >

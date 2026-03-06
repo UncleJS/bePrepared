@@ -137,7 +137,7 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
     },
     {
       params: t.Object({
-        householdId: t.String({ minLength: 36, maxLength: 36 }),
+        householdId: t.String({ minLength: 1, maxLength: 64 }),
         scenario: scenarioParamSchema,
       }),
       detail: { summary: "Get scenario-specific policy overrides" },
@@ -194,7 +194,7 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
         valueInt: t.Optional(t.Number({ minimum: 0, maximum: 1000000000 })),
       }),
       params: t.Object({
-        householdId: t.String({ minLength: 36, maxLength: 36 }),
+        householdId: t.String({ minLength: 1, maxLength: 64 }),
         scenario: scenarioParamSchema,
         key: t.String({ minLength: 1, maxLength: 100 }),
       }),

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useActiveHouseholdId } from "@/lib/useActiveHouseholdId";
-import { Plus } from "lucide-react";
+import { Plus, Archive } from "lucide-react";
 import Link from "next/link";
 import { EquipmentRow } from "./EquipmentRow";
 import { EquipmentFormFields } from "./EquipmentFormFields";
@@ -11,8 +11,19 @@ import { useEquipmentItemActions } from "./useEquipmentItemActions";
 
 export default function EquipmentPage() {
   const { householdId, status } = useActiveHouseholdId();
+  const [showArchived, setShowArchived] = useState(false);
 
-  const { equipment, categories, loading, error, setError, loadData } = useEquipmentData();
+  const {
+    equipment,
+    archivedEquipment,
+    categories,
+    loading,
+    error,
+    setError,
+    loadData,
+    loadArchived,
+  } = useEquipmentData();
+
   const {
     saving,
     message,
@@ -26,7 +37,8 @@ export default function EquipmentPage() {
     cancelEdit,
     saveItemEdit,
     archiveItem,
-  } = useEquipmentItemActions({ householdId, loadData, setError });
+    restoreItem,
+  } = useEquipmentItemActions({ householdId, loadData, loadArchived, showArchived, setError });
 
   const categoryMap = useMemo(
     () => Object.fromEntries(categories.map((c) => [c.id, c.name])),
@@ -38,6 +50,13 @@ export default function EquipmentPage() {
     void loadData(householdId);
   }, [householdId, loadData]);
 
+  useEffect(() => {
+    if (!householdId) return;
+    if (showArchived) {
+      void loadArchived(householdId);
+    }
+  }, [showArchived, householdId, loadArchived]);
+
   if (status === "loading")
     return <p className="text-muted-foreground text-sm">Loading session...</p>;
   if (!householdId)
@@ -46,9 +65,23 @@ export default function EquipmentPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Equipment</h1>
-        <p className="text-muted-foreground text-sm mt-1">{equipment.length} items registered</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Equipment</h1>
+          <p className="text-muted-foreground text-sm mt-1">{equipment.length} items registered</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowArchived((v) => !v)}
+          className={`inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+            showArchived
+              ? "border-primary bg-primary/10 text-primary"
+              : "border-border text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Archive size={13} />
+          {showArchived ? "Hide archived" : "Show archived"}
+        </button>
       </div>
 
       <section className="rounded-lg border border-border bg-card p-4">
@@ -103,9 +136,60 @@ export default function EquipmentPage() {
                 onArchive={archiveItem}
               />
             ))}
+            {equipment.length === 0 && (
+              <tr>
+                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
+                  No equipment registered.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
+
+      {showArchived && (
+        <div className="rounded-lg border border-border overflow-hidden">
+          <div className="bg-muted/30 px-4 py-2 border-b border-border flex items-center gap-2">
+            <Archive size={13} className="text-muted-foreground" />
+            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Archived ({archivedEquipment.length})
+            </span>
+          </div>
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50">
+              <tr>
+                <th className="text-left px-4 py-2">Name</th>
+                <th className="text-left px-4 py-2">Category</th>
+                <th className="text-left px-4 py-2">Model / Serial</th>
+                <th className="text-left px-4 py-2">Location</th>
+                <th className="text-left px-4 py-2">Status</th>
+                <th className="text-left px-4 py-2">Acquired</th>
+                <th className="text-right px-4 py-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {archivedEquipment.map((item) => (
+                <EquipmentRow
+                  key={item.id}
+                  item={item}
+                  categoryMap={categoryMap}
+                  onEdit={startEdit}
+                  onArchive={archiveItem}
+                  onRestore={restoreItem}
+                  isArchived
+                />
+              ))}
+              {archivedEquipment.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
+                    No archived equipment.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {editingId && (
         <section className="rounded-lg border border-border bg-card p-4 space-y-3">

@@ -10,7 +10,7 @@ Image=docker.io/library/mariadb:11
 Pod=beprepared.pod
 ContainerName=beprepared-db
 
-EnvironmentFile=%h/bePrepared/deploy/.env
+EnvironmentFile=%h/0_opencode/bePrepared/deploy/.env
 
 Volume=%h/bePrepared/data/mariadb:/var/lib/mysql:Z
 

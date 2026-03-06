@@ -10,7 +10,7 @@ Image=localhost/beprepared-worker:latest
 Pod=beprepared.pod
 ContainerName=beprepared-worker
 
-EnvironmentFile=%h/bePrepared/deploy/.env
+EnvironmentFile=%h/0_opencode/bePrepared/deploy/.env
 PodmanArgs=--read-only
 PodmanArgs=--tmpfs=/tmp:rw,nosuid,nodev,noexec,size=64m
 PodmanArgs=--security-opt=no-new-privileges
