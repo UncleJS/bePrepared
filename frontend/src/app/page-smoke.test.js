@@ -5,15 +5,41 @@ import { renderToStaticMarkup } from "react-dom/server";
 describe("page smoke", () => {
   it("renders login page shell", async () => {
     mock.module("next/navigation", () => ({
+      redirect: (url) => {
+        throw Object.assign(new Error("NEXT_REDIRECT"), {
+          digest: `NEXT_REDIRECT;replace;${url};307;`,
+        });
+      },
+      notFound: () => {
+        throw new Error("NEXT_NOT_FOUND");
+      },
       useRouter: () => ({ push: () => {}, refresh: () => {} }),
       useSearchParams: () => ({ get: () => null }),
+      usePathname: () => "/",
     }));
     mock.module("next-auth/react", () => ({
       signIn: async () => ({ ok: true }),
     }));
+    mock.module("next-auth", () => ({
+      default: () => ({
+        handlers: {},
+        signIn: async () => {},
+        signOut: async () => {},
+        auth: async () => null,
+      }),
+      AuthError: class AuthError extends Error {},
+    }));
+    mock.module("@/auth", () => ({
+      signIn: async () => {},
+      signOut: async () => {},
+      auth: async () => null,
+      handlers: {},
+    }));
 
     const { default: LoginPage } = await import("./(auth)/login/page");
-    const html = renderToStaticMarkup(createElement(LoginPage));
+    // LoginPage is an async Server Component — call it directly and await the JSX
+    const jsx = await LoginPage({ searchParams: Promise.resolve({}) });
+    const html = renderToStaticMarkup(jsx);
 
     expect(html).toContain("bePrepared");
     expect(html).toContain("Sign in");
