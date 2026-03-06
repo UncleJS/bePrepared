@@ -33,54 +33,55 @@ const state = {
   dependencies: [],
 };
 
-mock.module("../../db/client", () => ({
-  db: {
-    insert: () => ({
-      values: async (values) => {
-        if (values.taskId && values.dependsOnTaskId) {
-          state.dependencies.push({
-            id: values.id,
-            taskId: values.taskId,
-            dependsOnTaskId: values.dependsOnTaskId,
-            createdAt: new Date(),
-          });
-          return;
-        }
+const dbMock = {
+  insert: () => ({
+    values: async (values) => {
+      if (values.taskId && values.dependsOnTaskId) {
+        state.dependencies.push({
+          id: values.id,
+          taskId: values.taskId,
+          dependsOnTaskId: values.dependsOnTaskId,
+          createdAt: new Date(),
+        });
+        return;
+      }
+      state.task = { ...state.task, ...values };
+    },
+  }),
+  update: () => ({
+    set: (values) => ({
+      where: async () => {
         state.task = { ...state.task, ...values };
       },
     }),
-    update: () => ({
-      set: (values) => ({
-        where: async () => {
-          state.task = { ...state.task, ...values };
-        },
-      }),
-    }),
-    query: {
-      tasks: {
-        findMany: async () => [state.task, state.dependencyTask],
-        findFirst: async ({ where } = {}) => {
-          void where;
-          return state.task;
-        },
-      },
-      taskDependencies: {
-        findMany: async ({ where } = {}) => {
-          void where;
-          return state.dependencies;
-        },
-        findFirst: async ({ where } = {}) => {
-          void where;
-          return null;
-        },
-      },
-      taskProgress: {
-        findMany: async () => [],
-        findFirst: async () => null,
+  }),
+  transaction: async (fn) => fn(dbMock),
+  query: {
+    tasks: {
+      findMany: async () => [state.task, state.dependencyTask],
+      findFirst: async ({ where } = {}) => {
+        void where;
+        return state.task;
       },
     },
+    taskDependencies: {
+      findMany: async ({ where } = {}) => {
+        void where;
+        return state.dependencies;
+      },
+      findFirst: async ({ where } = {}) => {
+        void where;
+        return null;
+      },
+    },
+    taskProgress: {
+      findMany: async () => [],
+      findFirst: async () => null,
+    },
   },
-}));
+};
+
+mock.module("../../db/client", () => ({ db: dbMock }));
 
 mock.module("../../lib/routeAuth", () => ({
   requireAuth: () => ({ sub: "user-1", isAdmin: false, householdId: "household-1" }),
