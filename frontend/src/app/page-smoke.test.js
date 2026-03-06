@@ -45,41 +45,31 @@ describe("page smoke", () => {
     expect(html).toContain("Sign in");
   });
 
-  it("renders dashboard page with fetched planning + alerts", async () => {
+  it("renders dashboard page shell with client component placeholders", async () => {
     const realApi = await import("../lib/api");
     mock.module("@/lib/api", () => ({
       ...realApi,
       getSessionHouseholdId: async () => "household-1",
-      apiFetch: async (path) => {
-        if (String(path).includes("/alerts/")) {
-          return [
-            { id: "a1", title: "Generator service due", severity: "due", isResolved: false },
-            { id: "a2", title: "Water rotation overdue", severity: "overdue", isResolved: false },
-          ];
-        }
-        return {
-          people: { count: 4 },
-          policy: {
-            waterLitersPerPersonPerDay: 4,
-            caloriesKcalPerPersonPerDay: 2200,
-          },
-          totals: {
-            h72: { water: 48, calories: 26400 },
-            d14: { water: 224, calories: 123200 },
-            d30: { water: 480, calories: 264000 },
-            d90: { water: 1440, calories: 792000 },
-          },
-        };
-      },
+      apiFetch: async () => ({}),
+    }));
+
+    mock.module("next-auth/react", () => ({
+      useSession: () => ({
+        data: { user: { householdId: "household-1" } },
+        status: "authenticated",
+      }),
+      getSession: async () => ({ user: { householdId: "household-1" } }),
     }));
 
     const { default: DashboardPage } = await import("./dashboard/page");
     const html = renderToStaticMarkup(await DashboardPage());
 
+    // Server component renders the page heading; planning + alerts are client
+    // components that show skeleton loaders in SSR (no useEffect/data in static render)
     expect(html).toContain("Dashboard");
-    expect(html).toContain("Overdue Alerts");
-    expect(html).toContain("Planning Targets");
-    expect(html).toContain("Active Alerts");
+    expect(html).toContain("Household readiness overview");
+    // Skeleton placeholders confirm both client sections are mounted
+    expect(html).toContain("animate-pulse");
   });
 
   it("renders tasks route loading shell", async () => {
