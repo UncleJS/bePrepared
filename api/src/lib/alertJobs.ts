@@ -15,6 +15,7 @@ import { randomUUID } from "crypto";
 
 const {
   inventoryLots,
+  inventoryItems,
   equipmentItems,
   maintenanceSchedules,
   alerts,
@@ -160,10 +161,20 @@ async function upsertAlert(data: {
     if (decision === "escalated") {
       await db
         .update(alerts)
-        .set({ severity: data.severity, updatedAt: new Date() })
+        .set({
+          severity: data.severity,
+          title: data.title,
+          detail: data.detail,
+          updatedAt: new Date(),
+        })
         .where(eq(alerts.id, existing.id));
       return decision;
     }
+    // Also refresh title/detail on unchanged alerts (so backfill happens on next job run)
+    await db
+      .update(alerts)
+      .set({ title: data.title, detail: data.detail, updatedAt: new Date() })
+      .where(eq(alerts.id, existing.id));
     return decision;
   }
   await db.insert(alerts).values({
@@ -206,22 +217,34 @@ async function processInventoryExpiry(metrics: JobCounters) {
       ),
     });
 
+    // Build itemId → item map for this household (one query, not per-lot)
+    const itemRows = await db.query.inventoryItems.findMany({
+      where: and(eq(inventoryItems.householdId, hh.id), isNull(inventoryItems.archivedAt)),
+    });
+    const itemMap = new Map(itemRows.map((i) => [i.id, i]));
+
     for (const lot of lots) {
       if (!lot.expiresAt) {
         metrics.skipped += 1;
         continue;
       }
       try {
-        const expStr = lot.expiresAt.toString().slice(0, 10);
-        const severity = computeAlertSeverity(lot.expiresAt, today, graceDays);
+        const expStr = new Date(lot.expiresAt).toISOString().slice(0, 10);
+        const severity = computeAlertSeverity(new Date(lot.expiresAt), today, graceDays);
+        const item = itemMap.get(lot.itemId);
+        const itemName = item?.name ?? lot.batchRef ?? lot.id;
+        const parts: string[] = [`Expires: ${expStr}`];
+        if (item?.location) parts.push(`Location: ${item.location}`);
+        if (lot.qty != null) parts.push(`Qty: ${lot.qty}${item?.unit ? " " + item.unit : ""}`);
+        if (lot.batchRef) parts.push(`Batch: ${lot.batchRef}`);
         const result = await upsertAlert({
           householdId: hh.id,
           severity,
           category: "expiry",
           entityType: "inventory_lot",
           entityId: lot.id,
-          title: `Lot expiring: ${lot.batchRef ?? lot.id}`,
-          detail: `Expires: ${expStr}`,
+          title: `Lot expiring: ${itemName}`,
+          detail: parts.join(" · "),
           dueAt: new Date(expStr),
         });
         if (result === "inserted") metrics.inserted += 1;
@@ -257,22 +280,34 @@ async function processInventoryReplacement(metrics: JobCounters) {
       ),
     });
 
+    // Build itemId → item map for this household (one query, not per-lot)
+    const itemRows = await db.query.inventoryItems.findMany({
+      where: and(eq(inventoryItems.householdId, hh.id), isNull(inventoryItems.archivedAt)),
+    });
+    const itemMap = new Map(itemRows.map((i) => [i.id, i]));
+
     for (const lot of lots) {
       if (!lot.nextReplaceAt) {
         metrics.skipped += 1;
         continue;
       }
       try {
-        const repStr = lot.nextReplaceAt.toString().slice(0, 10);
-        const severity = computeAlertSeverity(lot.nextReplaceAt, today, graceDays);
+        const repStr = new Date(lot.nextReplaceAt).toISOString().slice(0, 10);
+        const severity = computeAlertSeverity(new Date(lot.nextReplaceAt), today, graceDays);
+        const item = itemMap.get(lot.itemId);
+        const itemName = item?.name ?? lot.batchRef ?? lot.id;
+        const parts: string[] = [`Replace by: ${repStr}`];
+        if (item?.location) parts.push(`Location: ${item.location}`);
+        if (lot.qty != null) parts.push(`Qty: ${lot.qty}${item?.unit ? " " + item.unit : ""}`);
+        if (lot.batchRef) parts.push(`Batch: ${lot.batchRef}`);
         const result = await upsertAlert({
           householdId: hh.id,
           severity,
           category: "replacement",
           entityType: "inventory_lot",
           entityId: lot.id,
-          title: `Lot replacement due: ${lot.batchRef ?? lot.id}`,
-          detail: `Replace by: ${repStr}`,
+          title: `Replace: ${itemName}`,
+          detail: parts.join(" · "),
           dueAt: new Date(repStr),
         });
         if (result === "inserted") metrics.inserted += 1;
@@ -316,24 +351,27 @@ async function processMaintenanceSchedules(metrics: JobCounters) {
         )
       );
 
-    for (const { schedule: sched } of scheduleRows) {
+    for (const { schedule: sched, equipment: equip } of scheduleRows) {
       if (!sched.nextDueAt) {
         metrics.skipped += 1;
         continue;
       }
       try {
-        const dueStr = sched.nextDueAt.toString().slice(0, 10);
+        const dueStr = new Date(sched.nextDueAt).toISOString().slice(0, 10);
         // Use the schedule's own grace_days (falls back to 0 if not set)
         const schedGraceDays = sched.graceDays ?? 0;
-        const severity = computeAlertSeverity(sched.nextDueAt, today, schedGraceDays);
+        const severity = computeAlertSeverity(new Date(sched.nextDueAt), today, schedGraceDays);
+        const parts: string[] = [`Due: ${dueStr}`];
+        if (equip.location) parts.push(`Location: ${equip.location}`);
+        if (equip.model) parts.push(`Model: ${equip.model}`);
         const result = await upsertAlert({
           householdId: hh.id,
           severity,
           category: "maintenance",
           entityType: "maintenance_schedule",
           entityId: sched.id,
-          title: `Maintenance due: ${sched.name}`,
-          detail: `Due: ${dueStr}`,
+          title: `Maintenance: ${equip.name} — ${sched.name}`,
+          detail: parts.join(" · "),
           dueAt: new Date(dueStr),
         });
         if (result === "inserted") metrics.inserted += 1;

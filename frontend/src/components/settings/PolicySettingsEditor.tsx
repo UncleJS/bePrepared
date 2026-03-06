@@ -51,7 +51,13 @@ export function PolicySettingsEditor({ householdId, defaults, overrides }: Props
     setMessage(null);
     setError(null);
 
-    if (!raw || Number.isNaN(parsed)) {
+    // Empty input → treat as reset to default
+    if (!raw) {
+      await resetOverride(d);
+      return;
+    }
+
+    if (Number.isNaN(parsed)) {
       setError(`Invalid value for ${d.key}. Enter a numeric value.`);
       return;
     }

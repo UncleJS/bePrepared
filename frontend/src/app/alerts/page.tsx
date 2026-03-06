@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import { apiFetch, fmtTs } from "@/lib/api";
 import { useActiveHouseholdId } from "@/lib/useActiveHouseholdId";
 import { CheckCircle2, AlertTriangle, RefreshCw } from "lucide-react";
@@ -10,12 +11,19 @@ type Alert = {
   id: string;
   severity: "upcoming" | "due" | "overdue";
   category: string;
+  entityType: string;
+  entityId: string;
   title: string;
   detail?: string | null;
   dueAt?: string | null;
   isRead: boolean;
   isResolved: boolean;
   createdAt: string;
+};
+
+const ENTITY_LINK: Record<string, string> = {
+  inventory_lot: "/inventory",
+  maintenance_schedule: "/equipment",
 };
 
 const SEVERITY_ICON: Record<string, React.ReactNode> = {
@@ -135,6 +143,14 @@ export default function AlertsPage() {
               </div>
             </div>
             <div className="flex gap-2 shrink-0">
+              {ENTITY_LINK[a.entityType] && (
+                <Link
+                  href={ENTITY_LINK[a.entityType]}
+                  className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded border border-border hover:bg-accent transition-colors"
+                >
+                  View →
+                </Link>
+              )}
               <button
                 onClick={() => markRead(a.id)}
                 disabled={a.isRead}

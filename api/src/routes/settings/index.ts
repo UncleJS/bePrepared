@@ -202,6 +202,37 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
     }
   )
 
+  .delete(
+    "/:householdId/scenario/:scenario/:key",
+    async ({ request, set, params }) => {
+      const claims = requireHouseholdScope(request, set, params.householdId);
+      if (!claims) return { error: "Forbidden" };
+
+      await db
+        .update(scenarioPolicies)
+        .set({ archivedAt: new Date() })
+        .where(
+          and(
+            eq(scenarioPolicies.householdId, params.householdId),
+            eq(scenarioPolicies.scenario, params.scenario),
+            eq(scenarioPolicies.key, params.key),
+            isNull(scenarioPolicies.archivedAt)
+          )
+        );
+      return { reset: true };
+    },
+    {
+      params: t.Object({
+        householdId: t.String({ minLength: 1, maxLength: 64 }),
+        scenario: scenarioParamSchema,
+        key: t.String({ minLength: 1, maxLength: 100 }),
+      }),
+      detail: {
+        summary: "Reset a scenario-specific policy override (revert to household/default)",
+      },
+    }
+  )
+
   // Audit log
   .get(
     "/:householdId/audit",

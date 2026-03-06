@@ -35,6 +35,15 @@ export function ScenarioPolicySettingsEditor({
   defaults: PolicyDefault[];
   scenarioPolicies: Record<Scenario, ScenarioPolicy[]>;
 }) {
+  const [overrideMap, setOverrideMap] = useState<Record<string, ScenarioPolicy>>(() => {
+    const map: Record<string, ScenarioPolicy> = {};
+    for (const scenario of SCENARIOS) {
+      for (const row of scenarioPolicies[scenario.key] ?? []) {
+        map[`${scenario.key}:${row.key}`] = row;
+      }
+    }
+    return map;
+  });
   const [values, setValues] = useState<Record<string, string>>(() => {
     const seeded: Record<string, string> = {};
     for (const scenario of SCENARIOS) {
@@ -49,14 +58,44 @@ export function ScenarioPolicySettingsEditor({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  async function resetScenarioValue(scenario: Scenario, d: PolicyDefault) {
+    const valueKey = `${scenario}:${d.key}`;
+    if (!overrideMap[valueKey]) {
+      // Nothing to reset — just clear the input
+      setValues((prev) => ({ ...prev, [valueKey]: "" }));
+      setMessage(`${d.key} already using household/default for ${scenario}.`);
+      return;
+    }
+    setSavingKey(valueKey);
+    setError(null);
+    setMessage(null);
+    try {
+      await apiFetch(`/settings/${householdId}/scenario/${scenario}/${d.key}`, {
+        method: "DELETE",
+      });
+      setOverrideMap((prev) => {
+        const next = { ...prev };
+        delete next[valueKey];
+        return next;
+      });
+      setValues((prev) => ({ ...prev, [valueKey]: "" }));
+      setMessage(`${d.key} reset to household/default for ${scenario}.`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to reset scenario override.");
+    } finally {
+      setSavingKey(null);
+    }
+  }
+
   async function saveScenarioValue(scenario: Scenario, d: PolicyDefault) {
     const valueKey = `${scenario}:${d.key}`;
     const raw = values[valueKey]?.trim() ?? "";
     setError(null);
     setMessage(null);
 
+    // Empty input → reset the override
     if (!raw) {
-      setMessage(`Leave blank to use household/default for ${d.key} (${scenario}).`);
+      await resetScenarioValue(scenario, d);
       return;
     }
 
@@ -73,10 +112,14 @@ export function ScenarioPolicySettingsEditor({
           ? { unit: d.unit, valueInt: Math.round(parsed) }
           : { unit: d.unit, valueDecimal: parsed };
 
-      await apiFetch(`/settings/${householdId}/scenario/${scenario}/${d.key}`, {
-        method: "PUT",
-        body: JSON.stringify(payload),
-      });
+      const saved = await apiFetch<ScenarioPolicy>(
+        `/settings/${householdId}/scenario/${scenario}/${d.key}`,
+        {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        }
+      );
+      setOverrideMap((prev) => ({ ...prev, [valueKey]: saved }));
       setMessage(`${d.key} saved for ${scenario}.`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to save scenario override.");
@@ -147,6 +190,14 @@ export function ScenarioPolicySettingsEditor({
                       className="rounded-md bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground disabled:opacity-50"
                     >
                       Save
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy || !overrideMap[`${scenario.key}:${d.key}`]}
+                      onClick={() => resetScenarioValue(scenario.key, d)}
+                      className="rounded-md border border-border px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-40"
+                    >
+                      Reset
                     </button>
                   </div>
                   <p className="text-xs text-muted-foreground">

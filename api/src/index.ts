@@ -8,6 +8,7 @@ import { users } from "./db/schema";
 import { and, eq, isNull } from "drizzle-orm";
 
 import { authRoute } from "./routes/auth";
+import { usersRoute } from "./routes/users";
 import { householdsRoute } from "./routes/households";
 import { modulesRoute } from "./routes/modules";
 import { tasksRoute } from "./routes/tasks";
@@ -114,6 +115,7 @@ const app = new Elysia()
         },
         tags: [
           { name: "auth", description: "Authentication" },
+          { name: "users", description: "User management" },
           { name: "households", description: "Household management" },
           { name: "modules", description: "Preparedness modules and guidance" },
           { name: "tasks", description: "Ticksheets and task progression" },
@@ -132,6 +134,7 @@ const app = new Elysia()
   .get("/", () => ({ status: "ok", name: "bePrepared API", version: "0.1.0" }))
   .get("/health", () => ({ status: "ok", ts: new Date().toISOString() }))
   .use(authRoute)
+  .use(usersRoute)
   .use(householdsRoute)
   .use(modulesRoute)
   .use(tasksRoute)

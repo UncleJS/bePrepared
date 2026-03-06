@@ -3,24 +3,25 @@
 ![License](https://img.shields.io/badge/license-CC_BY--NC--SA_4.0-lightgrey?style=flat-square)
 ![Doc Type](https://img.shields.io/badge/doc-api--contract-blue?style=flat-square)
 ![Status](https://img.shields.io/badge/status-stable-brightgreen?style=flat-square)
-![Updated](https://img.shields.io/badge/updated-2026--03--05-informational?style=flat-square)
+![Updated](https://img.shields.io/badge/updated-2026--03--06-informational?style=flat-square)
 
 ---
 
 ## Table of Contents
 
 1. [Conventions](#1-conventions)
-2. [Households](#2-households)
-3. [People Profiles](#3-people-profiles)
-4. [Modules & Guidance](#4-modules--guidance)
-5. [Tasks & Progress](#5-tasks--progress)
-6. [Inventory](#6-inventory)
-7. [Equipment](#7-equipment)
-8. [Maintenance](#8-maintenance)
-9. [Alerts](#9-alerts)
-10. [Settings & Policies](#10-settings--policies)
-11. [Planning](#11-planning)
-12. [Health & Meta](#12-health--meta)
+2. [Users](#2-users)
+3. [Households](#3-households)
+4. [People Profiles](#4-people-profiles)
+5. [Modules & Guidance](#5-modules--guidance)
+6. [Tasks & Progress](#6-tasks--progress)
+7. [Inventory](#7-inventory)
+8. [Equipment](#8-equipment)
+9. [Maintenance](#9-maintenance)
+10. [Alerts](#10-alerts)
+11. [Settings & Policies](#11-settings--policies)
+12. [Planning](#12-planning)
+13. [Health & Meta](#13-health--meta)
 
 ---
 
@@ -47,7 +48,95 @@
 
 ---
 
-## 2. Households
+## 2. Users
+
+[↑ TOC](#table-of-contents)
+
+All user endpoints omit `passwordHash` from responses.
+
+### `GET /users`
+
+List all active (non-archived) users. **Admin only.**
+
+**Response** — array of user objects (no `passwordHash`).
+
+---
+
+### `GET /users/me`
+
+Get the currently authenticated user's own profile.
+
+**Response** — user object (no `passwordHash`).
+
+---
+
+### `PATCH /users/me`
+
+Update own profile. All fields optional; omit `password` to leave it unchanged.
+
+**Body** (all fields optional):
+
+```json
+{
+  "username": "alice",
+  "email": "alice@example.com",
+  "password": "newSecurePassword"
+}
+```
+
+**Response** — updated user object (no `passwordHash`).
+
+---
+
+### `POST /users`
+
+Create a new user. **Admin only.**
+
+**Body**:
+
+```json
+{
+  "username": "bob",
+  "password": "securePassword",
+  "householdId": "uuid-of-household",
+  "email": "bob@example.com",
+  "isAdmin": false
+}
+```
+
+**Response** — created user object (no `passwordHash`).
+
+---
+
+### `PATCH /users/:id`
+
+Update any user. **Admin only.** All fields optional; omit `password` to leave it unchanged.
+
+**Body** (all fields optional):
+
+```json
+{
+  "username": "bob-updated",
+  "email": "bob@new.example.com",
+  "password": "newPassword",
+  "householdId": "uuid-of-new-household",
+  "isAdmin": true
+}
+```
+
+**Response** — updated user object (no `passwordHash`).
+
+---
+
+### `DELETE /users/:id`
+
+Archive a user (`archived_at = now()`). **Admin only.** Cannot archive your own account.
+
+**Response**: `{ "archived": true }`
+
+---
+
+## 3. Households
 
 [↑ TOC](#table-of-contents)
 
@@ -111,7 +200,7 @@ Archive a household (`archived_at = now()`).
 
 ---
 
-## 3. People Profiles
+## 4. People Profiles
 
 [↑ TOC](#table-of-contents)
 
@@ -151,7 +240,7 @@ Archive a profile.
 
 ---
 
-## 4. Modules & Guidance
+## 5. Modules & Guidance
 
 [↑ TOC](#table-of-contents)
 
@@ -236,7 +325,7 @@ Create a guidance document.
 
 ---
 
-## 5. Tasks & Progress
+## 6. Tasks & Progress
 
 [↑ TOC](#table-of-contents)
 
@@ -360,7 +449,7 @@ Returns `409` when moving to `completed` while dependencies remain incomplete.
 
 ---
 
-## 6. Inventory
+## 7. Inventory
 
 [↑ TOC](#table-of-contents)
 
@@ -502,7 +591,7 @@ Get lots expiring within the next N days (default 30).
 
 ---
 
-## 7. Equipment
+## 8. Equipment
 
 [↑ TOC](#table-of-contents)
 
@@ -603,7 +692,7 @@ Restore a previously archived equipment item (sets `archived_at = NULL`).
 
 ---
 
-## 8. Maintenance
+## 9. Maintenance
 
 [↑ TOC](#table-of-contents)
 
@@ -708,7 +797,7 @@ Query params:
 
 ---
 
-## 9. Alerts
+## 10. Alerts
 
 [↑ TOC](#table-of-contents)
 
@@ -762,7 +851,7 @@ Trigger an immediate alert generation run across all households. **Admin only.**
 
 ---
 
-## 10. Settings & Policies
+## 11. Settings & Policies
 
 [↑ TOC](#table-of-contents)
 
@@ -821,7 +910,7 @@ Get the policy audit log for a household (append-only history).
 
 ---
 
-## 11. Planning
+## 12. Planning
 
 [↑ TOC](#table-of-contents)
 
@@ -873,7 +962,7 @@ Query param `people` — manual override of people count (integer).
 
 ---
 
-## 12. Health & Meta
+## 13. Health & Meta
 
 [↑ TOC](#table-of-contents)
 

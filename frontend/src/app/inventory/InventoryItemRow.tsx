@@ -4,19 +4,18 @@ import type { InventoryItem } from "./types";
 
 export function InventoryItemRow({
   item,
+  alertItemIds,
   onEdit,
   onOpenLots,
   onArchive,
 }: {
   item: InventoryItem;
+  alertItemIds: Set<string>;
   onEdit: (item: InventoryItem) => void;
   onOpenLots: (itemId: string) => void;
   onArchive: (itemId: string) => void;
 }) {
   const totalQty = item.lots.reduce((sum, lot) => sum + Number(lot.qty), 0);
-  const threshold = Number(item.lowStockThreshold ?? item.targetQty ?? 0);
-  const belowTarget =
-    (item.lowStockThreshold != null || item.targetQty != null) && totalQty < threshold;
   const earliestExpiry = item.lots
     .map((lot) => lot.expiresAt)
     .filter(Boolean)
@@ -26,12 +25,17 @@ export function InventoryItemRow({
     .filter(Boolean)
     .sort()[0];
   const dueDays = daysUntil(earliestExpiry ?? earliestReplace);
+  const hasAlert = alertItemIds.has(item.id);
 
   return (
-    <tr className="transition-colors hover:bg-accent/30">
+    <tr
+      className={`transition-colors hover:bg-accent/30 ${
+        hasAlert ? "border-l-2 border-yellow-500 bg-yellow-900/20" : ""
+      }`}
+    >
       <td className="px-4 py-2.5">
         <div className="flex items-center gap-2">
-          {belowTarget && <AlertTriangle size={13} className="shrink-0 text-yellow-400" />}
+          {hasAlert && <AlertTriangle size={13} className="shrink-0 text-yellow-400" />}
           <span className="font-medium">{item.name}</span>
           <span className="text-xs text-muted-foreground">({item.unit || "each"})</span>
         </div>

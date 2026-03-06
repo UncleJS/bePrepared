@@ -1,6 +1,7 @@
 import { apiFetch, getSessionHouseholdId } from "@/lib/api";
 import { HouseholdSettingsEditor } from "@/components/settings/HouseholdSettingsEditor";
 import { HouseholdManager } from "@/components/settings/HouseholdManager";
+import { UserManager } from "@/components/settings/UserManager";
 import { PolicySettingsEditor } from "@/components/settings/PolicySettingsEditor";
 import { ScenarioPolicySettingsEditor } from "@/components/settings/ScenarioPolicySettingsEditor";
 import Link from "next/link";
@@ -68,6 +69,11 @@ export default async function SettingsPage() {
       </section>
 
       <section>
+        <h2 className="text-lg font-semibold mb-3">Users</h2>
+        <UserManager />
+      </section>
+
+      <section>
         <h2 className="text-lg font-semibold mb-3">Category Management</h2>
         <div className="flex flex-wrap gap-3">
           <Link
@@ -99,9 +105,7 @@ export default async function SettingsPage() {
         />
       </section>
 
-      <section>
-        <HouseholdManager />
-      </section>
+      <HouseholdManager />
     </div>
   );
 }

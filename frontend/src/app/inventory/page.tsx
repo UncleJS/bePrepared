@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useActiveHouseholdId } from "@/lib/useActiveHouseholdId";
+import { apiFetch } from "@/lib/api";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { InventoryItemFormFields } from "./InventoryItemFormFields";
@@ -13,11 +14,18 @@ import { useInventoryData } from "./useInventoryData";
 import { useInventoryItemActions } from "./useInventoryItemActions";
 import { useInventoryLotActions } from "./useInventoryLotActions";
 
+type ActiveAlert = {
+  entityType: string;
+  entityId: string;
+  isResolved: boolean;
+};
+
 export default function InventoryPage() {
   const { householdId, status } = useActiveHouseholdId();
 
   const { items, categories, loading, error, setError, loadData } = useInventoryData();
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [alertItemIds, setAlertItemIds] = useState<Set<string>>(new Set());
 
   const itemActions = useInventoryItemActions({
     householdId,
@@ -45,6 +53,31 @@ export default function InventoryPage() {
     if (!householdId) return;
     void loadData(householdId);
   }, [householdId, loadData]);
+
+  // Fetch active alerts and build a Set of item IDs that have at least one alert
+  useEffect(() => {
+    if (!householdId || items.length === 0) return;
+    apiFetch<ActiveAlert[]>(`/alerts/${householdId}`)
+      .then((allAlerts) => {
+        const active = allAlerts.filter((a) => !a.isResolved);
+        // Build lot ID → item ID reverse map from the loaded items
+        const lotToItem = new Map<string, string>();
+        for (const item of items) {
+          for (const lot of item.lots) {
+            lotToItem.set(lot.id, item.id);
+          }
+        }
+        const ids = new Set<string>();
+        for (const a of active) {
+          if (a.entityType === "inventory_lot") {
+            const itemId = lotToItem.get(a.entityId);
+            if (itemId) ids.add(itemId);
+          }
+        }
+        setAlertItemIds(ids);
+      })
+      .catch(console.error);
+  }, [householdId, items]);
 
   if (status === "loading")
     return <p className="text-muted-foreground text-sm">Loading session...</p>;
@@ -111,6 +144,7 @@ export default function InventoryPage() {
               <InventoryItemRow
                 key={item.id}
                 item={item}
+                alertItemIds={alertItemIds}
                 onEdit={itemActions.startEdit}
                 onOpenLots={setSelectedItemId}
                 onArchive={itemActions.archiveItem}
