@@ -115,3 +115,20 @@
 - This backlog intentionally separates discovery from implementation.
 - Use this file as the single checkpoint before each deep-dive sprint.
 - Update status markers during execution to keep continuity across sessions.
+
+---
+
+## G) Post-Review Session 2 Improvements
+
+Applied as a full codebase sweep on 2026-03-06. All 20 API tests continued passing after changes. Typecheck remained clean (0 errors).
+
+### P1
+
+- [x] **Structured JSON logger** (`api/src/lib/logger.ts`): thin `logger.info/warn/error` writing one JSON line per call to stdout/stderr; replaces all runtime `console.*` across API and worker.
+- [x] **Replace `as any` with non-null assertion `!`** in `api/src/routes/tasks/index.ts` on `query.readinessLevel` and `query.scenario`; values are guaranteed valid by Elysia schema before the handler runs.
+- [x] **`AlertCategory` union type** in `api/src/lib/alertJobs.ts`: matches the DB enum (`expiry | replacement | maintenance | low_stock | task_due | policy`), eliminating the `as any` cast in `upsertAlert`.
+- [x] **Batched alert-policy DB queries** in `api/src/lib/alertJobs.ts`: replaced two separate `getUpcomingDays()` / `getGraceDays()` calls (4 round-trips/household) with a single `getAlertPolicyForHousehold()` helper using `inArray` for both keys in 2 parallel queries.
+- [x] **Batched policy-engine DB queries** in `api/src/lib/policyEngine.ts`: removed `resolveKey()` (up to 12 sequential round-trips per planning call); replaced with `resolvePolicy()` using 3 parallel `findMany()` + `inArray` calls, resolving all 4 keys in-memory.
+- [x] **`SELECT 1` DB health probe** in `api/src/index.ts`: `/health` now executes a live DB check and returns HTTP 503 on failure instead of always returning 200.
+- [x] **Remove weak DB credential defaults** in `api/src/db/client.ts`: `user`, `password`, and `database` no longer fall back to the hardcoded string `"beprepared"`; the process will fail fast if env vars are unset.
+- [x] **`setInterval` stale-entry cleanup** in `api/src/routes/auth/index.ts`: the `loginAttempts` Map is now swept every 5 minutes via `.unref()`'d interval to prevent unbounded memory growth.

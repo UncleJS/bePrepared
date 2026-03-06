@@ -21,7 +21,7 @@ import {
   households,
   householdPeopleProfiles,
 } from "../db/schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, inArray } from "drizzle-orm";
 
 export type Scenario = "shelter_in_place" | "evacuation";
 
@@ -63,59 +63,81 @@ const SYSTEM_DEFAULTS: Record<string, number> = {
   [POLICY_KEYS.ALERT_GRACE]: 3,
 };
 
-async function resolveKey(householdId: string, scenario: Scenario, key: string): Promise<number> {
-  // 1. Scenario override
-  const scenarioRow = await db.query.scenarioPolicies.findFirst({
-    where: and(
-      eq(scenarioPolicies.householdId, householdId),
-      eq(scenarioPolicies.scenario, scenario),
-      eq(scenarioPolicies.key, key),
-      isNull(scenarioPolicies.archivedAt)
-    ),
-  });
-  if (scenarioRow?.valueDecimal) return Number(scenarioRow.valueDecimal);
-  if (scenarioRow?.valueInt !== null && scenarioRow?.valueInt !== undefined)
-    return scenarioRow.valueInt;
+const ALL_KEYS = [
+  POLICY_KEYS.WATER,
+  POLICY_KEYS.CALORIES,
+  POLICY_KEYS.ALERT_UPCOMING,
+  POLICY_KEYS.ALERT_GRACE,
+] as const;
 
-  // 2. Household global override
-  const householdRow = await db.query.householdPolicies.findFirst({
-    where: and(
-      eq(householdPolicies.householdId, householdId),
-      eq(householdPolicies.key, key),
-      isNull(householdPolicies.archivedAt)
-    ),
-  });
-  if (householdRow?.valueDecimal) return Number(householdRow.valueDecimal);
-  if (householdRow?.valueInt !== null && householdRow?.valueInt !== undefined)
-    return householdRow.valueInt;
+type PolicyKey = (typeof ALL_KEYS)[number];
 
-  // 3. System default
-  const defaultRow = await db.query.policyDefaults.findFirst({
-    where: eq(policyDefaults.key, key),
-  });
-  if (defaultRow?.valueDecimal) return Number(defaultRow.valueDecimal);
-  if (defaultRow?.valueInt !== null && defaultRow?.valueInt !== undefined)
-    return defaultRow.valueInt;
-
-  // 4. Hardcoded fallback
-  return SYSTEM_DEFAULTS[key] ?? 0;
-}
-
+/**
+ * Resolve all four policy values in 3 parallel DB round-trips instead of up
+ * to 12 sequential ones (old: 4 keys × 3 sequential queries each).
+ *
+ * Strategy:
+ *   1. Fetch all matching scenarioPolicies rows in one query   (inArray key)
+ *   2. Fetch all matching householdPolicies rows in one query  (inArray key)
+ *   3. Fetch all matching policyDefaults rows in one query     (inArray key)
+ * Then resolve each key in-memory using the three-tier precedence.
+ */
 export async function resolvePolicy(
   householdId: string,
   scenario: Scenario
 ): Promise<EffectivePolicy> {
-  const [water, calories, alertUpcoming, alertGrace] = await Promise.all([
-    resolveKey(householdId, scenario, POLICY_KEYS.WATER),
-    resolveKey(householdId, scenario, POLICY_KEYS.CALORIES),
-    resolveKey(householdId, scenario, POLICY_KEYS.ALERT_UPCOMING),
-    resolveKey(householdId, scenario, POLICY_KEYS.ALERT_GRACE),
+  const keys = [...ALL_KEYS];
+
+  const [scenarioRows, householdRows, defaultRows] = await Promise.all([
+    db.query.scenarioPolicies.findMany({
+      where: and(
+        eq(scenarioPolicies.householdId, householdId),
+        eq(scenarioPolicies.scenario, scenario),
+        inArray(scenarioPolicies.key, keys),
+        isNull(scenarioPolicies.archivedAt)
+      ),
+    }),
+    db.query.householdPolicies.findMany({
+      where: and(
+        eq(householdPolicies.householdId, householdId),
+        inArray(householdPolicies.key, keys),
+        isNull(householdPolicies.archivedAt)
+      ),
+    }),
+    db.query.policyDefaults.findMany({
+      where: inArray(policyDefaults.key, keys),
+    }),
   ]);
+
+  const scenarioMap = new Map(scenarioRows.map((r) => [r.key, r]));
+  const householdMap = new Map(householdRows.map((r) => [r.key, r]));
+  const defaultMap = new Map(defaultRows.map((r) => [r.key, r]));
+
+  function resolveKey(key: PolicyKey): number {
+    // 1. Scenario override
+    const sRow = scenarioMap.get(key);
+    if (sRow?.valueDecimal) return Number(sRow.valueDecimal);
+    if (sRow?.valueInt !== null && sRow?.valueInt !== undefined) return sRow.valueInt;
+
+    // 2. Household global override
+    const hRow = householdMap.get(key);
+    if (hRow?.valueDecimal) return Number(hRow.valueDecimal);
+    if (hRow?.valueInt !== null && hRow?.valueInt !== undefined) return hRow.valueInt;
+
+    // 3. System default from DB
+    const dRow = defaultMap.get(key);
+    if (dRow?.valueDecimal) return Number(dRow.valueDecimal);
+    if (dRow?.valueInt !== null && dRow?.valueInt !== undefined) return dRow.valueInt;
+
+    // 4. Hardcoded fallback
+    return SYSTEM_DEFAULTS[key] ?? 0;
+  }
+
   return {
-    waterLitersPerPersonPerDay: water,
-    caloriesKcalPerPersonPerDay: calories,
-    alertUpcomingDays: alertUpcoming,
-    alertGraceDays: alertGrace,
+    waterLitersPerPersonPerDay: resolveKey(POLICY_KEYS.WATER),
+    caloriesKcalPerPersonPerDay: resolveKey(POLICY_KEYS.CALORIES),
+    alertUpcomingDays: resolveKey(POLICY_KEYS.ALERT_UPCOMING),
+    alertGraceDays: resolveKey(POLICY_KEYS.ALERT_GRACE),
   };
 }
 

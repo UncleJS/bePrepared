@@ -5,7 +5,8 @@ import { bearerFromHeader, verifyApiToken } from "./lib/authToken";
 import { setRequestClaims } from "./lib/authContext";
 import { db } from "./db/client";
 import { users } from "./db/schema";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
+import { logger } from "./lib/logger";
 
 import { authRoute } from "./routes/auth";
 import { usersRoute } from "./routes/users";
@@ -132,7 +133,16 @@ const app = new Elysia()
     })
   )
   .get("/", () => ({ status: "ok", name: "bePrepared API", version: "0.1.0" }))
-  .get("/health", () => ({ status: "ok", ts: new Date().toISOString() }))
+  .get("/health", async ({ set }) => {
+    try {
+      await db.execute(sql`SELECT 1`);
+      return { status: "ok", ts: new Date().toISOString() };
+    } catch (err) {
+      logger.error("Health probe DB check failed", { err: String(err) });
+      set.status = 503;
+      return { status: "error", ts: new Date().toISOString() };
+    }
+  })
   .use(authRoute)
   .use(usersRoute)
   .use(householdsRoute)
@@ -146,6 +156,6 @@ const app = new Elysia()
   .use(planningRoute)
   .listen(PORT);
 
-console.log(`bePrepared API running on http://localhost:${PORT}`);
-console.log(`Swagger UI:   http://localhost:${PORT}/docs`);
-console.log(`OpenAPI JSON: http://localhost:${PORT}/docs/json`);
+logger.info("bePrepared API running", { url: `http://localhost:${PORT}` });
+logger.info("Swagger UI", { url: `http://localhost:${PORT}/docs` });
+logger.info("OpenAPI JSON", { url: `http://localhost:${PORT}/docs/json` });

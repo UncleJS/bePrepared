@@ -60,10 +60,10 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
         conditions.push(eq(tasks.moduleId, query.moduleId));
       }
       if (query.readinessLevel) {
-        conditions.push(eq(tasks.readinessLevel, query.readinessLevel as any));
+        conditions.push(eq(tasks.readinessLevel, query.readinessLevel!));
       }
       if (query.scenario) {
-        conditions.push(eq(tasks.scenario, query.scenario as any));
+        conditions.push(eq(tasks.scenario, query.scenario!));
       }
 
       const rows = await db.query.tasks.findMany({

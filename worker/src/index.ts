@@ -8,10 +8,11 @@
  */
 
 import { runAllJobs } from "../../api/src/lib/alertJobs";
+import { logger } from "../../api/src/lib/logger";
 
 const INTERVAL_MS = Number(process.env.WORKER_INTERVAL_MS ?? 3600000); // 1 hour
 
 // Run immediately on startup, then on interval
 await runAllJobs();
 setInterval(runAllJobs, INTERVAL_MS);
-console.log(`[worker] Scheduled every ${INTERVAL_MS / 1000}s`);
+logger.info("[worker] Scheduled", { intervalSec: INTERVAL_MS / 1000 });

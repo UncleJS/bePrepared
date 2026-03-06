@@ -4,6 +4,7 @@ import { users } from "../../db/schema";
 import { eq, isNull, and } from "drizzle-orm";
 import { issueApiToken } from "../../lib/authToken";
 import { runAllJobs } from "../../lib/alertJobs";
+import { logger } from "../../lib/logger";
 
 const LOGIN_WINDOW_MS = Number(process.env.AUTH_LOGIN_RATE_LIMIT_WINDOW_MS ?? 60_000);
 const LOGIN_MAX_ATTEMPTS = Number(process.env.AUTH_LOGIN_RATE_LIMIT_MAX ?? 5);
@@ -14,6 +15,17 @@ type LoginWindow = {
 };
 
 const loginAttempts = new Map<string, LoginWindow>();
+
+// Periodically evict expired login-attempt windows so the Map doesn't grow
+// unbounded. The interval is unref'd so it won't prevent the process from
+// exiting cleanly during tests or graceful shutdown.
+const LOGIN_CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of loginAttempts) {
+    if (entry.resetAt <= now) loginAttempts.delete(key);
+  }
+}, LOGIN_CLEANUP_INTERVAL_MS).unref();
 
 function resolveClientIp(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for");
@@ -109,7 +121,9 @@ export const authRoute = new Elysia({ prefix: "/auth", tags: ["auth"] }).post(
     );
 
     // Fire-and-forget alert refresh — does not block the login response
-    runAllJobs().catch((err) => console.error("[auth] alert job fire-and-forget error:", err));
+    runAllJobs().catch((err) =>
+      logger.error("[auth] alert job fire-and-forget error", { err: String(err) })
+    );
 
     // Return safe user fields (no password hash)
     return {

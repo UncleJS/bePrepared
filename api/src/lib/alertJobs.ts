@@ -10,8 +10,9 @@
 
 import { db } from "../db/client";
 import * as schema from "../db/schema";
-import { eq, isNull, and, lte, isNotNull } from "drizzle-orm";
+import { eq, isNull, and, lte, isNotNull, inArray } from "drizzle-orm";
 import { randomUUID } from "crypto";
+import { logger } from "./logger";
 
 const {
   inventoryLots,
@@ -30,6 +31,9 @@ const {
 
 type AlertSeverity = "upcoming" | "due" | "overdue";
 type AlertUpsertResult = "inserted" | "escalated" | "unchanged";
+
+// Matches the DB enum in schema/alerts.ts
+type AlertCategory = "expiry" | "replacement" | "maintenance" | "low_stock" | "task_due" | "policy";
 
 const severityRank: Record<AlertSeverity, number> = {
   upcoming: 0,
@@ -107,40 +111,55 @@ function createRunMetrics(): RunMetrics {
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function getUpcomingDays(householdId: string): Promise<number> {
-  const row = await db.query.householdPolicies.findFirst({
-    where: and(
-      eq(householdPolicies.householdId, householdId),
-      eq(householdPolicies.key, "alert_upcoming_days"),
-      isNull(householdPolicies.archivedAt)
-    ),
-  });
-  if (row?.valueInt) return row.valueInt;
-  const def = await db.query.policyDefaults.findFirst({
-    where: eq(policyDefaults.key, "alert_upcoming_days"),
-  });
-  return def?.valueInt ?? 14;
-}
+type AlertPolicyForHousehold = {
+  upcomingDays: number;
+  graceDays: number;
+};
 
-async function getGraceDays(householdId: string): Promise<number> {
-  const row = await db.query.householdPolicies.findFirst({
-    where: and(
-      eq(householdPolicies.householdId, householdId),
-      eq(householdPolicies.key, "alert_grace_days"),
-      isNull(householdPolicies.archivedAt)
-    ),
-  });
-  if (row?.valueInt != null) return row.valueInt;
-  const def = await db.query.policyDefaults.findFirst({
-    where: eq(policyDefaults.key, "alert_grace_days"),
-  });
-  return def?.valueInt ?? 0;
+/**
+ * Fetch both alert policy values for a household in two parallel DB round-trips:
+ *   1. All matching householdPolicies rows for the two keys at once (inArray)
+ *   2. All matching policyDefaults rows for the two keys at once (inArray)
+ *
+ * Falls back to hardcoded defaults if neither layer has a value.
+ */
+async function getAlertPolicyForHousehold(householdId: string): Promise<AlertPolicyForHousehold> {
+  const KEYS = ["alert_upcoming_days", "alert_grace_days"] as const;
+
+  const [hhRows, defaultRows] = await Promise.all([
+    db.query.householdPolicies.findMany({
+      where: and(
+        eq(householdPolicies.householdId, householdId),
+        inArray(householdPolicies.key, [...KEYS]),
+        isNull(householdPolicies.archivedAt)
+      ),
+    }),
+    db.query.policyDefaults.findMany({
+      where: inArray(policyDefaults.key, [...KEYS]),
+    }),
+  ]);
+
+  const hhMap = new Map(hhRows.map((r) => [r.key, r]));
+  const defMap = new Map(defaultRows.map((r) => [r.key, r]));
+
+  function resolve(key: (typeof KEYS)[number], hardcodedDefault: number): number {
+    const hhRow = hhMap.get(key);
+    if (hhRow?.valueInt != null) return hhRow.valueInt;
+    const defRow = defMap.get(key);
+    if (defRow?.valueInt != null) return defRow.valueInt;
+    return hardcodedDefault;
+  }
+
+  return {
+    upcomingDays: resolve("alert_upcoming_days", 14),
+    graceDays: resolve("alert_grace_days", 0),
+  };
 }
 
 async function upsertAlert(data: {
   householdId: string;
   severity: AlertSeverity;
-  category: string;
+  category: AlertCategory;
   entityType: string;
   entityId: string;
   title: string;
@@ -181,7 +200,7 @@ async function upsertAlert(data: {
     id: randomUUID(),
     householdId: data.householdId,
     severity: data.severity,
-    category: data.category as any,
+    category: data.category,
     entityType: data.entityType,
     entityId: data.entityId,
     title: data.title,
@@ -196,15 +215,14 @@ async function upsertAlert(data: {
 // ---------------------------------------------------------------------------
 
 async function processInventoryExpiry(metrics: JobCounters) {
-  console.log("[alertJobs] Processing inventory expiry...");
+  logger.info("[alertJobs] Processing inventory expiry...");
   const allHouseholds = await db.query.households.findMany({
     where: isNull(households.archivedAt),
   });
   const today = new Date();
 
   for (const hh of allHouseholds) {
-    const upcomingDays = await getUpcomingDays(hh.id);
-    const graceDays = await getGraceDays(hh.id);
+    const { upcomingDays, graceDays } = await getAlertPolicyForHousehold(hh.id);
     const upcoming = new Date(today);
     upcoming.setDate(upcoming.getDate() + upcomingDays);
 
@@ -252,22 +270,21 @@ async function processInventoryExpiry(metrics: JobCounters) {
         else metrics.skipped += 1;
       } catch (err) {
         metrics.errors += 1;
-        console.error("[alertJobs] Expiry alert upsert failed", { lotId: lot.id, err });
+        logger.error("[alertJobs] Expiry alert upsert failed", { lotId: lot.id, err: String(err) });
       }
     }
   }
 }
 
 async function processInventoryReplacement(metrics: JobCounters) {
-  console.log("[alertJobs] Processing inventory replacement cycles...");
+  logger.info("[alertJobs] Processing inventory replacement cycles...");
   const allHouseholds = await db.query.households.findMany({
     where: isNull(households.archivedAt),
   });
   const today = new Date();
 
   for (const hh of allHouseholds) {
-    const upcomingDays = await getUpcomingDays(hh.id);
-    const graceDays = await getGraceDays(hh.id);
+    const { upcomingDays, graceDays } = await getAlertPolicyForHousehold(hh.id);
     const upcoming = new Date(today);
     upcoming.setDate(upcoming.getDate() + upcomingDays);
 
@@ -315,21 +332,24 @@ async function processInventoryReplacement(metrics: JobCounters) {
         else metrics.skipped += 1;
       } catch (err) {
         metrics.errors += 1;
-        console.error("[alertJobs] Replacement alert upsert failed", { lotId: lot.id, err });
+        logger.error("[alertJobs] Replacement alert upsert failed", {
+          lotId: lot.id,
+          err: String(err),
+        });
       }
     }
   }
 }
 
 async function processMaintenanceSchedules(metrics: JobCounters) {
-  console.log("[alertJobs] Processing maintenance schedules...");
+  logger.info("[alertJobs] Processing maintenance schedules...");
   const allHouseholds = await db.query.households.findMany({
     where: isNull(households.archivedAt),
   });
   const today = new Date();
 
   for (const hh of allHouseholds) {
-    const upcomingDays = await getUpcomingDays(hh.id);
+    const { upcomingDays } = await getAlertPolicyForHousehold(hh.id);
     const upcoming = new Date(today);
     upcoming.setDate(upcoming.getDate() + upcomingDays);
 
@@ -379,7 +399,10 @@ async function processMaintenanceSchedules(metrics: JobCounters) {
         else metrics.skipped += 1;
       } catch (err) {
         metrics.errors += 1;
-        console.error("[alertJobs] Maintenance alert upsert failed", { scheduleId: sched.id, err });
+        logger.error("[alertJobs] Maintenance alert upsert failed", {
+          scheduleId: sched.id,
+          err: String(err),
+        });
       }
     }
   }
@@ -392,15 +415,15 @@ async function processMaintenanceSchedules(metrics: JobCounters) {
 export async function runAllJobs(): Promise<RunMetrics> {
   const start = Date.now();
   const metrics = createRunMetrics();
-  console.log(`[alertJobs] Run started at ${new Date().toISOString()}`);
+  logger.info("[alertJobs] Run started", { ts: new Date().toISOString() });
   try {
     await processInventoryExpiry(metrics.expiry);
     await processInventoryReplacement(metrics.replacement);
     await processMaintenanceSchedules(metrics.maintenance);
-    console.log("[alertJobs] Run metrics", metrics);
-    console.log(`[alertJobs] Run complete in ${Date.now() - start}ms`);
+    logger.info("[alertJobs] Run metrics", { metrics });
+    logger.info("[alertJobs] Run complete", { ms: Date.now() - start });
   } catch (err) {
-    console.error("[alertJobs] Error during job run:", err);
+    logger.error("[alertJobs] Error during job run", { err: String(err) });
   }
   return metrics;
 }

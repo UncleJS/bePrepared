@@ -1,29 +1,27 @@
 import { describe, expect, it, mock } from "bun:test";
 
 const defaultPolicyRows = [
-  { valueDecimal: "4", valueInt: null },
-  { valueDecimal: null, valueInt: 2200 },
-  { valueDecimal: null, valueInt: 14 },
-  { valueDecimal: null, valueInt: 3 },
+  { key: "water_liters_per_person_per_day", valueDecimal: "4", valueInt: null },
+  { key: "calories_kcal_per_person_per_day", valueDecimal: null, valueInt: 2200 },
+  { key: "alert_upcoming_days", valueDecimal: null, valueInt: 14 },
+  { key: "alert_grace_days", valueDecimal: null, valueInt: 3 },
 ];
 
 mock.module("../db/client", () => {
-  let defaultsCursor = 0;
   return {
     db: {
       query: {
         scenarioPolicies: {
           findFirst: async () => null,
+          findMany: async () => [],
         },
         householdPolicies: {
           findFirst: async () => null,
+          findMany: async () => [],
         },
         policyDefaults: {
-          findFirst: async () => {
-            const row = defaultPolicyRows[defaultsCursor] ?? null;
-            defaultsCursor += 1;
-            return row;
-          },
+          findFirst: async () => null,
+          findMany: async () => defaultPolicyRows,
         },
         households: {
           findFirst: async () => ({
