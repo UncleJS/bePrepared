@@ -120,7 +120,7 @@ http://localhost:9999/api/bff/docs
 ## 5. System Architecture Summary
 
 ```
-┌─────────────────── Podman Pod: preparedness-pod ───────────────────┐
+┌─────────────────── Podman Pod: beprepared ─────────────────────────┐
 │                                                                       │
 │  ┌─────────────┐   ┌─────────────┐   ┌─────────────┐               │
 │  │  frontend   │──▶│     api     │──▶│   mariadb   │               │

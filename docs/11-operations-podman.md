@@ -106,8 +106,8 @@ After=beprepared-pod.service
 Image=docker.io/library/mariadb:11
 Pod=beprepared.pod
 ContainerName=beprepared-db
-EnvironmentFile=%h/bePrepared/deploy/.env
-Volume=%h/bePrepared/data/mariadb:/var/lib/mysql:Z
+EnvironmentFile=%h/0_opencode/bePrepared/deploy/.env
+Volume=%h/0_opencode/bePrepared/data/mariadb:/var/lib/mysql:Z
 Environment=MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
 Environment=MARIADB_DATABASE=${DB_NAME}
 Environment=MARIADB_USER=${DB_USER}
@@ -131,7 +131,7 @@ After=beprepared-db.container
 Image=localhost/beprepared-api:latest
 Pod=beprepared.pod
 ContainerName=beprepared-api
-EnvironmentFile=%h/bePrepared/deploy/.env
+EnvironmentFile=%h/0_opencode/bePrepared/deploy/.env
 
 [Service]
 Restart=on-failure
@@ -151,7 +151,7 @@ After=beprepared-api.container
 Image=localhost/beprepared-worker:latest
 Pod=beprepared.pod
 ContainerName=beprepared-worker
-EnvironmentFile=%h/bePrepared/deploy/.env
+EnvironmentFile=%h/0_opencode/bePrepared/deploy/.env
 PodmanArgs=--read-only
 PodmanArgs=--tmpfs=/tmp:rw,nosuid,nodev,noexec,size=64m
 PodmanArgs=--security-opt=no-new-privileges
@@ -175,7 +175,7 @@ After=beprepared-api.container
 Image=localhost/beprepared-frontend:latest
 Pod=beprepared.pod
 ContainerName=beprepared-frontend
-EnvironmentFile=%h/bePrepared/deploy/.env
+EnvironmentFile=%h/0_opencode/bePrepared/deploy/.env
 PodmanArgs=--read-only
 PodmanArgs=--tmpfs=/tmp:rw,nosuid,nodev,noexec,size=64m
 PodmanArgs=--security-opt=no-new-privileges
@@ -338,7 +338,7 @@ systemctl --user start beprepared-api beprepared-worker
 
 ### Data volume location
 
-MariaDB data is stored in `~/bePrepared/data/mariadb/`. This directory persists across container restarts and rebuilds. Back up this directory for a raw data backup (stop DB first).
+MariaDB data is stored in `~/0_opencode/bePrepared/data/mariadb/`. This directory persists across container restarts and rebuilds. Back up this directory for a raw data backup (stop DB first).
 
 ### Restore drill cadence (recommended)
 
@@ -377,20 +377,24 @@ Record for each drill:
 
 Copy `deploy/.env.example` to `deploy/.env` and fill in values.
 
-| Variable                             | Required | Default                 | Notes                                                   |
-| ------------------------------------ | -------- | ----------------------- | ------------------------------------------------------- |
-| `DB_HOST`                            | yes      | `127.0.0.1`             | Inside pod: use `127.0.0.1` (shared pod network)        |
-| `DB_PORT`                            | no       | `3306`                  |                                                         |
-| `DB_NAME`                            | yes      | `beprepared`            |                                                         |
-| `DB_USER`                            | yes      | —                       |                                                         |
-| `DB_PASSWORD`                        | yes      | —                       |                                                         |
-| `DB_ROOT_PASSWORD`                   | yes      | —                       | MariaDB container only                                  |
-| `DATABASE_URL`                       | yes      | —                       | `mysql://user:pass@host:3306/dbname`                    |
-| `PORT`                               | no       | `3001`                  | API listen port (internal)                              |
-| `NEXT_PUBLIC_API_URL`                | yes      | `http://localhost:3001` | Browser API base URL (`/api` rewrite in frontend proxy) |
-| `CORS_ORIGINS`                       | yes      | `http://localhost:9999` | Comma-separated allowed browser origins                 |
-| `ALLOW_LOCALHOST_CORS_IN_PRODUCTION` | no       | `false`                 | Production guard override for localhost origins         |
-| `NODE_ENV`                           | no       | `production`            |                                                         |
+| Variable                             | Required | Default                 | Notes                                                    |
+| ------------------------------------ | -------- | ----------------------- | -------------------------------------------------------- |
+| `DB_HOST`                            | yes      | `127.0.0.1`             | Inside pod: use `127.0.0.1` (shared pod network)         |
+| `DB_PORT`                            | no       | `3306`                  |                                                          |
+| `DB_NAME`                            | yes      | `beprepared`            |                                                          |
+| `DB_USER`                            | yes      | —                       |                                                          |
+| `DB_PASSWORD`                        | yes      | —                       |                                                          |
+| `DB_ROOT_PASSWORD`                   | yes      | —                       | MariaDB container only                                   |
+| `DATABASE_URL`                       | yes      | —                       | `mysql://user:pass@host:3306/dbname`                     |
+| `PORT`                               | no       | `3001`                  | API listen port (internal)                               |
+| `NEXT_PUBLIC_API_URL`                | yes      | `http://localhost:3001` | Browser API base URL (`/api` rewrite in frontend proxy)  |
+| `CORS_ORIGINS`                       | yes      | `http://localhost:9999` | Comma-separated allowed browser origins                  |
+| `ALLOW_LOCALHOST_CORS_IN_PRODUCTION` | no       | `false`                 | Production guard override for localhost origins          |
+| `AUTH_SECRET`                        | yes      | —                       | Random secret for JWT signing; `openssl rand -base64 32` |
+| `AUTH_ENABLED`                       | no       | `true`                  | Set `false` only for local dev (never in production)     |
+| `NEXTAUTH_URL`                       | yes      | `http://localhost:9999` | Public base URL of the frontend (used by NextAuth)       |
+| `WORKER_INTERVAL_MS`                 | no       | `3600000`               | Alert worker run interval in ms (default = 1 hour)       |
+| `NODE_ENV`                           | no       | `production`            |                                                          |
 
 ---
 

@@ -172,7 +172,8 @@ Create a module.
   "slug": "water",
   "title": "Water",
   "description": "Safe water storage and purification",
-  "icon": "droplets",
+  "iconName": "droplets",
+  "category": "water",
   "sortOrder": 1
 }
 ```
@@ -187,14 +188,33 @@ Get one module with nested sections and guidance docs.
 
 ### `POST /modules/:id/sections`
 
-Create a section.
+Create a section. **Admin only.**
 
 **Body**:
 
 ```json
 {
+  "slug": "storage",
   "title": "Storage",
   "sortOrder": 1
+}
+```
+
+> `slug` is required and must be URL-safe (e.g. `storage`, `purification`).
+
+---
+
+### `PATCH /modules/:moduleId/sections/:sectionId/docs/:docId`
+
+Update a guidance document. **Admin only.**
+
+**Body** (all fields optional):
+
+```json
+{
+  "title": "Updated title",
+  "body": "Updated markdown content...",
+  "sortOrder": 2
 }
 ```
 
@@ -406,6 +426,22 @@ Create an inventory item.
 
 Update an inventory item.
 
+**Body** (all fields optional):
+
+```json
+{
+  "name": "Drinking water (5L jugs)",
+  "categoryId": "uuid",
+  "unit": "liters",
+  "location": "Garage shelf B",
+  "targetQty": 100,
+  "lowStockThreshold": 50,
+  "defaultReplaceDays": 365,
+  "isTrackedByExpiry": true,
+  "notes": "Rotation schedule updated"
+}
+```
+
 ---
 
 ### `DELETE /inventory/:householdId/items/:itemId`
@@ -441,6 +477,25 @@ Archive (consume/dispose) a lot.
 
 ---
 
+### `PATCH /inventory/:householdId/items/:itemId/lots/:lotId`
+
+Update a lot.
+
+**Body** (all fields optional):
+
+```json
+{
+  "qty": 18,
+  "acquiredAt": "2026-03-01",
+  "expiresAt": "2028-03-01",
+  "replaceDays": 365,
+  "batchRef": "receipt-2026-03-01-updated",
+  "notes": "Corrected qty after audit"
+}
+```
+
+---
+
 ### `GET /inventory/:householdId/expiring?days=30`
 
 Get lots expiring within the next N days (default 30).
@@ -453,7 +508,27 @@ Get lots expiring within the next N days (default 30).
 
 ### `GET /equipment/battery-profiles`
 
-List all battery chemistry profiles.
+List all battery chemistry profiles. **Admin only.**
+
+---
+
+### `POST /equipment/battery-profiles`
+
+Create a battery chemistry profile. **Admin only.**
+
+**Body**:
+
+```json
+{
+  "name": "AA Alkaline",
+  "chemistry": "alkaline",
+  "shelfLifeDays": 3650,
+  "recheckCycleDays": 365,
+  "storageTempMin": 10,
+  "storageTempMax": 25,
+  "notes": "Standard AA alkaline — store cool and dry"
+}
+```
 
 ---
 
@@ -520,6 +595,14 @@ Archive an equipment item.
 
 ---
 
+### `POST /equipment/:householdId/:itemId/restore`
+
+Restore a previously archived equipment item (sets `archived_at = NULL`).
+
+**Response**: restored equipment item object.
+
+---
+
 ## 8. Maintenance
 
 [↑ TOC](#table-of-contents)
@@ -527,6 +610,27 @@ Archive an equipment item.
 ### `GET /maintenance/templates`
 
 List all maintenance templates (global).
+
+---
+
+### `POST /maintenance/templates`
+
+Create a maintenance template. **Admin only.**
+
+**Body**:
+
+```json
+{
+  "categorySlug": "generator",
+  "name": "Annual full service",
+  "description": "Full engine service including oil, filter, and spark plug",
+  "taskType": "full_service",
+  "defaultCalDays": 365,
+  "usageMeterUnit": "hours",
+  "defaultUsageInterval": 100,
+  "graceDays": 14
+}
+```
 
 ---
 
@@ -639,6 +743,22 @@ Mark an alert as resolved.
 ### `DELETE /alerts/:householdId/:alertId`
 
 Archive an alert.
+
+---
+
+### `POST /alerts/run-job`
+
+Trigger an immediate alert generation run across all households. **Admin only.**
+
+**Response**:
+
+```json
+{
+  "expiry": { "inserted": 2, "escalated": 1, "skipped": 0, "errors": 0 },
+  "replacement": { "inserted": 0, "escalated": 0, "skipped": 3, "errors": 0 },
+  "maintenance": { "inserted": 1, "escalated": 0, "skipped": 2, "errors": 0 }
+}
+```
 
 ---
 

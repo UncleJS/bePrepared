@@ -36,12 +36,32 @@ const severityRank: Record<AlertSeverity, number> = {
   overdue: 2,
 };
 
-function computeAlertSeverity(dueAt: Date, today: Date = new Date()): AlertSeverity {
+/**
+ * Compute alert severity for a given due date.
+ *
+ * @param dueAt       The date the item is due / expires / needs replacement.
+ * @param today       Reference "now" (defaults to wall clock).
+ * @param graceDays   Number of days past due before escalating to "overdue".
+ *                    During the grace window the severity stays "due".
+ *                    Defaults to 0 (no grace — immediately overdue once past).
+ */
+function computeAlertSeverity(
+  dueAt: Date,
+  today: Date = new Date(),
+  graceDays: number = 0
+): AlertSeverity {
   const due = dueAt.toISOString().slice(0, 10);
   const now = today.toISOString().slice(0, 10);
-  if (due < now) return "overdue";
+  if (due > now) return "upcoming";
   if (due === now) return "due";
-  return "upcoming";
+  // due < now — check grace window
+  if (graceDays > 0) {
+    const graceEnd = new Date(dueAt);
+    graceEnd.setDate(graceEnd.getDate() + graceDays);
+    const graceEndStr = graceEnd.toISOString().slice(0, 10);
+    if (now <= graceEndStr) return "due";
+  }
+  return "overdue";
 }
 
 function resolveAlertUpsertResult(
@@ -101,6 +121,21 @@ async function getUpcomingDays(householdId: string): Promise<number> {
   return def?.valueInt ?? 14;
 }
 
+async function getGraceDays(householdId: string): Promise<number> {
+  const row = await db.query.householdPolicies.findFirst({
+    where: and(
+      eq(householdPolicies.householdId, householdId),
+      eq(householdPolicies.key, "alert_grace_days"),
+      isNull(householdPolicies.archivedAt)
+    ),
+  });
+  if (row?.valueInt != null) return row.valueInt;
+  const def = await db.query.policyDefaults.findFirst({
+    where: eq(policyDefaults.key, "alert_grace_days"),
+  });
+  return def?.valueInt ?? 0;
+}
+
 async function upsertAlert(data: {
   householdId: string;
   severity: AlertSeverity;
@@ -158,6 +193,7 @@ async function processInventoryExpiry(metrics: JobCounters) {
 
   for (const hh of allHouseholds) {
     const upcomingDays = await getUpcomingDays(hh.id);
+    const graceDays = await getGraceDays(hh.id);
     const upcoming = new Date(today);
     upcoming.setDate(upcoming.getDate() + upcomingDays);
 
@@ -177,7 +213,7 @@ async function processInventoryExpiry(metrics: JobCounters) {
       }
       try {
         const expStr = lot.expiresAt.toString().slice(0, 10);
-        const severity = computeAlertSeverity(lot.expiresAt, today);
+        const severity = computeAlertSeverity(lot.expiresAt, today, graceDays);
         const result = await upsertAlert({
           householdId: hh.id,
           severity,
@@ -208,6 +244,7 @@ async function processInventoryReplacement(metrics: JobCounters) {
 
   for (const hh of allHouseholds) {
     const upcomingDays = await getUpcomingDays(hh.id);
+    const graceDays = await getGraceDays(hh.id);
     const upcoming = new Date(today);
     upcoming.setDate(upcoming.getDate() + upcomingDays);
 
@@ -227,7 +264,7 @@ async function processInventoryReplacement(metrics: JobCounters) {
       }
       try {
         const repStr = lot.nextReplaceAt.toString().slice(0, 10);
-        const severity = computeAlertSeverity(lot.nextReplaceAt, today);
+        const severity = computeAlertSeverity(lot.nextReplaceAt, today, graceDays);
         const result = await upsertAlert({
           householdId: hh.id,
           severity,
@@ -286,7 +323,9 @@ async function processMaintenanceSchedules(metrics: JobCounters) {
       }
       try {
         const dueStr = sched.nextDueAt.toString().slice(0, 10);
-        const severity = computeAlertSeverity(sched.nextDueAt, today);
+        // Use the schedule's own grace_days (falls back to 0 if not set)
+        const schedGraceDays = sched.graceDays ?? 0;
+        const severity = computeAlertSeverity(sched.nextDueAt, today, schedGraceDays);
         const result = await upsertAlert({
           householdId: hh.id,
           severity,

@@ -13,12 +13,13 @@
 2. [Entity Relationship Overview](#2-entity-relationship-overview)
 3. [Households Domain](#3-households-domain)
 4. [Policies Domain](#4-policies-domain)
-5. [Modules & Tasks Domain](#5-modules--tasks-domain)
-6. [Inventory Domain](#6-inventory-domain)
-7. [Equipment & Maintenance Domain](#7-equipment--maintenance-domain)
-8. [Alerts Domain](#8-alerts-domain)
-9. [Archive & Restore Pattern](#9-archive--restore-pattern)
-10. [Enum Reference](#10-enum-reference)
+5. [Users Domain](#5-users-domain)
+6. [Modules & Tasks Domain](#6-modules--tasks-domain)
+7. [Inventory Domain](#7-inventory-domain)
+8. [Equipment & Maintenance Domain](#8-equipment--maintenance-domain)
+9. [Alerts Domain](#9-alerts-domain)
+10. [Archive & Restore Pattern](#10-archive--restore-pattern)
+11. [Enum Reference](#11-enum-reference)
 
 ---
 
@@ -61,9 +62,10 @@ tasks
   ├─ task_dependencies (M:N self-join)
   └─ task_progress (1:N, per household)
 policy_defaults           (system-wide, keyed)
-inventory_categories      (global reference)
+inventory_categories      (system-seeded + per-household custom; see §7)
 battery_profiles          (global reference)
 maintenance_templates     (global reference)
+equipment_categories      (system-seeded + per-household custom; see §8)
 ```
 
 ---
@@ -171,46 +173,77 @@ Append-only. Never archived.
 
 ---
 
-## 5. Modules & Tasks Domain
+## 5. Users Domain
+
+[↑ TOC](#table-of-contents)
+
+### `users`
+
+Application users. Each user belongs to exactly one household.
+
+| Column          | Type                  | Notes                                                    |
+| --------------- | --------------------- | -------------------------------------------------------- |
+| `id`            | VARCHAR(36) PK        | UUID v4                                                  |
+| `household_id`  | VARCHAR(36) NOT NULL  | FK → `households.id`                                     |
+| `username`      | VARCHAR(255) NOT NULL | Login identifier (unique)                                |
+| `email`         | VARCHAR(255) NULL     | Optional email address                                   |
+| `password_hash` | VARCHAR(255) NOT NULL | bcrypt hash of the user's password                       |
+| `is_admin`      | BOOLEAN NOT NULL      | Admin users may manage global tasks, modules, categories |
+| `created_at`    | TIMESTAMP NOT NULL    |                                                          |
+| `updated_at`    | TIMESTAMP NOT NULL    |                                                          |
+| `archived_at`   | TIMESTAMP NULL        | NULL = active                                            |
+
+---
+
+## 6. Modules & Tasks Domain
 
 [↑ TOC](#table-of-contents)
 
 ### `modules`
 
-| Column        | Type                         | Notes                           |
-| ------------- | ---------------------------- | ------------------------------- |
-| `id`          | VARCHAR(36) PK               |                                 |
-| `slug`        | VARCHAR(100) NOT NULL UNIQUE | e.g. `water`, `food`, `medical` |
-| `title`       | VARCHAR(255) NOT NULL        |                                 |
-| `description` | TEXT NULL                    |                                 |
-| `icon`        | VARCHAR(50) NULL             | Icon name hint for UI           |
-| `sort_order`  | INT NOT NULL DEFAULT 0       |                                 |
-| `archived_at` | TIMESTAMP NULL               |                                 |
+| Column        | Type                                                                                                       | Notes                                      |
+| ------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| `id`          | VARCHAR(36) PK                                                                                             |                                            |
+| `slug`        | VARCHAR(100) NOT NULL UNIQUE                                                                               | e.g. `water`, `food`, `medical`            |
+| `title`       | VARCHAR(255) NOT NULL                                                                                      |                                            |
+| `description` | TEXT NULL                                                                                                  |                                            |
+| `icon_name`   | VARCHAR(100) NULL                                                                                          | Icon identifier for UI (e.g. `droplets`)   |
+| `category`    | ENUM('water','food','shelter','medical','security','comms','sanitation','power','mobility','general') NULL | Domain category used for filtering/display |
+| `sort_order`  | INT NOT NULL DEFAULT 0                                                                                     |                                            |
+| `created_at`  | TIMESTAMP NOT NULL                                                                                         |                                            |
+| `updated_at`  | TIMESTAMP NOT NULL                                                                                         |                                            |
+| `archived_at` | TIMESTAMP NULL                                                                                             |                                            |
 
 ### `sections`
 
 Sub-groups within a module.
 
-| Column        | Type                   | Notes             |
-| ------------- | ---------------------- | ----------------- |
-| `id`          | VARCHAR(36) PK         |                   |
-| `module_id`   | VARCHAR(36) NOT NULL   | FK → `modules.id` |
-| `title`       | VARCHAR(255) NOT NULL  |                   |
-| `sort_order`  | INT NOT NULL DEFAULT 0 |                   |
-| `archived_at` | TIMESTAMP NULL         |                   |
+| Column        | Type                   | Notes                                   |
+| ------------- | ---------------------- | --------------------------------------- |
+| `id`          | VARCHAR(36) PK         |                                         |
+| `module_id`   | VARCHAR(36) NOT NULL   | FK → `modules.id`                       |
+| `slug`        | VARCHAR(100) NOT NULL  | URL-safe identifier (unique per module) |
+| `title`       | VARCHAR(255) NOT NULL  |                                         |
+| `sort_order`  | INT NOT NULL DEFAULT 0 |                                         |
+| `created_at`  | TIMESTAMP NOT NULL     |                                         |
+| `updated_at`  | TIMESTAMP NOT NULL     |                                         |
+| `archived_at` | TIMESTAMP NULL         |                                         |
 
 ### `guidance_docs`
 
 Informational content within a section.
 
-| Column        | Type                   | Notes              |
-| ------------- | ---------------------- | ------------------ |
-| `id`          | VARCHAR(36) PK         |                    |
-| `section_id`  | VARCHAR(36) NOT NULL   | FK → `sections.id` |
-| `title`       | VARCHAR(255) NOT NULL  |                    |
-| `body`        | TEXT NULL              | Markdown           |
-| `sort_order`  | INT NOT NULL DEFAULT 0 |                    |
-| `archived_at` | TIMESTAMP NULL         |                    |
+| Column        | Type                   | Notes                                 |
+| ------------- | ---------------------- | ------------------------------------- |
+| `id`          | VARCHAR(36) PK         |                                       |
+| `section_id`  | VARCHAR(36) NOT NULL   | FK → `sections.id`                    |
+| `title`       | VARCHAR(255) NOT NULL  |                                       |
+| `body`        | TEXT NOT NULL          | Markdown content                      |
+| `badge_json`  | TEXT NULL              | JSON blob for optional badge metadata |
+| `sort_order`  | INT NOT NULL DEFAULT 0 |                                       |
+| `created_at`  | TIMESTAMP NOT NULL     |                                       |
+| `updated_at`  | TIMESTAMP NOT NULL     |                                       |
+| `archived_at` | TIMESTAMP NULL         |                                       |
 
 ### `tasks`
 
@@ -265,22 +298,26 @@ Per-household completion status of each task.
 
 ---
 
-## 6. Inventory Domain
+## 7. Inventory Domain
 
 [↑ TOC](#table-of-contents)
 
 ### `inventory_categories`
 
-Global reference table, seeded.
+Supports both system-seeded categories (`is_system = true`, `household_id = NULL`) and per-household custom categories (`is_system = false`, `household_id` set). Active queries for a household return rows where `is_system = true OR household_id = :householdId`.
 
-| Column        | Type                         | Notes                 |
-| ------------- | ---------------------------- | --------------------- |
-| `id`          | VARCHAR(36) PK               |                       |
-| `name`        | VARCHAR(255) NOT NULL        |                       |
-| `slug`        | VARCHAR(100) NOT NULL UNIQUE |                       |
-| `module_id`   | VARCHAR(36) NULL             | Link to owning module |
-| `sort_order`  | INT NOT NULL DEFAULT 0       |                       |
-| `archived_at` | TIMESTAMP NULL               |                       |
+| Column         | Type                           | Notes                                             |
+| -------------- | ------------------------------ | ------------------------------------------------- |
+| `id`           | VARCHAR(36) PK                 |                                                   |
+| `household_id` | VARCHAR(36) NULL               | NULL = system-seeded; non-null = household custom |
+| `name`         | VARCHAR(255) NOT NULL          |                                                   |
+| `slug`         | VARCHAR(100) NOT NULL          | Unique within scope (system or per-household)     |
+| `is_system`    | BOOLEAN NOT NULL DEFAULT FALSE | TRUE for seed records; FALSE for household custom |
+| `module_id`    | VARCHAR(36) NULL               | Optional link to owning module                    |
+| `sort_order`   | INT NOT NULL DEFAULT 0         |                                                   |
+| `created_at`   | TIMESTAMP NOT NULL             |                                                   |
+| `updated_at`   | TIMESTAMP NOT NULL             |                                                   |
+| `archived_at`  | TIMESTAMP NULL                 |                                                   |
 
 ### `inventory_items`
 
@@ -327,9 +364,25 @@ Physical batches. Archiving a lot = consumed or disposed.
 
 ---
 
-## 7. Equipment & Maintenance Domain
+## 8. Equipment & Maintenance Domain
 
 [↑ TOC](#table-of-contents)
+
+### `equipment_categories`
+
+Supports both system-seeded categories (`is_system = true`, `household_id = NULL`) and per-household custom categories (`is_system = false`, `household_id` set). Active queries for a household return rows where `is_system = true OR household_id = :householdId`.
+
+| Column         | Type                           | Notes                                              |
+| -------------- | ------------------------------ | -------------------------------------------------- |
+| `id`           | VARCHAR(36) PK                 |                                                    |
+| `household_id` | VARCHAR(36) NULL               | NULL = system-seeded; non-null = household custom  |
+| `slug`         | VARCHAR(100) NOT NULL          | Unique within scope; referenced by equipment items |
+| `name`         | VARCHAR(255) NOT NULL          |                                                    |
+| `is_system`    | BOOLEAN NOT NULL DEFAULT FALSE | TRUE for seed records; FALSE for household custom  |
+| `sort_order`   | INT NOT NULL DEFAULT 0         |                                                    |
+| `created_at`   | TIMESTAMP NOT NULL             |                                                    |
+| `updated_at`   | TIMESTAMP NOT NULL             |                                                    |
+| `archived_at`  | TIMESTAMP NULL                 |                                                    |
 
 ### `equipment_items`
 
@@ -424,7 +477,7 @@ Immutable service history records.
 
 ---
 
-## 8. Alerts Domain
+## 9. Alerts Domain
 
 [↑ TOC](#table-of-contents)
 
@@ -450,7 +503,7 @@ Immutable service history records.
 
 ---
 
-## 9. Archive & Restore Pattern
+## 10. Archive & Restore Pattern
 
 [↑ TOC](#table-of-contents)
 
@@ -470,23 +523,24 @@ This means `household_policies` and `scenario_policies` may have multiple rows p
 
 ---
 
-## 10. Enum Reference
+## 11. Enum Reference
 
 [↑ TOC](#table-of-contents)
 
-| Enum                                       | Values                                                                         |
-| ------------------------------------------ | ------------------------------------------------------------------------------ |
-| `households.active_scenario`               | `shelter_in_place`, `evacuation`                                               |
-| `household_people_profiles.scenario_bound` | `shelter_in_place`, `evacuation`, NULL                                         |
-| `tasks.task_class`                         | `acquire`, `prepare`, `test`, `maintain`, `document`                           |
-| `tasks.readiness_level`                    | `l1_72h`, `l2_14d`, `l3_30d`, `l4_90d`                                         |
-| `tasks.scenario`                           | `both`, `shelter_in_place`, `evacuation`                                       |
-| `task_progress.status`                     | `pending`, `in_progress`, `completed`, `overdue`                               |
-| `equipment_items.status`                   | `operational`, `needs_service`, `unserviceable`, `retired`                     |
-| `battery_profiles.chemistry`               | `alkaline`, `lithium_primary`, `liion`, `nimh`, `lead_acid`, `other`           |
-| `maintenance_templates.task_type`          | `inspect`, `clean`, `lubricate`, `test`, `full_service`, `recharge`, `replace` |
-| `alerts.severity`                          | `upcoming`, `due`, `overdue`                                                   |
-| `alerts.category`                          | `expiry`, `replacement`, `maintenance`, `low_stock`, `task_due`, `policy`      |
+| Enum                                       | Values                                                                                                   |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `households.active_scenario`               | `shelter_in_place`, `evacuation`                                                                         |
+| `household_people_profiles.scenario_bound` | `shelter_in_place`, `evacuation`, NULL                                                                   |
+| `modules.category`                         | `water`, `food`, `shelter`, `medical`, `security`, `comms`, `sanitation`, `power`, `mobility`, `general` |
+| `tasks.task_class`                         | `acquire`, `prepare`, `test`, `maintain`, `document`                                                     |
+| `tasks.readiness_level`                    | `l1_72h`, `l2_14d`, `l3_30d`, `l4_90d`                                                                   |
+| `tasks.scenario`                           | `both`, `shelter_in_place`, `evacuation`                                                                 |
+| `task_progress.status`                     | `pending`, `in_progress`, `completed`, `overdue`                                                         |
+| `equipment_items.status`                   | `operational`, `needs_service`, `unserviceable`, `retired`                                               |
+| `battery_profiles.chemistry`               | `alkaline`, `lithium_primary`, `liion`, `nimh`, `lead_acid`, `other`                                     |
+| `maintenance_templates.task_type`          | `inspect`, `clean`, `lubricate`, `test`, `full_service`, `recharge`, `replace`                           |
+| `alerts.severity`                          | `upcoming`, `due`, `overdue`                                                                             |
+| `alerts.category`                          | `expiry`, `replacement`, `maintenance`, `low_stock`, `task_due`, `policy`                                |
 
 ---
 

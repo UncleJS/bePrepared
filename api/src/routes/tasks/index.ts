@@ -5,6 +5,19 @@ import { eq, isNull, and, inArray } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { requireAdmin, requireAuth, requireHouseholdScope } from "../../lib/routeAuth";
 
+// ISO-8601 datetime / date validation (YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss[.sss]Z)
+const ISO8601_RE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?Z)?$/;
+function parseISODate(value: string, fieldName: string): Date {
+  if (!ISO8601_RE.test(value)) {
+    throw new Error(`${fieldName} must be ISO-8601 format (YYYY-MM-DD or YYYY-MM-DDTHH:mm:ssZ)`);
+  }
+  const d = new Date(value);
+  if (isNaN(d.getTime())) {
+    throw new Error(`${fieldName} is not a valid date`);
+  }
+  return d;
+}
+
 async function unresolvedTaskDependencies(householdId: string, taskId: string) {
   const dependencies = await db.query.taskDependencies.findMany({
     where: eq(taskDependencies.taskId, taskId),
@@ -41,8 +54,20 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
   .get(
     "/",
     async ({ query }) => {
+      const conditions: ReturnType<typeof eq>[] = [isNull(tasks.archivedAt)];
+
+      if (query.moduleId) {
+        conditions.push(eq(tasks.moduleId, query.moduleId));
+      }
+      if (query.readinessLevel) {
+        conditions.push(eq(tasks.readinessLevel, query.readinessLevel as any));
+      }
+      if (query.scenario) {
+        conditions.push(eq(tasks.scenario, query.scenario as any));
+      }
+
       const rows = await db.query.tasks.findMany({
-        where: isNull(tasks.archivedAt),
+        where: and(...conditions),
         orderBy: tasks.sortOrder,
       });
 
@@ -60,7 +85,23 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
 
       return Array.from(deduped.values());
     },
-    { detail: { summary: "List all tasks" } }
+    {
+      query: t.Object({
+        moduleId: t.Optional(t.String({ minLength: 36, maxLength: 36 })),
+        readinessLevel: t.Optional(
+          t.Union([
+            t.Literal("l1_72h"),
+            t.Literal("l2_14d"),
+            t.Literal("l3_30d"),
+            t.Literal("l4_90d"),
+          ])
+        ),
+        scenario: t.Optional(
+          t.Union([t.Literal("both"), t.Literal("shelter_in_place"), t.Literal("evacuation")])
+        ),
+      }),
+      detail: { summary: "List all tasks" },
+    }
   )
 
   .get(
@@ -217,26 +258,34 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
       const claims = requireAdmin(request, set);
       if (!claims) return { error: "Admin access required" };
 
-      await db
-        .update(tasks)
-        .set({
-          moduleId: body.moduleId,
-          sectionId: body.sectionId,
-          title: body.title,
-          description: body.description,
-          taskClass: body.taskClass,
-          readinessLevel: body.readinessLevel,
-          scenario: body.scenario,
-          isRecurring: body.isRecurring,
-          recurDays: body.recurDays,
-          sortOrder: body.sortOrder,
-          evidencePrompt: body.evidencePrompt,
-        })
-        .where(and(eq(tasks.id, params.id), isNull(tasks.archivedAt)));
+      const row = await db.transaction(async (tx) => {
+        const existing = await tx.query.tasks.findFirst({
+          where: and(eq(tasks.id, params.id), isNull(tasks.archivedAt)),
+        });
+        if (!existing) return null;
 
-      const row = await db.query.tasks.findFirst({
-        where: and(eq(tasks.id, params.id), isNull(tasks.archivedAt)),
+        await tx
+          .update(tasks)
+          .set({
+            moduleId: body.moduleId,
+            sectionId: body.sectionId,
+            title: body.title,
+            description: body.description,
+            taskClass: body.taskClass,
+            readinessLevel: body.readinessLevel,
+            scenario: body.scenario,
+            isRecurring: body.isRecurring,
+            recurDays: body.recurDays,
+            sortOrder: body.sortOrder,
+            evidencePrompt: body.evidencePrompt,
+          })
+          .where(and(eq(tasks.id, params.id), isNull(tasks.archivedAt)));
+
+        return tx.query.tasks.findFirst({
+          where: and(eq(tasks.id, params.id), isNull(tasks.archivedAt)),
+        });
       });
+
       if (!row) {
         set.status = 404;
         return { error: "Task not found" };
@@ -301,6 +350,17 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
       const claims = requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
+      // Validate date strings before any DB work
+      let parsedCompletedAt: Date | undefined;
+      let parsedNextDueAt: Date | undefined;
+      try {
+        if (body.completedAt) parsedCompletedAt = parseISODate(body.completedAt, "completedAt");
+        if (body.nextDueAt) parsedNextDueAt = parseISODate(body.nextDueAt, "nextDueAt");
+      } catch (err: any) {
+        set.status = 400;
+        return { error: err.message };
+      }
+
       const existing = await db.query.taskProgress.findFirst({
         where: and(
           eq(taskProgress.householdId, params.householdId),
@@ -323,8 +383,8 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
         }
 
         const now = new Date();
-        const nextCompletedAt = body.completedAt
-          ? new Date(body.completedAt)
+        const nextCompletedAt = parsedCompletedAt
+          ? parsedCompletedAt
           : nextStatus === "completed"
             ? (existing.completedAt ?? now)
             : null;
@@ -334,7 +394,7 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
           .set({
             status: nextStatus,
             completedAt: nextCompletedAt,
-            nextDueAt: body.nextDueAt ? new Date(body.nextDueAt) : existing.nextDueAt,
+            nextDueAt: parsedNextDueAt ?? existing.nextDueAt,
             evidenceNote: body.evidenceNote ?? existing.evidenceNote,
             completedBy: body.completedBy ?? existing.completedBy,
           })
@@ -372,8 +432,8 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
         householdId: params.householdId,
         taskId: body.taskId,
         status: body.status,
-        completedAt: body.completedAt ? new Date(body.completedAt) : undefined,
-        nextDueAt: body.nextDueAt ? new Date(body.nextDueAt) : undefined,
+        completedAt: parsedCompletedAt,
+        nextDueAt: parsedNextDueAt,
         evidenceNote: body.evidenceNote,
         completedBy: body.completedBy,
       });
@@ -405,6 +465,17 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
       const claims = requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
+      // Validate date strings before any DB work
+      let parsedCompletedAt: Date | undefined;
+      let parsedNextDueAt: Date | undefined;
+      try {
+        if (body.completedAt) parsedCompletedAt = parseISODate(body.completedAt, "completedAt");
+        if (body.nextDueAt) parsedNextDueAt = parseISODate(body.nextDueAt, "nextDueAt");
+      } catch (err: any) {
+        set.status = 400;
+        return { error: err.message };
+      }
+
       const existing = await db.query.taskProgress.findFirst({
         where: and(
           eq(taskProgress.id, params.id),
@@ -435,12 +506,10 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
         .set({
           status: body.status,
           completedAt:
-            body.status === "completed" && !body.completedAt
+            body.status === "completed" && !parsedCompletedAt
               ? now
-              : body.completedAt
-                ? new Date(body.completedAt)
-                : undefined,
-          nextDueAt: body.nextDueAt ? new Date(body.nextDueAt) : undefined,
+              : (parsedCompletedAt ?? undefined),
+          nextDueAt: parsedNextDueAt,
           evidenceNote: body.evidenceNote,
           completedBy: body.completedBy,
         })
