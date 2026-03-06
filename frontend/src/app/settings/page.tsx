@@ -19,7 +19,6 @@ type Household = {
   id: string;
   name: string;
   targetPeople: number;
-  activeScenario: "shelter_in_place" | "evacuation";
   notes?: string | null;
 };
 

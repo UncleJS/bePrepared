@@ -7,16 +7,12 @@ type Household = {
   id: string;
   name: string;
   targetPeople: number;
-  activeScenario: "shelter_in_place" | "evacuation";
 };
 
 export function HouseholdManager() {
   const [households, setHouseholds] = useState<Household[]>([]);
   const [name, setName] = useState("");
   const [targetPeople, setTargetPeople] = useState("2");
-  const [activeScenario, setActiveScenario] = useState<"shelter_in_place" | "evacuation">(
-    "shelter_in_place"
-  );
   const [visible, setVisible] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +48,7 @@ export function HouseholdManager() {
     try {
       await apiFetch("/households", {
         method: "POST",
-        body: JSON.stringify({ name: name.trim(), targetPeople: people, activeScenario }),
+        body: JSON.stringify({ name: name.trim(), targetPeople: people }),
       });
       setName("");
       setTargetPeople("2");
@@ -70,7 +66,7 @@ export function HouseholdManager() {
       <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
         Families (Admin)
       </h3>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <label className="space-y-1">
           <span className="block text-xs font-bold uppercase tracking-wide text-primary">
             Family Name
@@ -94,19 +90,6 @@ export function HouseholdManager() {
             className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
           />
         </label>
-        <label className="space-y-1">
-          <span className="block text-xs font-bold uppercase tracking-wide text-primary">
-            Default Scenario
-          </span>
-          <select
-            value={activeScenario}
-            onChange={(e) => setActiveScenario(e.target.value as "shelter_in_place" | "evacuation")}
-            className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
-          >
-            <option value="shelter_in_place">Shelter in place</option>
-            <option value="evacuation">Evacuation</option>
-          </select>
-        </label>
         <button
           type="button"
           onClick={createHousehold}
@@ -125,7 +108,6 @@ export function HouseholdManager() {
             <tr>
               <th className="text-left px-4 py-2">Name</th>
               <th className="text-left px-4 py-2">People</th>
-              <th className="text-left px-4 py-2">Scenario</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -133,7 +115,6 @@ export function HouseholdManager() {
               <tr key={h.id}>
                 <td className="px-4 py-2.5">{h.name}</td>
                 <td className="px-4 py-2.5">{h.targetPeople}</td>
-                <td className="px-4 py-2.5">{h.activeScenario.replace("_", " ")}</td>
               </tr>
             ))}
           </tbody>

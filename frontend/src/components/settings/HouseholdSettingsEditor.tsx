@@ -7,15 +7,11 @@ type Household = {
   id: string;
   name: string;
   targetPeople: number;
-  activeScenario: "shelter_in_place" | "evacuation";
   notes?: string | null;
 };
 
 export function HouseholdSettingsEditor({ household }: { household: Household }) {
   const [targetPeople, setTargetPeople] = useState(String(household.targetPeople));
-  const [activeScenario, setActiveScenario] = useState<"shelter_in_place" | "evacuation">(
-    household.activeScenario
-  );
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -34,10 +30,7 @@ export function HouseholdSettingsEditor({ household }: { household: Household })
     try {
       await apiFetch(`/households/${household.id}`, {
         method: "PATCH",
-        body: JSON.stringify({
-          targetPeople: people,
-          activeScenario,
-        }),
+        body: JSON.stringify({ targetPeople: people }),
       });
       setMessage("Household settings updated.");
     } catch (e) {
@@ -62,20 +55,6 @@ export function HouseholdSettingsEditor({ household }: { household: Household })
             onChange={(e) => setTargetPeople(e.target.value)}
             className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
           />
-        </label>
-
-        <label className="space-y-1">
-          <span className="block text-xs font-bold uppercase tracking-wide text-primary">
-            Active Scenario
-          </span>
-          <select
-            value={activeScenario}
-            onChange={(e) => setActiveScenario(e.target.value as "shelter_in_place" | "evacuation")}
-            className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
-          >
-            <option value="shelter_in_place">Shelter in place</option>
-            <option value="evacuation">Evacuation</option>
-          </select>
         </label>
 
         <button

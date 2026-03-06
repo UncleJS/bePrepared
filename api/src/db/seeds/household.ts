@@ -12,7 +12,6 @@ export async function seedHousehold() {
       id,
       name: "My Household",
       targetPeople: 2,
-      activeScenario: "shelter_in_place",
       notes: "Default demo household created during initial seed. Edit in Settings.",
     })
     .onDuplicateKeyUpdate({ set: { name: "My Household" } });

@@ -74,7 +74,6 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
         t.Object({
           name: t.String({ minLength: 1, maxLength: 255 }),
           targetPeople: t.Number({ minimum: 1, maximum: 1000 }),
-          activeScenario: t.Union([t.Literal("shelter_in_place"), t.Literal("evacuation")]),
           activeProfileId: t.String({ minLength: 36, maxLength: 36 }),
           notes: t.String({ maxLength: 10000 }),
         })

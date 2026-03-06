@@ -14,9 +14,6 @@ export const households = mysqlTable("households", {
   id: varchar("id", { length: 36 }).primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   targetPeople: int("target_people").notNull().default(2),
-  activeScenario: mysqlEnum("active_scenario", ["shelter_in_place", "evacuation"])
-    .notNull()
-    .default("shelter_in_place"),
   activeProfileId: varchar("active_profile_id", { length: 36 }),
   notes: text("notes"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
