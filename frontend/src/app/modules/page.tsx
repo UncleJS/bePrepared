@@ -24,7 +24,8 @@ export default async function ModulesPage() {
       <div>
         <h1 className="text-2xl font-bold">Preparedness Modules</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          10 modules covering every domain of household preparedness
+          {modules.length} module{modules.length !== 1 ? "s" : ""} covering every domain of
+          household preparedness
         </p>
       </div>
 

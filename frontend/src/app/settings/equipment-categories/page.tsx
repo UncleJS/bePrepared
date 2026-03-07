@@ -10,6 +10,7 @@ export default function EquipmentCategoriesPage() {
       itemPath={(householdId) => `/equipment/${householdId}`}
       namePlaceholder="Power"
       slugPlaceholder="power"
+      backHref="/settings"
     />
   );
 }

@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { apiFetch } from "@/lib/api";
 import { useActiveHouseholdId } from "@/lib/useActiveHouseholdId";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { ChevronLeft, Pencil, Plus, Trash2 } from "lucide-react";
 
 type Category = { id: string; name: string; slug: string; isSystem: boolean; sortOrder: number };
 type Item = { id: string; categoryId?: string | null };
@@ -14,12 +15,14 @@ export function CategoryManager({
   itemPath,
   namePlaceholder,
   slugPlaceholder,
+  backHref,
 }: {
   title: string;
   categoryPath: (householdId: string) => string;
   itemPath: (householdId: string) => string;
   namePlaceholder: string;
   slugPlaceholder: string;
+  backHref?: string;
 }) {
   const { householdId, status } = useActiveHouseholdId();
   const [categories, setCategories] = useState<Category[]>([]);
@@ -69,6 +72,14 @@ export function CategoryManager({
   return (
     <div className="space-y-6">
       <div>
+        {backHref && (
+          <Link
+            href={backHref}
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-3"
+          >
+            <ChevronLeft size={14} /> Settings
+          </Link>
+        )}
         <h1 className="text-2xl font-bold">{title}</h1>
         <p className="text-sm text-muted-foreground">System + household custom categories.</p>
       </div>

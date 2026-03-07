@@ -1,117 +1,84 @@
-import { apiFetch, getSessionHouseholdId } from "@/lib/api";
-import { HouseholdSettingsEditor } from "@/components/settings/HouseholdSettingsEditor";
-import { HouseholdManager } from "@/components/settings/HouseholdManager";
-import { UserManager } from "@/components/settings/UserManager";
-import { PolicySettingsEditor } from "@/components/settings/PolicySettingsEditor";
-import { ScenarioPolicySettingsEditor } from "@/components/settings/ScenarioPolicySettingsEditor";
 import Link from "next/link";
+import {
+  Home,
+  Users,
+  BookOpen,
+  Package,
+  ShieldCheck,
+  SlidersHorizontal,
+  Building2,
+} from "lucide-react";
 
-type PolicyDefault = {
-  key: string;
-  valueDecimal?: string;
-  valueInt?: number;
-  unit: string;
-  description?: string;
-};
+const settingsSections = [
+  {
+    href: "/settings/household",
+    icon: Home,
+    label: "Household",
+    description: "Family size, household name, and notes.",
+  },
+  {
+    href: "/settings/users",
+    icon: Users,
+    label: "Users",
+    description: "Manage user accounts and personal profiles.",
+  },
+  {
+    href: "/settings/policies",
+    icon: SlidersHorizontal,
+    label: "Policies",
+    description: "Household overrides and scenario planning values.",
+  },
+  {
+    href: "/settings/modules",
+    icon: BookOpen,
+    label: "Module Content",
+    description: "Categories, modules, sections, and guidance docs.",
+  },
+  {
+    href: "/settings/inventory-categories",
+    icon: Package,
+    label: "Inventory Categories",
+    description: "System and custom inventory categories.",
+  },
+  {
+    href: "/settings/equipment-categories",
+    icon: ShieldCheck,
+    label: "Equipment Categories",
+    description: "System and custom equipment categories.",
+  },
+  {
+    href: "/settings/families",
+    icon: Building2,
+    label: "Families",
+    description: "Create and manage household families.",
+  },
+];
 
-type HouseholdPolicy = PolicyDefault & { id: string };
-type ScenarioPolicy = PolicyDefault & { id: string };
-type Household = {
-  id: string;
-  name: string;
-  targetPeople: number;
-  notes?: string | null;
-};
-
-async function getData(householdId: string) {
-  const [household, defaults, overrides, sip, evac] = await Promise.allSettled([
-    apiFetch<Household>(`/households/${householdId}`),
-    apiFetch<PolicyDefault[]>("/settings/defaults"),
-    apiFetch<HouseholdPolicy[]>(`/settings/${householdId}/policies`),
-    apiFetch<ScenarioPolicy[]>(`/settings/${householdId}/scenario/shelter_in_place`),
-    apiFetch<ScenarioPolicy[]>(`/settings/${householdId}/scenario/evacuation`),
-  ]);
-
-  return {
-    household: household.status === "fulfilled" ? household.value : null,
-    defaults: defaults.status === "fulfilled" ? defaults.value : [],
-    overrides: overrides.status === "fulfilled" ? overrides.value : [],
-    scenarioPolicies: {
-      shelter_in_place: sip.status === "fulfilled" ? sip.value : [],
-      evacuation: evac.status === "fulfilled" ? evac.value : [],
-    },
-  };
-}
-
-export default async function SettingsPage() {
-  const householdId = await getSessionHouseholdId();
-  if (!householdId)
-    return <p className="text-sm text-muted-foreground">No household in session.</p>;
-
-  const { household, defaults, overrides, scenarioPolicies } = await getData(householdId);
-
+export default function SettingsPage() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Settings</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Policy defaults and household overrides. Edit values inline and save.
+          Configure your household, users, content, and policies.
         </p>
       </div>
 
-      <section>
-        <h2 className="text-lg font-semibold mb-3">Household</h2>
-        {household ? (
-          <HouseholdSettingsEditor household={household} />
-        ) : (
-          <p className="text-sm text-muted-foreground">Unable to load household settings.</p>
-        )}
-      </section>
-
-      <section>
-        <h2 className="text-lg font-semibold mb-3">Users</h2>
-        <UserManager />
-      </section>
-
-      <section>
-        <h2 className="text-lg font-semibold mb-3">Content Management</h2>
-        <div className="flex flex-wrap gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {settingsSections.map(({ href, icon: Icon, label, description }) => (
           <Link
-            href="/settings/modules"
-            className="rounded-md border border-border px-3 py-2 text-sm hover:bg-accent"
+            key={href}
+            href={href}
+            className="rounded-lg border border-border bg-card hover:border-primary/50 hover:bg-accent transition-colors p-4 flex items-start gap-3"
           >
-            Module Content
+            <Icon size={18} className="text-primary mt-0.5 shrink-0" />
+            <div>
+              <p className="font-semibold text-sm">{label}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+            </div>
           </Link>
-          <Link
-            href="/settings/inventory-categories"
-            className="rounded-md border border-border px-3 py-2 text-sm hover:bg-accent"
-          >
-            Inventory Categories
-          </Link>
-          <Link
-            href="/settings/equipment-categories"
-            className="rounded-md border border-border px-3 py-2 text-sm hover:bg-accent"
-          >
-            Equipment Categories
-          </Link>
-        </div>
-      </section>
-
-      <section>
-        <h2 className="text-lg font-semibold mb-3">Policy Defaults</h2>
-        <PolicySettingsEditor householdId={householdId} defaults={defaults} overrides={overrides} />
-      </section>
-
-      <section>
-        <h2 className="text-lg font-semibold mb-3">Scenario Overrides</h2>
-        <ScenarioPolicySettingsEditor
-          householdId={householdId}
-          defaults={defaults}
-          scenarioPolicies={scenarioPolicies}
-        />
-      </section>
-
-      <HouseholdManager />
+        ))}
+      </div>
     </div>
   );
 }

@@ -10,6 +10,7 @@ export default function InventoryCategoriesPage() {
       itemPath={(householdId) => `/inventory/${householdId}/items`}
       namePlaceholder="Water"
       slugPlaceholder="water"
+      backHref="/settings"
     />
   );
 }

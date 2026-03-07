@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { apiFetch } from "@/lib/api";
 import {
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
   GripVertical,
   Pencil,
   Plus,
@@ -1001,6 +1003,12 @@ export default function ModulesAdminPage() {
   return (
     <div className="space-y-6">
       <div>
+        <Link
+          href="/settings"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-3"
+        >
+          <ChevronLeft size={14} /> Settings
+        </Link>
         <h1 className="text-2xl font-bold">Module Content</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Manage categories, modules, sections, and guidance docs. Drag rows to reorder.
