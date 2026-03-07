@@ -6,7 +6,6 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 QUADLET_DIR="$HOME/.config/containers/systemd"
-DATA_DIR="$HOME/bePrepared/data/mariadb"
 ENV_FILE="$SCRIPT_DIR/.env"
 
 echo "==> bePrepared pod-start.sh"
@@ -20,9 +19,9 @@ if [[ ! -f "$ENV_FILE" ]]; then
   exit 1
 fi
 
-# ---- 2. Create data directory ----
-mkdir -p "$DATA_DIR"
-echo "==> Data directory: $DATA_DIR"
+# ---- 2. Create named volume for MariaDB data ----
+podman volume create beprepared-db 2>/dev/null || true
+echo "==> Named volume: beprepared-db ($(podman volume inspect beprepared-db --format '{{.Mountpoint}}')")
 
 # ---- 3. Build images (if not already built) ----
 echo "==> Building container images..."

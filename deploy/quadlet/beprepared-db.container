@@ -12,7 +12,7 @@ ContainerName=beprepared-db
 
 EnvironmentFile=%h/0_opencode/bePrepared/deploy/.env
 
-Volume=%h/0_opencode/bePrepared/data/mariadb:/var/lib/mysql:Z
+Volume=beprepared-db:/var/lib/mysql:Z
 
 [Service]
 Restart=on-failure
