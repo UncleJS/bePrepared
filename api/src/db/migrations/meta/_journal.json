@@ -43,6 +43,13 @@
       "when": 1772800000000,
       "tag": "0005_drop_active_scenario",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1741305600000,
+      "tag": "0006_module_categories",
+      "breakpoints": true
     }
   ]
 }

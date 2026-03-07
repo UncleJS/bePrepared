@@ -1,14 +1,15 @@
 // schema/modules.ts
-import {
-  mysqlTable,
-  varchar,
-  text,
-  int,
-  boolean,
-  timestamp,
-  mysqlEnum,
-  uniqueIndex,
-} from "drizzle-orm/mysql-core";
+import { mysqlTable, varchar, text, int, timestamp, uniqueIndex } from "drizzle-orm/mysql-core";
+
+export const moduleCategories = mysqlTable("module_categories", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  slug: varchar("slug", { length: 100 }).notNull().unique(),
+  title: varchar("title", { length: 255 }).notNull(),
+  sortOrder: int("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+  archivedAt: timestamp("archived_at"),
+});
 
 export const modules = mysqlTable("modules", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -17,20 +18,9 @@ export const modules = mysqlTable("modules", {
   description: text("description"),
   iconName: varchar("icon_name", { length: 100 }),
   sortOrder: int("sort_order").notNull().default(0),
-  category: mysqlEnum("category", [
-    "water",
-    "food",
-    "shelter",
-    "medical",
-    "security",
-    "comms",
-    "sanitation",
-    "power",
-    "mobility",
-    "general",
-  ])
+  categoryId: varchar("category_id", { length: 36 })
     .notNull()
-    .default("general"),
+    .references(() => moduleCategories.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
   archivedAt: timestamp("archived_at"),

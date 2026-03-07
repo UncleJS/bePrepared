@@ -1,21 +1,35 @@
 import { db } from "../client";
-import { modules, sections } from "../schema";
+import { moduleCategories, modules, sections } from "../schema";
 import { randomUUID } from "crypto";
+import { eq } from "drizzle-orm";
 
+// ---------------------------------------------------------------------------
+// System module categories (stable slugs — match old enum values exactly)
+// ---------------------------------------------------------------------------
+const MODULE_CATEGORIES: Array<{
+  slug: string;
+  title: string;
+  sortOrder: number;
+}> = [
+  { slug: "water", title: "Water", sortOrder: 1 },
+  { slug: "food", title: "Food", sortOrder: 2 },
+  { slug: "shelter", title: "Shelter", sortOrder: 3 },
+  { slug: "medical", title: "Medical", sortOrder: 4 },
+  { slug: "power", title: "Power", sortOrder: 5 },
+  { slug: "comms", title: "Communications", sortOrder: 6 },
+  { slug: "sanitation", title: "Sanitation", sortOrder: 7 },
+  { slug: "security", title: "Security", sortOrder: 8 },
+  { slug: "mobility", title: "Mobility", sortOrder: 9 },
+  { slug: "general", title: "General Preparedness", sortOrder: 10 },
+];
+
+// ---------------------------------------------------------------------------
+// Modules + their sections
+// ---------------------------------------------------------------------------
 const MODULES: Array<{
   slug: string;
   title: string;
-  category:
-    | "water"
-    | "food"
-    | "shelter"
-    | "medical"
-    | "comms"
-    | "sanitation"
-    | "power"
-    | "mobility"
-    | "security"
-    | "general";
+  categorySlug: string;
   sortOrder: number;
   description: string;
   sections: Array<{ slug: string; title: string; sortOrder: number }>;
@@ -23,7 +37,7 @@ const MODULES: Array<{
   {
     slug: "water",
     title: "Water",
-    category: "water",
+    categorySlug: "water",
     sortOrder: 1,
     description:
       "Water storage, purification, and conservation strategies for all readiness levels.",
@@ -37,7 +51,7 @@ const MODULES: Array<{
   {
     slug: "food",
     title: "Food",
-    category: "food",
+    categorySlug: "food",
     sortOrder: 2,
     description: "Food storage, rotation, caloric planning, and emergency cooking.",
     sections: [
@@ -50,7 +64,7 @@ const MODULES: Array<{
   {
     slug: "shelter",
     title: "Shelter",
-    category: "shelter",
+    categorySlug: "shelter",
     sortOrder: 3,
     description: "Shelter-in-place and evacuation shelter strategies, warmth, and safety.",
     sections: [
@@ -62,7 +76,7 @@ const MODULES: Array<{
   {
     slug: "medical",
     title: "Medical",
-    category: "medical",
+    categorySlug: "medical",
     sortOrder: 4,
     description: "First aid supplies, medications, and emergency medical planning.",
     sections: [
@@ -75,7 +89,7 @@ const MODULES: Array<{
   {
     slug: "power",
     title: "Power",
-    category: "power",
+    categorySlug: "power",
     sortOrder: 5,
     description: "Backup power, batteries, lighting, and energy management.",
     sections: [
@@ -88,7 +102,7 @@ const MODULES: Array<{
   {
     slug: "comms",
     title: "Communications",
-    category: "comms",
+    categorySlug: "comms",
     sortOrder: 6,
     description: "Emergency communications, radios, and information management.",
     sections: [
@@ -100,7 +114,7 @@ const MODULES: Array<{
   {
     slug: "sanitation",
     title: "Sanitation",
-    category: "sanitation",
+    categorySlug: "sanitation",
     sortOrder: 7,
     description: "Hygiene, waste management, and sanitation without infrastructure.",
     sections: [
@@ -112,7 +126,7 @@ const MODULES: Array<{
   {
     slug: "security",
     title: "Security",
-    category: "security",
+    categorySlug: "security",
     sortOrder: 8,
     description: "Home security, community coordination, and safety planning.",
     sections: [
@@ -124,7 +138,7 @@ const MODULES: Array<{
   {
     slug: "mobility",
     title: "Mobility",
-    category: "mobility",
+    categorySlug: "mobility",
     sortOrder: 9,
     description: "Evacuation routes, vehicles, and bug-out planning.",
     sections: [
@@ -136,7 +150,7 @@ const MODULES: Array<{
   {
     slug: "general",
     title: "General Preparedness",
-    category: "general",
+    categorySlug: "general",
     sortOrder: 10,
     description: "Overall household readiness plans, drills, and documentation.",
     sections: [
@@ -148,15 +162,33 @@ const MODULES: Array<{
 ];
 
 export async function seedModules() {
+  console.log("  Seeding module categories...");
+
+  // 1. Upsert categories
+  for (const cat of MODULE_CATEGORIES) {
+    await db
+      .insert(moduleCategories)
+      .values({ id: randomUUID(), ...cat })
+      .onDuplicateKeyUpdate({ set: { title: cat.title, sortOrder: cat.sortOrder } });
+  }
+
+  // 2. Build slug → id lookup
+  const catRows = await db.query.moduleCategories.findMany();
+  const catBySlug = new Map(catRows.map((c) => [c.slug, c.id]));
+
   console.log("  Seeding modules and sections...");
   let mCount = 0,
     sCount = 0;
+
   for (const mod of MODULES) {
-    const { sections: secs, ...modData } = mod;
+    const { sections: secs, categorySlug, ...modData } = mod;
+    const categoryId = catBySlug.get(categorySlug);
+    if (!categoryId) throw new Error(`Category not found for slug: ${categorySlug}`);
+
     const modId = randomUUID();
     await db
       .insert(modules)
-      .values({ id: modId, ...modData })
+      .values({ id: modId, categoryId, ...modData })
       .onDuplicateKeyUpdate({ set: { title: modData.title } });
 
     // Re-fetch to get real id in case of upsert
@@ -174,5 +206,6 @@ export async function seedModules() {
       sCount++;
     }
   }
-  console.log(`  ✓ ${mCount} modules, ${sCount} sections`);
+
+  console.log(`  ✓ ${MODULE_CATEGORIES.length} categories, ${mCount} modules, ${sCount} sections`);
 }

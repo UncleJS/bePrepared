@@ -74,8 +74,14 @@ export default async function SettingsPage() {
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold mb-3">Category Management</h2>
+        <h2 className="text-lg font-semibold mb-3">Content Management</h2>
         <div className="flex flex-wrap gap-3">
+          <Link
+            href="/settings/modules"
+            className="rounded-md border border-border px-3 py-2 text-sm hover:bg-accent"
+          >
+            Module Content
+          </Link>
           <Link
             href="/settings/inventory-categories"
             className="rounded-md border border-border px-3 py-2 text-sm hover:bg-accent"

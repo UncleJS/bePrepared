@@ -12,6 +12,7 @@ import { authRoute } from "./routes/auth";
 import { usersRoute } from "./routes/users";
 import { householdsRoute } from "./routes/households";
 import { modulesRoute } from "./routes/modules";
+import { moduleCategoriesRoute } from "./routes/modules/categories";
 import { tasksRoute } from "./routes/tasks";
 import { inventoryRoute } from "./routes/inventory";
 import { equipmentRoute } from "./routes/equipment";
@@ -147,6 +148,7 @@ const app = new Elysia()
   .use(usersRoute)
   .use(householdsRoute)
   .use(modulesRoute)
+  .use(moduleCategoriesRoute)
   .use(tasksRoute)
   .use(inventoryRoute)
   .use(equipmentRoute)
