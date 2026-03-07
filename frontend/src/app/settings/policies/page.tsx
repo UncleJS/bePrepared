@@ -4,6 +4,8 @@ import { ScenarioPolicySettingsEditor } from "@/components/settings/ScenarioPoli
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 type PolicyDefault = {
   key: string;
   valueDecimal?: string;

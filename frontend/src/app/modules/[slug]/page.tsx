@@ -3,6 +3,8 @@ import { BookOpen, ChevronRight, FileText } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 // ---------------------------------------------------------------------------
 // Types — mirror the API response shape from GET /modules/:slug
 // ---------------------------------------------------------------------------

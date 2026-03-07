@@ -1,6 +1,8 @@
 import { apiFetch, getSessionHouseholdId } from "@/lib/api";
 import { Droplets, Flame, Users } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 type PlanningResult = {
   householdId: string;
   scenario: string;

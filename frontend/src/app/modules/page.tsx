@@ -2,6 +2,8 @@ import { apiFetch } from "@/lib/api";
 import { BookOpen, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 type Module = { id: string; slug: string; title: string; description?: string };
 
 async function getModules(): Promise<{ modules: Module[]; error: string | null }> {

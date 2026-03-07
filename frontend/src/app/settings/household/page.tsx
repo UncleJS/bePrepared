@@ -3,6 +3,8 @@ import { HouseholdSettingsEditor } from "@/components/settings/HouseholdSettings
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 type Household = {
   id: string;
   name: string;
