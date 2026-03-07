@@ -73,8 +73,16 @@ bePrepared/
 │   ├── Containerfile.frontend
 │   ├── Containerfile.worker
 │   ├── quadlet/            # *.container and *.pod Quadlet unit files
-│   ├── pod-start.sh        # first-run helper
 │   └── .env.example
+├── scripts/                # Deployment and operations scripts
+│   ├── install.sh          # first-run setup
+│   ├── uninstall.sh        # full teardown
+│   ├── rebuild.sh          # rebuild images + restart services
+│   ├── start.sh / stop.sh / restart.sh
+│   ├── status.sh           # health check
+│   ├── logs.sh             # tail journalctl logs
+│   ├── db.sh               # migrate / seed
+│   └── update.sh           # git pull + rebuild + migrate + verify
 └── docs/                   # This documentation tree
 ```
 

@@ -54,27 +54,34 @@ cd ~/bePrepared
 
 # 2. Copy and edit secrets
 cp deploy/.env.example deploy/.env
-# Edit deploy/.env — set DB password, ports, etc.
+# Edit deploy/.env — set DB password, ports, AUTH_SECRET, etc.
 
-# 3. Build container images
-podman build -f deploy/Containerfile.api     -t beprepared-api:latest .
-podman build -f deploy/Containerfile.worker  -t beprepared-worker:latest .
+# 3. Run the install script (handles steps 3–6 automatically)
+./scripts/install.sh
+```
+
+`install.sh` builds all three container images, installs Quadlet unit files, starts the pod, waits for MariaDB, runs migrations, and seeds reference data. Pass `--skip-seed` to skip seeding on reinstalls.
+
+To run the steps manually instead:
+
+```bash
+# Build container images
+podman build -f deploy/Containerfile.api      -t beprepared-api:latest .
+podman build -f deploy/Containerfile.worker   -t beprepared-worker:latest .
 podman build -f deploy/Containerfile.frontend -t beprepared-frontend:latest .
 
-# 4. Install Quadlet units
+# Install Quadlet units
 cp deploy/quadlet/*.container ~/.config/containers/systemd/
 cp deploy/quadlet/*.pod       ~/.config/containers/systemd/
 
-# 5. Reload systemd and start the pod
+# Reload systemd and start the pod
 systemctl --user daemon-reload
 systemctl --user start beprepared-pod
 
-# 6. Wait ~5s for MariaDB to initialise, then run migrations + seed
+# Wait ~5s for MariaDB to initialise, then run migrations + seed
 podman exec beprepared-api bun run db:migrate
 podman exec beprepared-api bun run db:seed
 ```
-
-The `pod-start.sh` script in `deploy/` wraps steps 4–6 for convenience.
 
 ---
 
@@ -194,17 +201,29 @@ WantedBy=beprepared-pod.service
 
 [↑ TOC](#table-of-contents)
 
+Use the scripts in `scripts/` for common operations, or run the underlying `systemctl` commands directly.
+
 ```bash
 # Start everything
-systemctl --user start beprepared-pod
+./scripts/start.sh
+# or: systemctl --user start beprepared-pod
 
 # Stop everything
-systemctl --user stop beprepared-pod
+./scripts/stop.sh
+# or: systemctl --user stop beprepared-pod
+
+# Restart full pod
+./scripts/restart.sh
+# or: systemctl --user restart beprepared-pod
 
 # Restart one service (e.g. after rebuild)
-systemctl --user restart beprepared-api
+./scripts/restart.sh api
+# or: systemctl --user restart beprepared-api
 
-# Check status
+# Check health (all units + API /health + frontend)
+./scripts/status.sh
+
+# Raw status of a unit
 systemctl --user status beprepared-api
 systemctl --user status beprepared-db
 systemctl --user status beprepared-worker
@@ -224,19 +243,25 @@ systemctl --user enable beprepared-pod
 [↑ TOC](#table-of-contents)
 
 ```bash
-# Follow API logs
+# Follow all bePrepared unit logs (live tail)
+./scripts/logs.sh
+
+# Follow a specific service
+./scripts/logs.sh api
+./scripts/logs.sh worker
+./scripts/logs.sh db
+
+# Last 100 lines of API, no follow
+./scripts/logs.sh api -n 100
+
+# API logs since midnight
+./scripts/logs.sh api --since today
+
+# Raw journalctl equivalents
 journalctl --user -u beprepared-api -f
-
-# Follow worker logs
 journalctl --user -u beprepared-worker -f
-
-# Follow DB logs
 journalctl --user -u beprepared-db -f
-
-# All pod logs since last boot
 journalctl --user -u 'beprepared*' --since today
-
-# Last 100 lines of API
 journalctl --user -u beprepared-api -n 100
 ```
 
@@ -249,13 +274,21 @@ journalctl --user -u beprepared-api -n 100
 ### Run migrations
 
 ```bash
-podman exec -it beprepared-api bun run db:migrate
+./scripts/db.sh migrate
+# or: podman exec -it beprepared-api bun run db:migrate
 ```
 
 ### Run seeds (idempotent)
 
 ```bash
-podman exec -it beprepared-api bun run db:seed
+./scripts/db.sh seed
+# or: podman exec -it beprepared-api bun run db:seed
+```
+
+### Migrate then seed in one step
+
+```bash
+./scripts/db.sh migrate+seed
 ```
 
 ### Open a MariaDB shell
@@ -281,12 +314,30 @@ ORDER BY table_name;
 [↑ TOC](#table-of-contents)
 
 ```bash
+# Full update: git pull → rebuild all → restart → migrate → status check
+./scripts/update.sh
+
+# Already on the right commit, skip pull
+./scripts/update.sh --skip-pull
+
+# Rebuild a single service after a targeted code change
+./scripts/rebuild.sh api
+./scripts/rebuild.sh worker
+./scripts/rebuild.sh frontend
+
+# Rebuild all three manually
+./scripts/rebuild.sh
+```
+
+Manual steps (equivalent to `update.sh`):
+
+```bash
 # 1. Pull latest code
 git pull
 
 # 2. Rebuild images
-podman build -f deploy/Containerfile.api     -t beprepared-api:latest .
-podman build -f deploy/Containerfile.worker  -t beprepared-worker:latest .
+podman build -f deploy/Containerfile.api      -t beprepared-api:latest .
+podman build -f deploy/Containerfile.worker   -t beprepared-worker:latest .
 podman build -f deploy/Containerfile.frontend -t beprepared-frontend:latest .
 
 # 3. Restart affected services
@@ -298,7 +349,7 @@ systemctl --user restart beprepared-frontend
 podman exec -it beprepared-api bun run db:migrate
 
 # 5. Run post-restart verification checks
-./deploy/post-restart-check.sh
+./scripts/status.sh
 ```
 
 Images are tagged `:latest` locally — no registry required.
@@ -353,7 +404,7 @@ Suggested drill process:
 4. Start services:
    - `systemctl --user start beprepared-api beprepared-worker`
 5. Run verification checks:
-   - `./deploy/post-restart-check.sh`
+   - `./scripts/status.sh`
 6. Confirm data sanity with a small query set (example: key table counts, latest alerts/tasks rows).
 
 Pass/fail criteria:
@@ -422,7 +473,7 @@ journalctl --user -u beprepared-api -n 50
 systemctl --user restart beprepared-worker beprepared-frontend
 
 # 5) Run post-restart checks
-./deploy/post-restart-check.sh
+./scripts/status.sh
 ```
 
 If checks fail repeatedly:

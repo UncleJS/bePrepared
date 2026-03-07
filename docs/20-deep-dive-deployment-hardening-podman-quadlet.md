@@ -26,7 +26,7 @@ The project runs as a rootless Podman pod managed by user systemd (Quadlet):
   - `deploy/quadlet/beprepared-api.container`
   - `deploy/quadlet/beprepared-worker.container`
   - `deploy/quadlet/beprepared-frontend.container`
-- Setup automation: `deploy/pod-start.sh`
+- Setup automation: `scripts/install.sh`
 
 Operational strengths already in place:
 
@@ -72,7 +72,7 @@ Primary external exposure is the frontend host port (`9999`). API and DB remain 
 2. **Environment file is shared across all services**
    - `deploy/.env` is convenient but broad; each service receives more variables than strictly required.
 3. **Startup readiness is partially script-based**
-   - `pod-start.sh` waits for DB readiness, but steady-state health monitoring is still mostly log-driven.
+   - `install.sh` waits for DB readiness, but steady-state health monitoring is still mostly log-driven.
 4. **No formal restore drill cadence**
    - Backup/restore steps are documented, but no recurring validation routine is defined.
 
@@ -116,7 +116,7 @@ Primary external exposure is the frontend host port (`9999`). API and DB remain 
 
 1. [x] Implement minimal-risk Quadlet hardening flags for frontend and worker (`--read-only`, tmpfs `/tmp`, `no-new-privileges`, `--cap-drop=all`).
 2. [ ] Introduce scoped env files to reduce secret sprawl (deferred by operator choice; shared `deploy/.env` retained for now).
-3. [x] Add an operations check script for post-deploy health verification (`deploy/post-restart-check.sh`).
+3. [x] Add an operations check script for post-deploy health verification (`scripts/status.sh`).
 4. [x] Document recurring backup-restore drill cadence and pass/fail criteria in operations runbook.
 5. [x] Document degraded-mode recovery sequencing in operations troubleshooting runbook.
 
