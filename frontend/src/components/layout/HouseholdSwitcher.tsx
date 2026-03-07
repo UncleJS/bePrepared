@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { apiFetch, resolveClientHouseholdId, setActiveHouseholdId } from "@/lib/api";
+import {
+  apiFetch,
+  readActiveHouseholdCookie,
+  resolveClientHouseholdId,
+  setActiveHouseholdId,
+} from "@/lib/api";
 
 type Household = { id: string; name: string };
 
@@ -27,11 +32,14 @@ export function HouseholdSwitcher({
       .then((rows) => {
         setHouseholds(rows);
         setSelected((prev) => {
-          if (!prev && rows[0]) {
-            setActiveHouseholdId(rows[0].id);
-            return rows[0].id;
+          const current = prev || rows[0]?.id || "";
+          // Always seed the cookie on first load so every page and the
+          // server-side resolver see a consistent value without the user
+          // having to manually pick from the dropdown.
+          if (!readActiveHouseholdCookie() && current) {
+            setActiveHouseholdId(current);
           }
-          return prev;
+          return current;
         });
       })
       .catch(() => {});

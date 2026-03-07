@@ -1,7 +1,7 @@
 const ACTIVE_HOUSEHOLD_COOKIE = "bp_active_household_id";
 const ACTIVE_HOUSEHOLD_EVENT = "bp:active-household-changed";
 
-function readActiveHouseholdCookie(): string | null {
+export function readActiveHouseholdCookie(): string | null {
   if (typeof window === "undefined") return null;
   const cookieId = document.cookie
     .split("; ")
