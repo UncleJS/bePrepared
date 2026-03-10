@@ -1,10 +1,29 @@
 # 19 — Deep Dive: Frontend Maintainability Refactor Plan
 
+![License](https://img.shields.io/badge/license-CC_BY--NC--SA_4.0-lightgrey?style=flat-square)
+![Doc Type](https://img.shields.io/badge/doc-deep_dive-frontend-blue?style=flat-square)
+![Status](https://img.shields.io/badge/status-stable-brightgreen?style=flat-square)
+![Updated](https://img.shields.io/badge/updated-2026--03--10-informational?style=flat-square)
+
+---
+
+## Table of Contents
+
+1. [Current State Summary](#1-current-state-summary)
+2. [Remaining Maintainability Pressure Points](#2-remaining-maintainability-pressure-points)
+3. [Target Architecture (Frontend)](#3-target-architecture-frontend)
+4. [Refactor Phases](#4-refactor-phases)
+5. [Guardrails](#5-guardrails)
+6. [Success Criteria](#6-success-criteria)
+7. [Verification Checklist](#7-verification-checklist)
+
 > Deep dive #5 from the remediation backlog. This document captures the maintainability posture of the Next.js frontend and a pragmatic incremental refactor roadmap.
 
 ---
 
 ## 1. Current State Summary
+
+[↑ TOC](#table-of-contents)
 
 The frontend has already completed a major decomposition wave:
 
@@ -18,6 +37,8 @@ This reduced page-size complexity and duplicated JSX substantially.
 ---
 
 ## 2. Remaining Maintainability Pressure Points
+
+[↑ TOC](#table-of-contents)
 
 Even after decomposition, these areas still carry complexity risk:
 
@@ -33,6 +54,8 @@ Even after decomposition, these areas still carry complexity risk:
 ---
 
 ## 3. Target Architecture (Frontend)
+
+[↑ TOC](#table-of-contents)
 
 ```mermaid
 flowchart TD
@@ -55,6 +78,8 @@ Design goals:
 ---
 
 ## 4. Refactor Phases
+
+[↑ TOC](#table-of-contents)
 
 ### Phase A — Standardize hook contracts
 
@@ -84,6 +109,8 @@ Design goals:
 
 ## 5. Guardrails
 
+[↑ TOC](#table-of-contents)
+
 - Preserve current visual language and UX behavior.
 - Avoid large-bang rewrites; keep changes small and verifiable.
 - Prefer additive helper extraction over broad abstraction layers.
@@ -91,6 +118,8 @@ Design goals:
 ---
 
 ## 6. Success Criteria
+
+[↑ TOC](#table-of-contents)
 
 - Feature pages are orchestration-only (minimal mutation logic inline).
 - Repeated action/error patterns are shared utilities.
@@ -100,6 +129,8 @@ Design goals:
 ---
 
 ## 7. Verification Checklist
+
+[↑ TOC](#table-of-contents)
 
 - [x] Current maintainability strengths and remaining hotspots identified.
 - [x] Target route -> hook -> component architecture documented.

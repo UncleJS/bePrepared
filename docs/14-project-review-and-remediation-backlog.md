@@ -1,10 +1,31 @@
 # 14 — Project Review and Remediation Backlog
 
+![License](https://img.shields.io/badge/license-CC_BY--NC--SA_4.0-lightgrey?style=flat-square)
+![Doc Type](https://img.shields.io/badge/doc-remediation_backlog-orange?style=flat-square)
+![Status](https://img.shields.io/badge/status-active-brightgreen?style=flat-square)
+![Updated](https://img.shields.io/badge/updated-2026--03--10-informational?style=flat-square)
+
+---
+
+## Table of Contents
+
+1. [Status Key](#status-key)
+2. [A) Security Findings](#a-security-findings)
+3. [B) Quality, Testing, and CI/CD](#b-quality-testing-and-cicd)
+4. [C) Architecture and Code Health](#c-architecture-and-code-health)
+5. [D) Documentation Accuracy](#d-documentation-accuracy)
+6. [E) Deep-Dive Queue (for future sessions)](#e-deep-dive-queue-for-future-sessions)
+7. [F) Post Deep-Dive Implementation Queue](#f-post-deep-dive-implementation-queue)
+8. [Notes](#notes)
+9. [G) Post-Review Session 2 Improvements](#g-post-review-session-2-improvements)
+
 > Persistent checklist from the full-repo review. Keep this file as the working index for future deep dives.
 
 ---
 
 ## Status Key
+
+[↑ TOC](#table-of-contents)
 
 - `[ ]` Pending
 - `[~]` In progress
@@ -14,6 +35,8 @@
 ---
 
 ## A) Security Findings
+
+[↑ TOC](#table-of-contents)
 
 ### P0
 
@@ -39,6 +62,8 @@
 
 ## B) Quality, Testing, and CI/CD
 
+[↑ TOC](#table-of-contents)
+
 ### P0
 
 - [x] **Create baseline API tests**: added auth token/scope tests, planning calculation tests, and critical CRUD coverage for tasks route create/update/progress validation.
@@ -52,6 +77,8 @@
 ---
 
 ## C) Architecture and Code Health
+
+[↑ TOC](#table-of-contents)
 
 ### P1
 
@@ -67,6 +94,8 @@
 ---
 
 ## D) Documentation Accuracy
+
+[↑ TOC](#table-of-contents)
 
 ### P0
 
@@ -84,6 +113,8 @@
 
 ## E) Deep-Dive Queue (for future sessions)
 
+[↑ TOC](#table-of-contents)
+
 - [x] **Deep dive #1: Authentication and session architecture** (documented in `docs/15-deep-dive-auth-session-architecture.md`)
 - [x] **Deep dive #2: API authorization and household scoping** (documented in `docs/16-deep-dive-api-authorization-household-scoping.md`)
 - [x] **Deep dive #3: Alert generation logic and escalation correctness** (documented in `docs/17-deep-dive-alert-generation-escalation.md`)
@@ -94,6 +125,8 @@
 ---
 
 ## F) Post Deep-Dive Implementation Queue
+
+[↑ TOC](#table-of-contents)
 
 ### P1
 
@@ -112,6 +145,8 @@
 
 ## Notes
 
+[↑ TOC](#table-of-contents)
+
 - This backlog intentionally separates discovery from implementation.
 - Use this file as the single checkpoint before each deep-dive sprint.
 - Update status markers during execution to keep continuity across sessions.
@@ -119,6 +154,8 @@
 ---
 
 ## G) Post-Review Session 2 Improvements
+
+[↑ TOC](#table-of-contents)
 
 Applied as a full codebase sweep on 2026-03-06. All 20 API tests continued passing after changes. Typecheck remained clean (0 errors).
 
@@ -132,3 +169,7 @@ Applied as a full codebase sweep on 2026-03-06. All 20 API tests continued passi
 - [x] **`SELECT 1` DB health probe** in `api/src/index.ts`: `/health` now executes a live DB check and returns HTTP 503 on failure instead of always returning 200.
 - [x] **Remove weak DB credential defaults** in `api/src/db/client.ts`: `user`, `password`, and `database` no longer fall back to the hardcoded string `"beprepared"`; the process will fail fast if env vars are unset.
 - [x] **`setInterval` stale-entry cleanup** in `api/src/routes/auth/index.ts`: the `loginAttempts` Map is now swept every 5 minutes via `.unref()`'d interval to prevent unbounded memory growth.
+
+---
+
+_Content licensed under CC BY-NC-SA 4.0._

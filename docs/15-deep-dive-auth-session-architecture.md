@@ -1,10 +1,30 @@
 # 15 — Deep Dive: Authentication and Session Architecture
 
+![License](https://img.shields.io/badge/license-CC_BY--NC--SA_4.0-lightgrey?style=flat-square)
+![Doc Type](https://img.shields.io/badge/doc-deep_dive-auth-blue?style=flat-square)
+![Status](https://img.shields.io/badge/status-stable-brightgreen?style=flat-square)
+![Updated](https://img.shields.io/badge/updated-2026--03--10-informational?style=flat-square)
+
+---
+
+## Table of Contents
+
+1. [Scope](#1-scope)
+2. [End-to-End Auth Flow](#2-end-to-end-auth-flow)
+3. [Current Implementation (Code Map)](#3-current-implementation-code-map)
+4. [Trust Boundaries](#4-trust-boundaries)
+5. [Security Strengths](#5-security-strengths)
+6. [Remaining Risks and Constraints](#6-remaining-risks-and-constraints)
+7. [Recommended Next Hardening Moves (Optional)](#7-recommended-next-hardening-moves-optional)
+8. [Verification Checklist](#8-verification-checklist)
+
 > Deep dive #1 from the remediation backlog. This document describes the implemented auth/session model, trust boundaries, and hardening posture.
 
 ---
 
 ## 1. Scope
+
+[↑ TOC](#table-of-contents)
 
 This deep dive covers:
 
@@ -18,6 +38,8 @@ This deep dive covers:
 ---
 
 ## 2. End-to-End Auth Flow
+
+[↑ TOC](#table-of-contents)
 
 ```mermaid
 flowchart LR
@@ -38,6 +60,8 @@ flowchart LR
 ---
 
 ## 3. Current Implementation (Code Map)
+
+[↑ TOC](#table-of-contents)
 
 - **Token format + crypto**: `api/src/lib/authToken.ts`
   - HMAC SHA-256 signed token (`HS256` style JWT shape)
@@ -71,6 +95,8 @@ flowchart LR
 
 ## 4. Trust Boundaries
 
+[↑ TOC](#table-of-contents)
+
 1. **Browser boundary**
    - Browser has NextAuth session cookie
    - Browser does not receive raw API token in session JSON
@@ -87,6 +113,8 @@ flowchart LR
 
 ## 5. Security Strengths
 
+[↑ TOC](#table-of-contents)
+
 - API token is not exposed to client session payloads
 - Login endpoint has request throttling
 - API rejects `AUTH_ENABLED=false` in production
@@ -98,6 +126,8 @@ flowchart LR
 
 ## 6. Remaining Risks and Constraints
 
+[↑ TOC](#table-of-contents)
+
 - Login rate limiter is in-memory; horizontal scaling requires shared limiter storage
 - API token revocation is still coarse-grained (exp-based) rather than denylist/session-version based
 - NextAuth cookie/session lifetime (30 days) is longer than API token lifetime (12h); system relies on re-login behavior when token expires
@@ -107,6 +137,8 @@ flowchart LR
 
 ## 7. Recommended Next Hardening Moves (Optional)
 
+[↑ TOC](#table-of-contents)
+
 1. Add distributed rate limiting (Redis or DB-backed counter) for `/auth/login`.
 2. Add token/session versioning in `users` to support explicit server-side invalidation.
 3. Add auth observability counters (failed logins, 401/403 rates, dependency on BFF 401s).
@@ -115,6 +147,8 @@ flowchart LR
 ---
 
 ## 8. Verification Checklist
+
+[↑ TOC](#table-of-contents)
 
 - [x] Browser session object does not include `apiToken`
 - [x] BFF requires valid NextAuth JWT and returns `401` if missing

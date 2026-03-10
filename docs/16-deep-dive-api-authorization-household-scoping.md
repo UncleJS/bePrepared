@@ -1,10 +1,30 @@
 # 16 — Deep Dive: API Authorization and Household Scoping
 
+![License](https://img.shields.io/badge/license-CC_BY--NC--SA_4.0-lightgrey?style=flat-square)
+![Doc Type](https://img.shields.io/badge/doc-deep_dive-authz-blue?style=flat-square)
+![Status](https://img.shields.io/badge/status-stable-brightgreen?style=flat-square)
+![Updated](https://img.shields.io/badge/updated-2026--03--10-informational?style=flat-square)
+
+---
+
+## Table of Contents
+
+1. [Scope](#1-scope)
+2. [Authorization Layers](#2-authorization-layers)
+3. [Household Scope Model](#3-household-scope-model)
+4. [Route Guard Coverage (Current)](#4-route-guard-coverage-current)
+5. [Strengths](#5-strengths)
+6. [Known Gaps / Tradeoffs](#6-known-gaps--tradeoffs)
+7. [Recommended Next Hardening (Optional)](#7-recommended-next-hardening-optional)
+8. [Verification Checklist](#8-verification-checklist)
+
 > Deep dive #2 from the remediation backlog. This document maps how authorization is enforced across API routes, where household boundaries are applied, and where residual edge cases remain.
 
 ---
 
 ## 1. Scope
+
+[↑ TOC](#table-of-contents)
 
 This deep dive covers:
 
@@ -17,6 +37,8 @@ This deep dive covers:
 ---
 
 ## 2. Authorization Layers
+
+[↑ TOC](#table-of-contents)
 
 Authorization is implemented as a layered model:
 
@@ -35,6 +57,8 @@ Authorization is implemented as a layered model:
 ---
 
 ## 3. Household Scope Model
+
+[↑ TOC](#table-of-contents)
 
 Household scoping is path-driven for most domain routes (`/:householdId/...`).
 
@@ -58,6 +82,8 @@ Admins can operate across households by path value; non-admins are restricted to
 
 ## 4. Route Guard Coverage (Current)
 
+[↑ TOC](#table-of-contents)
+
 Based on route inspection:
 
 - **`households`**: mixed (`requireAuth`, `requireAdmin`, `requireHouseholdScope`)
@@ -74,6 +100,8 @@ Based on route inspection:
 
 ## 5. Strengths
 
+[↑ TOC](#table-of-contents)
+
 - **Stale privilege reduction**: admin demotion and archived-user lockout are effective on next request because claims are DB-refreshed globally.
 - **Consistent household gate primitive**: `requireHouseholdScope` is used broadly and uniformly.
 - **Category ownership hardening**: shared helper functions now centralize allowed/custom category checks for inventory/equipment.
@@ -83,6 +111,8 @@ Based on route inspection:
 
 ## 6. Known Gaps / Tradeoffs
 
+[↑ TOC](#table-of-contents)
+
 - **Household list visibility for admins**: by design admins can enumerate all active households (`GET /households`). This is operationally useful but broad.
 - **Auth semantics encoded in handlers**: many endpoints return `{ error: "Forbidden" }` manually after guard checks; behavior is consistent but repetitive.
 - **No explicit policy layer abstraction**: authorization logic is robust but still route-centric rather than a separate policy engine.
@@ -90,6 +120,8 @@ Based on route inspection:
 ---
 
 ## 7. Recommended Next Hardening (Optional)
+
+[↑ TOC](#table-of-contents)
 
 1. Add a small authorization helper wrapper to standardize guard failure payloads (`401/403` body shape).
 2. Add API integration tests for cross-household access attempts on each major domain route group.
@@ -99,6 +131,8 @@ Based on route inspection:
 ---
 
 ## 8. Verification Checklist
+
+[↑ TOC](#table-of-contents)
 
 - [x] Private requests without bearer token receive `401`.
 - [x] Non-admin user cannot access other households by path (`403`).

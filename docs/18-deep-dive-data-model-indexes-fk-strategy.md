@@ -1,10 +1,29 @@
 # 18 — Deep Dive: Data Model Constraints, Indexes, and FK Strategy
 
+![License](https://img.shields.io/badge/license-CC_BY--NC--SA_4.0-lightgrey?style=flat-square)
+![Doc Type](https://img.shields.io/badge/doc-deep_dive-data_model-blue?style=flat-square)
+![Status](https://img.shields.io/badge/status-stable-brightgreen?style=flat-square)
+![Updated](https://img.shields.io/badge/updated-2026--03--10-informational?style=flat-square)
+
+---
+
+## Table of Contents
+
+1. [Scope](#1-scope)
+2. [Constraint Posture (Current)](#2-constraint-posture-current)
+3. [Foreign Key Strategy (Current)](#3-foreign-key-strategy-current)
+4. [Index Posture (Current)](#4-index-posture-current)
+5. [Integrity and Archive-Only Tradeoffs](#5-integrity-and-archive-only-tradeoffs)
+6. [Recommended Next Improvements](#6-recommended-next-improvements)
+7. [Verification Checklist](#7-verification-checklist)
+
 > Deep dive #4 from the remediation backlog. This document assesses schema-level integrity controls, index posture, and foreign key strategy in the current MariaDB model.
 
 ---
 
 ## 1. Scope
+
+[↑ TOC](#table-of-contents)
 
 This deep dive evaluates:
 
@@ -16,6 +35,8 @@ This deep dive evaluates:
 ---
 
 ## 2. Constraint Posture (Current)
+
+[↑ TOC](#table-of-contents)
 
 ### 2.1 Strong constraints already present
 
@@ -40,6 +61,8 @@ Most mutable tables include `archived_at`. The application treats non-archived r
 
 ## 3. Foreign Key Strategy (Current)
 
+[↑ TOC](#table-of-contents)
+
 Implemented FKs (migration `0003_hybrid_categories_fk.sql`):
 
 - `inventory_categories.household_id -> households.id` (`ON DELETE SET NULL`)
@@ -57,6 +80,8 @@ Observations:
 ---
 
 ## 4. Index Posture (Current)
+
+[↑ TOC](#table-of-contents)
 
 Known explicit indexes from migrations:
 
@@ -81,6 +106,8 @@ Potential performance gap:
 
 ## 5. Integrity and Archive-Only Tradeoffs
 
+[↑ TOC](#table-of-contents)
+
 ```mermaid
 flowchart TD
   A[Write request] --> B[App-level validation]
@@ -99,6 +126,8 @@ The model intentionally prioritizes historical retention and reversible operatio
 
 ## 6. Recommended Next Improvements
 
+[↑ TOC](#table-of-contents)
+
 1. Add targeted composite indexes for highest-frequency filtered reads, for example:
    - `alerts (household_id, archived_at, is_resolved, due_at)`
    - `inventory_lots (household_id, archived_at, expires_at)`
@@ -111,6 +140,8 @@ The model intentionally prioritizes historical retention and reversible operatio
 ---
 
 ## 7. Verification Checklist
+
+[↑ TOC](#table-of-contents)
 
 - [x] Core uniqueness constraints identified and mapped.
 - [x] Implemented FK set and delete actions documented.

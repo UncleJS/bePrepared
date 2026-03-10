@@ -20,7 +20,31 @@ bun.lockb
 .env
 .env.local
 .env.*.local
+.env.example
 deploy/.env
+deploy/secrets/*
+!deploy/secrets/.gitkeep
+*.enc
+*.pem
+*.key
+*.p12
+*.pfx
+*.kdbx
+*credentials*
+*credential*
+*password*
+*passwd*
+*secret*
+**/*credentials*.json
+**/*credentials*.yml
+**/*credentials*.yaml
+**/*credentials*.toml
+**/*credentials*.ini
+**/*password*.json
+**/*password*.yml
+**/*password*.yaml
+**/*password*.toml
+**/*password*.ini
 
 # --- Database data volume ---
 data/
