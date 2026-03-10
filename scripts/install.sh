@@ -48,9 +48,9 @@ echo "    Mount: $(podman volume inspect beprepared-db --format '{{.Mountpoint}}
 
 # ---- 3. Build container images ----
 echo "==> Building container images..."
-podman build -f "$DEPLOY_DIR/Containerfile.api"      -t beprepared-api:latest      "$PROJECT_ROOT"
-podman build -f "$DEPLOY_DIR/Containerfile.worker"   -t beprepared-worker:latest   "$PROJECT_ROOT"
-podman build -f "$DEPLOY_DIR/Containerfile.frontend" -t beprepared-frontend:latest "$PROJECT_ROOT"
+podman build --format docker -f "$DEPLOY_DIR/Containerfile.api"      -t beprepared-api:latest      "$PROJECT_ROOT"
+podman build --format docker -f "$DEPLOY_DIR/Containerfile.worker"   -t beprepared-worker:latest   "$PROJECT_ROOT"
+podman build --format docker -f "$DEPLOY_DIR/Containerfile.frontend" -t beprepared-frontend:latest "$PROJECT_ROOT"
 echo "==> Images built."
 
 # ---- 4. Install Quadlet unit files ----

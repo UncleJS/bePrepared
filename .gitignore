@@ -36,6 +36,11 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# --- Healthcheck log directory ---
+# Keep the directory in git but ignore the log files written at runtime.
+logs/*.log
+!logs/.gitkeep
+
 # --- OS ---
 .DS_Store
 .DS_Store?

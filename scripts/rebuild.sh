@@ -48,6 +48,7 @@ echo ""
 for svc in "${TARGETS[@]}"; do
   echo "==> Building image: beprepared-${svc}:latest..."
   podman build \
+    --format docker \
     -f "$DEPLOY_DIR/Containerfile.${svc}" \
     -t "beprepared-${svc}:latest" \
     "$PROJECT_ROOT"

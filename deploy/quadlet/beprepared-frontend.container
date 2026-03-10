@@ -12,10 +12,16 @@ ContainerName=beprepared-frontend
 
 EnvironmentFile=%h/0_opencode/bePrepared/deploy/.env
 Environment=PORT=9999
+# Bind Next.js standalone server to all interfaces so the HEALTHCHECK probe
+# can reach it via 127.0.0.1 inside the shared Podman pod network namespace.
+Environment=HOSTNAME=0.0.0.0
 PodmanArgs=--read-only
 PodmanArgs=--tmpfs=/tmp:rw,nosuid,nodev,noexec,size=64m
 PodmanArgs=--security-opt=no-new-privileges
 PodmanArgs=--cap-drop=all
+# Automatically restart the container when its HEALTHCHECK transitions to
+# "unhealthy" (i.e. 3 consecutive root-page probe failures).
+PodmanArgs=--health-on-failure=restart
 
 [Service]
 Restart=on-failure

@@ -15,6 +15,9 @@ PodmanArgs=--read-only
 PodmanArgs=--tmpfs=/tmp:rw,nosuid,nodev,noexec,size=64m
 PodmanArgs=--security-opt=no-new-privileges
 PodmanArgs=--cap-drop=all
+# Automatically restart the container when the /tmp/worker.ready heartbeat
+# file probe transitions to "unhealthy" (3 consecutive failures).
+PodmanArgs=--health-on-failure=restart
 
 [Service]
 Restart=on-failure
