@@ -4,7 +4,7 @@
 ![Status](https://img.shields.io/badge/status-active-brightgreen?style=flat-square)
 ![Stack](https://img.shields.io/badge/stack-Next.js%20%7C%20Elysia%20%7C%20MariaDB-blue?style=flat-square)
 ![Deploy](https://img.shields.io/badge/deploy-Podman_Pod-orange?style=flat-square)
-![Docs](https://img.shields.io/badge/docs-20_pages-informational?style=flat-square)
+![Docs](https://img.shields.io/badge/docs-21_pages-informational?style=flat-square)
 
 > A database-driven household preparedness platform — from 72-hour readiness to 90-day self-sufficiency.
 
@@ -63,6 +63,7 @@ Source of truth note: for persisted enums, field names, and API payload semantic
 | 18  | [Deep Dive: Data Model Constraints, Indexes, and FK Strategy](./18-deep-dive-data-model-indexes-fk-strategy.md) | Schema integrity posture and scale-oriented DB strategy                   |
 | 19  | [Deep Dive: Frontend Maintainability Refactor Plan](./19-deep-dive-frontend-maintainability-plan.md)            | Incremental roadmap for frontend maintainability and testability          |
 | 20  | [Deep Dive: Deployment Hardening (Podman/Quadlet)](./20-deep-dive-deployment-hardening-podman-quadlet.md)       | Operations hardening posture and deployment resilience plan               |
+| —   | [E2E Testing](./e2e-testing.md)                                                                                 | Local Playwright setup, seeded env, shard debugging, and report merging   |
 | —   | [Deployment Scripts](../scripts/README.md)                                                                      | install, uninstall, rebuild, start/stop/restart, status, logs, db, update |
 
 [↑ Go to TOC](#table-of-contents)
@@ -93,6 +94,8 @@ http://localhost:3001/docs
 ```
 
 See [scripts/README.md](../scripts/README.md) for the full scripts reference (rebuild, update, logs, and more).
+
+For browser testing and CI shard debugging, see [E2E Testing](./e2e-testing.md).
 
 [↑ Go to TOC](#table-of-contents)
 

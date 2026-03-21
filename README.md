@@ -50,6 +50,7 @@ scripts/    Operator automation scripts
 [↑ Go to TOC](#table-of-contents)
 
 Start with `docs/README.md`, then follow the numbered documents (`docs/01-...md` through `docs/20-...md`).
+For Playwright setup, local seeded runs, and shard debugging, see `docs/e2e-testing.md`.
 
 ---
 
@@ -62,6 +63,15 @@ bun install
 cd api && bun run dev
 cd ../frontend && bun run dev
 cd ../worker && bun run dev
+```
+
+E2E quickstart:
+
+```bash
+bun run test:e2e:install
+bun run db:migrate
+bun run db:seed
+bun run test:e2e
 ```
 
 ---

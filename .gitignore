@@ -89,6 +89,10 @@ next-env.d.ts
 # --- Testing ---
 coverage/
 .nyc_output/
+e2e/.auth/
+playwright-report/
+test-results/
+blob-report/
 
 # --- Podman / container artefacts ---
 # (quadlet units and Containerfiles are intentionally committed)

@@ -35,3 +35,116 @@ jobs:
 
       - name: Test
         run: bun run test
+
+  e2e:
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    services:
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_DATABASE: beprepared_e2e
+          MARIADB_USER: beprepared
+          MARIADB_PASSWORD: beprepared
+          MARIADB_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mariadb-admin ping -h 127.0.0.1 -uroot -proot --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_USER: beprepared
+      DB_PASSWORD: beprepared
+      DB_NAME: beprepared_e2e
+      API_PORT: 3002
+      FRONTEND_PORT: 9998
+      AUTH_SECRET: e2e-auth-secret
+      API_AUTH_SECRET: e2e-auth-secret
+      SEED_ADMIN_PASSWORD: e2e-admin-password
+      NEXTAUTH_URL: http://127.0.0.1:9998
+      NEXTAUTH_API_URL: http://127.0.0.1:3002
+      NEXT_PUBLIC_API_URL: http://127.0.0.1:3002
+      CORS_ORIGINS: http://127.0.0.1:9998
+      NODE_ENV: test
+      AUTH_ENABLED: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run migrations
+        run: bun run db:migrate
+
+      - name: Seed database
+        run: bun run db:seed
+
+      - name: Install Playwright browser
+        run: bun run test:e2e:install:ci
+
+      - name: Run E2E tests (shard ${{ matrix.shard }}/2)
+        run: bun run --cwd e2e test -- --shard=${{ matrix.shard }}/2 --reporter=blob
+
+      - name: Upload shard blob report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blob-report-${{ matrix.shard }}
+          path: e2e/blob-report
+          if-no-files-found: ignore
+
+      - name: Upload shard test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.shard }}
+          path: e2e/test-results
+          if-no-files-found: ignore
+
+  e2e-report:
+    needs: e2e
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Download blob reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: blob-report-*
+          path: e2e/blob-report
+          merge-multiple: true
+
+      - name: Merge Playwright reports
+        run: bun run test:e2e:merge
+
+      - name: Upload merged Playwright report
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/playwright-report
+          if-no-files-found: ignore

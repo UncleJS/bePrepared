@@ -11,10 +11,37 @@ import Credentials from "next-auth/providers/credentials";
 
 const API_BASE =
   process.env.NEXTAUTH_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const IS_TEST = (process.env.NODE_ENV ?? "").toLowerCase() === "test";
+
+function isExpectedCredentialsSigninError(error: unknown): boolean {
+  if (!error) return false;
+  if (String(error).includes("CredentialsSignin")) return true;
+  if (typeof error === "string") return error.includes("CredentialsSignin");
+  if (error instanceof Error) {
+    return error.name === "CredentialsSignin" || error.message.includes("CredentialsSignin");
+  }
+  if (typeof error === "object") {
+    const authError = error as { type?: string; name?: string; message?: string };
+    return (
+      authError.type === "CredentialsSignin" ||
+      authError.name === "CredentialsSignin" ||
+      authError.message?.includes("CredentialsSignin") === true
+    );
+  }
+  return false;
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
   basePath: "/api/auth",
+  logger: IS_TEST
+    ? {
+        error(error) {
+          if (isExpectedCredentialsSigninError(error)) return;
+          console.error("[auth][error]", error);
+        },
+      }
+    : undefined,
   providers: [
     Credentials({
       name: "credentials",

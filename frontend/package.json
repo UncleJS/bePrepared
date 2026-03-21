@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --port 9999",
+    "dev:e2e": "next dev --port ${FRONTEND_PORT:-9998} --hostname 127.0.0.1",
     "build": "next build",
     "typecheck": "bunx tsc --noEmit -p tsconfig.json",
     "start": "next start --port 9999",
