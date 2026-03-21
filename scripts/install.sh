@@ -87,12 +87,12 @@ done
 
 # ---- 8. Run migrations ----
 echo "==> Running DB migrations..."
-podman exec beprepared-api bun run db:migrate
+"$SCRIPT_DIR/db.sh" migrate
 
 # ---- 9. Run seed (optional) ----
 if [[ "$SKIP_SEED" == "false" ]]; then
   echo "==> Running DB seed..."
-  podman exec beprepared-api bun run db:seed
+  "$SCRIPT_DIR/db.sh" seed
 else
   echo "==> Skipping DB seed (--skip-seed)."
 fi

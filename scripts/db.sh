@@ -37,15 +37,19 @@ fi
 
 echo "==> bePrepared db.sh: $SUBCOMMAND"
 
+run_in_api_container() {
+  podman exec beprepared-api bun run "$1"
+}
+
 run_migrate() {
   echo "==> Running migrations..."
-  podman exec beprepared-api bun run db:migrate
+  run_in_api_container /app/api/src/db/migrate.ts
   echo "==> Migrations complete."
 }
 
 run_seed() {
   echo "==> Running seed..."
-  podman exec beprepared-api bun run db:seed
+  run_in_api_container /app/api/src/db/seeds/index.ts
   echo "==> Seed complete."
 }
 
