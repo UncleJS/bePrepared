@@ -835,7 +835,7 @@ Archive an alert.
 
 ---
 
-### `POST /alerts/run-job`
+### `POST /admin/alerts/run-job`
 
 Trigger an immediate alert generation run across all households. **Admin only.**
 
@@ -848,6 +848,8 @@ Trigger an immediate alert generation run across all households. **Admin only.**
   "maintenance": { "inserted": 1, "escalated": 0, "skipped": 2, "errors": 0 }
 }
 ```
+
+`POST /alerts/run-job` remains available as a deprecated compatibility alias.
 
 ---
 

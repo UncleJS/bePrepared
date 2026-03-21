@@ -28,6 +28,11 @@ export function HouseholdSwitcher({
   );
 
   useEffect(() => {
+    if (!isAdmin) {
+      setHouseholds([]);
+      return;
+    }
+
     void apiFetch<Household[]>("/households")
       .then((rows) => {
         setHouseholds(rows);
@@ -43,7 +48,7 @@ export function HouseholdSwitcher({
         });
       })
       .catch(() => {});
-  }, []);
+  }, [isAdmin]);
 
   if (!isAdmin || households.length <= 1) return null;
 

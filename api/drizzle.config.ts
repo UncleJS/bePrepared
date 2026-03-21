@@ -1,5 +1,13 @@
 import type { Config } from "drizzle-kit";
 
+function requiredEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} is required to run drizzle-kit commands.`);
+  }
+  return value;
+}
+
 export default {
   schema: "./src/db/schema/index.ts",
   out: "./src/db/migrations",
@@ -7,8 +15,8 @@ export default {
   dbCredentials: {
     host: process.env.DB_HOST ?? "127.0.0.1",
     port: Number(process.env.DB_PORT ?? 3306),
-    user: process.env.DB_USER ?? "beprepared",
-    password: process.env.DB_PASSWORD ?? "beprepared",
-    database: process.env.DB_NAME ?? "beprepared",
+    user: requiredEnv("DB_USER"),
+    password: requiredEnv("DB_PASSWORD"),
+    database: requiredEnv("DB_NAME"),
   },
 } satisfies Config;

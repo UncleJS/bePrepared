@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   LayoutDashboard,
   BookOpen,
@@ -21,7 +22,6 @@ import {
   Building2,
 } from "lucide-react";
 import { clsx } from "clsx";
-import { apiFetch } from "@/lib/api";
 
 const mainNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -46,23 +46,20 @@ const settingsSubLinks = [
 
 export function SideNav() {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const inSettings = pathname.startsWith("/settings");
 
   // Start expanded if already in settings
   const [settingsOpen, setSettingsOpen] = useState(inSettings);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const isAdmin = useMemo(
+    () => ((session?.user as { isAdmin?: boolean } | undefined)?.isAdmin ?? false) === true,
+    [session]
+  );
 
   // Auto-expand when navigating into settings; collapse when leaving
   useEffect(() => {
     if (inSettings) setSettingsOpen(true);
   }, [inSettings]);
-
-  // Fetch admin status once on mount
-  useEffect(() => {
-    apiFetch<{ isAdmin: boolean }>("/users/me")
-      .then((me) => setIsAdmin(me.isAdmin === true))
-      .catch(() => setIsAdmin(false));
-  }, []);
 
   return (
     <nav className="w-56 shrink-0 border-r border-border bg-card flex flex-col py-4">

@@ -1,10 +1,10 @@
 import { Elysia, t } from "elysia";
 import { db } from "../../db/client";
+import { logger } from "@beprepared/shared/logger";
 import { users } from "../../db/schema";
 import { eq, isNull, and } from "drizzle-orm";
 import { issueApiToken } from "../../lib/authToken";
 import { runAllJobs } from "../../lib/alertJobs";
-import { logger } from "../../lib/logger";
 
 const LOGIN_WINDOW_MS = Number(process.env.AUTH_LOGIN_RATE_LIMIT_WINDOW_MS ?? 60_000);
 const LOGIN_MAX_ATTEMPTS = Number(process.env.AUTH_LOGIN_RATE_LIMIT_MAX ?? 5);

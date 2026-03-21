@@ -7,19 +7,27 @@ const severityRank: Record<AlertSeverity, number> = {
   overdue: 2,
 };
 
-export function computeAlertSeverity(dueAt: Date, today: Date = new Date()): AlertSeverity {
+export function computeAlertSeverity(
+  dueAt: Date,
+  today: Date = new Date(),
+  graceDays: number = 0
+): AlertSeverity {
   const due = dueAt.toISOString().slice(0, 10);
   const now = today.toISOString().slice(0, 10);
 
-  if (due < now) return "overdue";
+  if (due > now) return "upcoming";
   if (due === now) return "due";
-  return "upcoming";
+
+  if (graceDays > 0) {
+    const graceEnd = new Date(dueAt);
+    graceEnd.setDate(graceEnd.getDate() + graceDays);
+    if (now <= graceEnd.toISOString().slice(0, 10)) return "due";
+  }
+
+  return "overdue";
 }
 
-export function shouldEscalateSeverity(
-  current: AlertSeverity,
-  incoming: AlertSeverity
-): boolean {
+export function shouldEscalateSeverity(current: AlertSeverity, incoming: AlertSeverity): boolean {
   return severityRank[incoming] > severityRank[current];
 }
 

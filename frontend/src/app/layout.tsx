@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import "./globals.css";
 import { SideNav } from "@/components/layout/SideNav";
 import { TopBar } from "@/components/layout/TopBar";
@@ -9,19 +10,27 @@ export const metadata: Metadata = {
   description: "Household disaster preparedness — 72h to 90-day self-sufficiency",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const shell = (await headers()).get("x-bp-shell") ?? "app";
+
   return (
     <html lang="en" className="dark">
       <body className="min-h-screen flex flex-col bg-background text-foreground">
         <Providers>
-          <TopBar />
-          <div className="flex flex-1">
-            <SideNav />
-            <main className="flex-1 p-6 overflow-auto">{children}</main>
-          </div>
-          <footer className="border-t border-border px-6 py-2 text-xs text-muted-foreground text-center">
-            Content licensed under CC BY-NC-SA 4.0
-          </footer>
+          {shell === "auth" ? (
+            <main className="flex-1">{children}</main>
+          ) : (
+            <>
+              <TopBar />
+              <div className="flex flex-1">
+                <SideNav />
+                <main className="flex-1 overflow-auto p-6">{children}</main>
+              </div>
+              <footer className="border-t border-border px-6 py-2 text-center text-xs text-muted-foreground">
+                Content licensed under CC BY-NC-SA 4.0
+              </footer>
+            </>
+          )}
         </Providers>
       </body>
     </html>

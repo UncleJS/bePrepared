@@ -13,8 +13,8 @@
  *   never completes a run after the start-period elapses.
  */
 
+import { logger } from "@beprepared/shared/logger";
 import { runAllJobs } from "../../api/src/lib/alertJobs";
-import { logger } from "../../api/src/lib/logger";
 
 const INTERVAL_MS = Number(process.env.WORKER_INTERVAL_MS ?? 3600000); // 1 hour
 const HEARTBEAT_FILE = "/tmp/worker.ready";

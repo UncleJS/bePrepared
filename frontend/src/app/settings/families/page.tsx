@@ -1,10 +1,13 @@
-"use client";
-
+import { auth } from "@/auth";
+import { AdminAccessNotice } from "@/components/settings/AdminAccessNotice";
 import { HouseholdManager } from "@/components/settings/HouseholdManager";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
-export default function FamiliesPage() {
+export default async function FamiliesPage() {
+  const session = await auth();
+  const isAdmin = ((session?.user as { isAdmin?: boolean } | undefined)?.isAdmin ?? false) === true;
+
   return (
     <div className="space-y-6">
       <div>
@@ -18,7 +21,7 @@ export default function FamiliesPage() {
         <p className="text-sm text-muted-foreground mt-1">Create and manage household families.</p>
       </div>
 
-      <HouseholdManager />
+      {isAdmin ? <HouseholdManager /> : <AdminAccessNotice section="Families" />}
     </div>
   );
 }

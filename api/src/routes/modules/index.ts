@@ -1,7 +1,7 @@
 import { Elysia, t } from "elysia";
 import { db } from "../../db/client";
 import { modules, sections, guidanceDocs } from "../../db/schema";
-import { eq, isNull, and, inArray, sql } from "drizzle-orm";
+import { eq, isNull, and, inArray } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { requireAdmin, requireAuth } from "../../lib/routeAuth";
 
@@ -150,7 +150,15 @@ export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] }
       const claims = requireAdmin(request, set);
       if (!claims) return { error: "Admin access required" };
 
-      await db.update(modules).set(body).where(eq(modules.id, params.moduleId));
+      const updates: Partial<typeof modules.$inferInsert> = {};
+      if (body.slug !== undefined) updates.slug = body.slug;
+      if (body.title !== undefined) updates.title = body.title;
+      if (body.description !== undefined) updates.description = body.description;
+      if (body.iconName !== undefined) updates.iconName = body.iconName;
+      if (body.sortOrder !== undefined) updates.sortOrder = body.sortOrder;
+      if (body.categoryId !== undefined) updates.categoryId = body.categoryId;
+
+      await db.update(modules).set(updates).where(eq(modules.id, params.moduleId));
       return db.query.modules.findFirst({ where: eq(modules.id, params.moduleId) });
     },
     {
@@ -174,7 +182,7 @@ export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] }
       const claims = requireAdmin(request, set);
       if (!claims) return { error: "Admin access required" };
 
-      const now = sql`now()`;
+      const now = new Date();
 
       // 1. Find all non-archived sections
       const sectionRows = await db
@@ -253,7 +261,12 @@ export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] }
       const claims = requireAdmin(request, set);
       if (!claims) return { error: "Admin access required" };
 
-      await db.update(sections).set(body).where(eq(sections.id, params.sectionId));
+      const updates: Partial<typeof sections.$inferInsert> = {};
+      if (body.slug !== undefined) updates.slug = body.slug;
+      if (body.title !== undefined) updates.title = body.title;
+      if (body.sortOrder !== undefined) updates.sortOrder = body.sortOrder;
+
+      await db.update(sections).set(updates).where(eq(sections.id, params.sectionId));
       return db.query.sections.findFirst({ where: eq(sections.id, params.sectionId) });
     },
     {
@@ -274,7 +287,7 @@ export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] }
       const claims = requireAdmin(request, set);
       if (!claims) return { error: "Admin access required" };
 
-      const now = sql`now()`;
+      const now = new Date();
 
       // Cascade-archive docs first
       await db
@@ -341,7 +354,13 @@ export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] }
       const claims = requireAdmin(request, set);
       if (!claims) return { error: "Admin access required" };
 
-      await db.update(guidanceDocs).set(body).where(eq(guidanceDocs.id, params.docId));
+      const updates: Partial<typeof guidanceDocs.$inferInsert> = {};
+      if (body.title !== undefined) updates.title = body.title;
+      if (body.body !== undefined) updates.body = body.body;
+      if (body.sortOrder !== undefined) updates.sortOrder = body.sortOrder;
+      if (body.badgeJson !== undefined) updates.badgeJson = body.badgeJson;
+
+      await db.update(guidanceDocs).set(updates).where(eq(guidanceDocs.id, params.docId));
       return db.query.guidanceDocs.findFirst({ where: eq(guidanceDocs.id, params.docId) });
     },
     {
@@ -365,7 +384,7 @@ export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] }
 
       await db
         .update(guidanceDocs)
-        .set({ archivedAt: sql`now()` })
+        .set({ archivedAt: new Date() })
         .where(eq(guidanceDocs.id, params.docId));
       return { ok: true };
     },

@@ -6,7 +6,8 @@
   "workspaces": [
     "frontend",
     "api",
-    "worker"
+    "worker",
+    "shared"
   ],
   "scripts": {
     "dev:api": "bun run --cwd api dev",
@@ -14,7 +15,7 @@
     "dev:frontend": "bun run --cwd frontend dev",
     "build:api": "bun run --cwd api build",
     "build:frontend": "bun run --cwd frontend build",
-    "typecheck": "bun run --cwd api typecheck && bun run --cwd frontend typecheck",
+    "typecheck": "bun run --cwd api typecheck && bun run --cwd worker typecheck && bun run --cwd frontend typecheck && bun run --cwd shared typecheck",
     "lint:mermaid": "bun run scripts/lint-mermaid.js",
     "lint": "bun run --cwd frontend lint && bun run lint:mermaid",
     "format": "bunx prettier --write .",
@@ -22,7 +23,7 @@
     "db:push": "bun run --cwd api db:push",
     "db:migrate": "bun run --cwd api db:migrate",
     "db:seed": "bun run --cwd api db:seed",
-    "test": "bun run --cwd api test && bun run --cwd worker test && bun run --cwd frontend test"
+    "test": "bun run --cwd api test && bun run --cwd frontend test && bun run --cwd shared test"
   },
   "license": "CC-BY-NC-SA-4.0",
   "devDependencies": {

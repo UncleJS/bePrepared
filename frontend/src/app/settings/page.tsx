@@ -1,3 +1,4 @@
+import { auth } from "@/auth";
 import Link from "next/link";
 import {
   Home,
@@ -21,6 +22,7 @@ const settingsSections = [
     icon: Users,
     label: "Users",
     description: "Manage user accounts and personal profiles.",
+    adminOnly: true,
   },
   {
     href: "/settings/policies",
@@ -33,28 +35,36 @@ const settingsSections = [
     icon: BookOpen,
     label: "Module Content",
     description: "Categories, modules, sections, and guidance docs.",
+    adminOnly: true,
   },
   {
     href: "/settings/inventory-categories",
     icon: Package,
     label: "Inventory Categories",
     description: "System and custom inventory categories.",
+    adminOnly: true,
   },
   {
     href: "/settings/equipment-categories",
     icon: ShieldCheck,
     label: "Equipment Categories",
     description: "System and custom equipment categories.",
+    adminOnly: true,
   },
   {
     href: "/settings/families",
     icon: Building2,
     label: "Families",
     description: "Create and manage household families.",
+    adminOnly: true,
   },
 ];
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const session = await auth();
+  const isAdmin = ((session?.user as { isAdmin?: boolean } | undefined)?.isAdmin ?? false) === true;
+  const visibleSections = settingsSections.filter((section) => !section.adminOnly || isAdmin);
+
   return (
     <div className="space-y-6">
       <div>
@@ -65,7 +75,7 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {settingsSections.map(({ href, icon: Icon, label, description }) => (
+        {visibleSections.map(({ href, icon: Icon, label, description }) => (
           <Link
             key={href}
             href={href}

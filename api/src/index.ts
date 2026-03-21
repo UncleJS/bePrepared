@@ -1,12 +1,12 @@
 import { Elysia } from "elysia";
 import { swagger } from "@elysiajs/swagger";
 import { cors } from "@elysiajs/cors";
+import { logger } from "@beprepared/shared/logger";
 import { bearerFromHeader, verifyApiToken } from "./lib/authToken";
 import { setRequestClaims } from "./lib/authContext";
 import { db } from "./db/client";
 import { users } from "./db/schema";
 import { and, eq, isNull, sql } from "drizzle-orm";
-import { logger } from "./lib/logger";
 
 import { authRoute } from "./routes/auth";
 import { usersRoute } from "./routes/users";
@@ -17,7 +17,7 @@ import { tasksRoute } from "./routes/tasks";
 import { inventoryRoute } from "./routes/inventory";
 import { equipmentRoute } from "./routes/equipment";
 import { maintenanceRoute } from "./routes/maintenance";
-import { alertsRoute } from "./routes/alerts";
+import { adminAlertsRoute, alertsRoute } from "./routes/alerts";
 import { settingsRoute } from "./routes/settings";
 import { planningRoute } from "./routes/planning";
 
@@ -133,6 +133,10 @@ const app = new Elysia()
       swaggerOptions: { tryItOutEnabled: !IS_PRODUCTION },
     })
   )
+  .get(
+    "/openapi.json",
+    () => new Response(null, { status: 307, headers: { location: "/docs/json" } })
+  )
   .get("/", () => ({ status: "ok", name: "bePrepared API", version: "0.1.0" }))
   .get("/health", async ({ set }) => {
     try {
@@ -154,10 +158,11 @@ const app = new Elysia()
   .use(equipmentRoute)
   .use(maintenanceRoute)
   .use(alertsRoute)
+  .use(adminAlertsRoute)
   .use(settingsRoute)
   .use(planningRoute)
   .listen(PORT);
 
 logger.info("bePrepared API running", { url: `http://localhost:${PORT}` });
 logger.info("Swagger UI", { url: `http://localhost:${PORT}/docs` });
-logger.info("OpenAPI JSON", { url: `http://localhost:${PORT}/docs/json` });
+logger.info("OpenAPI JSON", { url: `http://localhost:${PORT}/openapi.json` });

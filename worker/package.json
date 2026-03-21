@@ -5,9 +5,11 @@
   "scripts": {
     "dev": "bun run --watch src/index.ts",
     "start": "bun run src/index.ts",
-    "test": "bun test"
+    "test": "bun test",
+    "typecheck": "bunx tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@beprepared/shared": "workspace:*",
     "drizzle-orm": "^0.38.0",
     "mysql2": "^3.11.0"
   },

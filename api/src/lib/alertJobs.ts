@@ -3,16 +3,22 @@
  *
  * Alert job logic extracted from the worker so the API can:
  *  1. Trigger a fire-and-forget run on user login
- *  2. Expose POST /alerts/run-job for admin-triggered runs
+ *  2. Expose POST /admin/alerts/run-job for admin-triggered runs
  *
  * Uses the API's existing DB client (api/src/db/client.ts).
  */
 
 import { db } from "../db/client";
+import {
+  computeAlertSeverity,
+  resolveAlertUpsertResult,
+  type AlertSeverity,
+  type AlertUpsertResult,
+} from "@beprepared/shared/alertSeverity";
+import { logger } from "@beprepared/shared/logger";
 import * as schema from "../db/schema";
 import { eq, isNull, and, lte, isNotNull, inArray } from "drizzle-orm";
 import { randomUUID } from "crypto";
-import { logger } from "./logger";
 
 const {
   inventoryLots,
@@ -25,58 +31,8 @@ const {
   householdPolicies,
 } = schema;
 
-// ---------------------------------------------------------------------------
-// Severity helpers (inlined from worker/src/lib/alertSeverity.ts)
-// ---------------------------------------------------------------------------
-
-type AlertSeverity = "upcoming" | "due" | "overdue";
-type AlertUpsertResult = "inserted" | "escalated" | "unchanged";
-
 // Matches the DB enum in schema/alerts.ts
 type AlertCategory = "expiry" | "replacement" | "maintenance" | "low_stock" | "task_due" | "policy";
-
-const severityRank: Record<AlertSeverity, number> = {
-  upcoming: 0,
-  due: 1,
-  overdue: 2,
-};
-
-/**
- * Compute alert severity for a given due date.
- *
- * @param dueAt       The date the item is due / expires / needs replacement.
- * @param today       Reference "now" (defaults to wall clock).
- * @param graceDays   Number of days past due before escalating to "overdue".
- *                    During the grace window the severity stays "due".
- *                    Defaults to 0 (no grace — immediately overdue once past).
- */
-function computeAlertSeverity(
-  dueAt: Date,
-  today: Date = new Date(),
-  graceDays: number = 0
-): AlertSeverity {
-  const due = dueAt.toISOString().slice(0, 10);
-  const now = today.toISOString().slice(0, 10);
-  if (due > now) return "upcoming";
-  if (due === now) return "due";
-  // due < now — check grace window
-  if (graceDays > 0) {
-    const graceEnd = new Date(dueAt);
-    graceEnd.setDate(graceEnd.getDate() + graceDays);
-    const graceEndStr = graceEnd.toISOString().slice(0, 10);
-    if (now <= graceEndStr) return "due";
-  }
-  return "overdue";
-}
-
-function resolveAlertUpsertResult(
-  existing: AlertSeverity | null,
-  incoming: AlertSeverity
-): AlertUpsertResult {
-  if (!existing) return "inserted";
-  if (severityRank[incoming] > severityRank[existing]) return "escalated";
-  return "unchanged";
-}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -166,6 +122,23 @@ async function upsertAlert(data: {
   detail?: string;
   dueAt?: Date;
 }): Promise<AlertUpsertResult> {
+  try {
+    await db.insert(alerts).values({
+      id: randomUUID(),
+      householdId: data.householdId,
+      severity: data.severity,
+      category: data.category,
+      entityType: data.entityType,
+      entityId: data.entityId,
+      title: data.title,
+      detail: data.detail,
+      dueAt: data.dueAt,
+    });
+    return "inserted";
+  } catch (err) {
+    if (!isDuplicateKeyError(err)) throw err;
+  }
+
   const existing = await db.query.alerts.findFirst({
     where: and(
       eq(alerts.householdId, data.householdId),
@@ -175,39 +148,37 @@ async function upsertAlert(data: {
       isNull(alerts.archivedAt)
     ),
   });
-  if (existing) {
-    const decision = resolveAlertUpsertResult(existing.severity, data.severity);
-    if (decision === "escalated") {
-      await db
-        .update(alerts)
-        .set({
-          severity: data.severity,
-          title: data.title,
-          detail: data.detail,
-          updatedAt: new Date(),
-        })
-        .where(eq(alerts.id, existing.id));
-      return decision;
-    }
-    // Also refresh title/detail on unchanged alerts (so backfill happens on next job run)
+  if (!existing) {
+    throw new Error(
+      `Active alert disappeared during duplicate resolution for ${data.householdId}:${data.entityType}:${data.entityId}`
+    );
+  }
+
+  const decision = resolveAlertUpsertResult(existing.severity, data.severity);
+  if (decision === "escalated") {
     await db
       .update(alerts)
-      .set({ title: data.title, detail: data.detail, updatedAt: new Date() })
+      .set({
+        severity: data.severity,
+        title: data.title,
+        detail: data.detail,
+        updatedAt: new Date(),
+      })
       .where(eq(alerts.id, existing.id));
     return decision;
   }
-  await db.insert(alerts).values({
-    id: randomUUID(),
-    householdId: data.householdId,
-    severity: data.severity,
-    category: data.category,
-    entityType: data.entityType,
-    entityId: data.entityId,
-    title: data.title,
-    detail: data.detail,
-    dueAt: data.dueAt,
-  });
-  return "inserted";
+
+  await db
+    .update(alerts)
+    .set({ title: data.title, detail: data.detail, updatedAt: new Date() })
+    .where(eq(alerts.id, existing.id));
+  return decision;
+}
+
+function isDuplicateKeyError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const mysqlError = error as Error & { code?: string; errno?: number };
+  return mysqlError.code === "ER_DUP_ENTRY" || mysqlError.errno === 1062;
 }
 
 // ---------------------------------------------------------------------------

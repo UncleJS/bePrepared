@@ -109,6 +109,22 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
     ...options,
   });
   if (!res.ok) {
+    if (res.status === 401) {
+      if (typeof window === "undefined") {
+        const { headers: nextHeaders } = await import("next/headers");
+        const currentPath = (await nextHeaders()).get("x-bp-pathname") ?? "/dashboard";
+        const { redirect } = await import("next/navigation");
+        redirect(`/login?callbackUrl=${encodeURIComponent(currentPath)}`);
+      } else {
+        const { signOut } = await import("next-auth/react");
+        const callbackUrl = `${window.location.pathname}${window.location.search}`;
+        await signOut({
+          redirect: true,
+          callbackUrl: `/login?callbackUrl=${encodeURIComponent(callbackUrl)}`,
+        });
+      }
+    }
+
     const text = await res.text().catch(() => res.statusText);
     throw new Error(`API ${res.status}: ${text}`);
   }

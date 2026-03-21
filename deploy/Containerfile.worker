@@ -7,9 +7,12 @@ WORKDIR /app
 COPY package.json bun.lock* ./
 COPY api/package.json ./api/
 COPY frontend/package.json ./frontend/
+COPY shared/package.json ./shared/
+COPY shared/src ./shared/src
 COPY api/src ./api/src
 COPY worker/package.json ./worker/
 COPY worker/src ./worker/src
+COPY shared/tsconfig.json ./shared/
 
 RUN bun install
 

@@ -7,9 +7,12 @@ WORKDIR /app
 COPY package.json bun.lock* ./
 COPY api/package.json ./api/
 COPY frontend/package.json ./frontend/
+COPY shared/package.json ./shared/
 COPY worker/package.json ./worker/
 COPY api/src ./api/src
 COPY api/drizzle.config.ts ./api/
+COPY shared/src ./shared/src
+COPY shared/tsconfig.json ./shared/
 
 # Install all workspace deps
 RUN bun install

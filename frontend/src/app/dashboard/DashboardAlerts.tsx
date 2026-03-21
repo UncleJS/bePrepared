@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, fmtDate } from "@/lib/api";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 
 type Alert = {
@@ -125,7 +125,7 @@ export default function DashboardAlerts({ householdId }: { householdId: string }
                     >
                       {SEVERITY_LABEL[a.severity]}
                     </span>
-                    {a.dueAt && <span>{a.dueAt.slice(0, 10)}</span>}
+                    {a.dueAt && <span>{fmtDate(a.dueAt)}</span>}
                     <span className="capitalize">{a.category.replace("_", " ")}</span>
                   </div>
                 </div>

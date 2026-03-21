@@ -13,6 +13,7 @@
     "test": "bun test"
   },
   "dependencies": {
+    "@beprepared/shared": "workspace:*",
     "elysia": "^1.2.0",
     "@elysiajs/swagger": "^1.2.0",
     "@elysiajs/cors": "^1.2.0",

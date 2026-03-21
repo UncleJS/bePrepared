@@ -87,5 +87,17 @@ export const alertsRoute = new Elysia({ prefix: "/alerts", tags: ["alerts"] })
       const metrics = await runAllJobs();
       return { ok: true, metrics };
     },
-    { detail: { summary: "Manually trigger alert job run (admin only)" } }
+    { detail: { summary: "Deprecated alias for admin alert job trigger" } }
   );
+
+export const adminAlertsRoute = new Elysia({ prefix: "/admin/alerts", tags: ["alerts"] }).post(
+  "/run-job",
+  async ({ request, set }) => {
+    const claims = requireAdmin(request, set);
+    if (!claims) return { error: "Forbidden" };
+
+    const metrics = await runAllJobs();
+    return { ok: true, metrics };
+  },
+  { detail: { summary: "Manually trigger alert job run (admin only)" } }
+);

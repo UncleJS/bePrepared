@@ -11,6 +11,10 @@ Pod=beprepared.pod
 ContainerName=beprepared-api
 
 EnvironmentFile=%h/0_opencode/bePrepared/deploy/.env
+PodmanArgs=--read-only
+PodmanArgs=--tmpfs=/tmp:rw,nosuid,nodev,noexec,size=64m
+PodmanArgs=--security-opt=no-new-privileges
+PodmanArgs=--cap-drop=all
 
 # Automatically restart the container when its HEALTHCHECK transitions to
 # "unhealthy" (i.e. 3 consecutive /health probe failures).

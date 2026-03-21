@@ -56,7 +56,7 @@ function AdminUserManager({
     void loadUsers();
   }, []);
 
-  function flash(msg: string, isError = false) {
+  function flash(msg: string | null, isError = false) {
     if (isError) {
       setError(msg);
       setMessage(null);
@@ -84,7 +84,7 @@ function AdminUserManager({
 
   async function saveEdit(userId: string) {
     if (!editState) return;
-    flash(null as unknown as string);
+    flash(null);
     try {
       const body: Record<string, unknown> = {
         username: editState.username,
@@ -108,7 +108,7 @@ function AdminUserManager({
 
   async function archiveUser(userId: string, username: string) {
     if (!confirm(`Archive user "${username}"? They will no longer be able to log in.`)) return;
-    flash(null as unknown as string);
+    flash(null);
     try {
       await apiFetch(`/users/${userId}`, { method: "DELETE" });
       flash(`User "${username}" archived.`);
@@ -119,7 +119,7 @@ function AdminUserManager({
   }
 
   async function createUser() {
-    flash(null as unknown as string);
+    flash(null);
     if (!newUsername.trim()) return flash("Username is required.", true);
     if (!newPassword) return flash("Password is required.", true);
     if (newPassword.length < 8) return flash("Password must be at least 8 characters.", true);

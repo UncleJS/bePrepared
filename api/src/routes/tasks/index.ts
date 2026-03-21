@@ -53,7 +53,10 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
 
   .get(
     "/",
-    async ({ query }) => {
+    async ({ request, set, query }) => {
+      const claims = requireAuth(request, set);
+      if (!claims) return { error: "Unauthorized" };
+
       const conditions: ReturnType<typeof eq>[] = [isNull(tasks.archivedAt)];
 
       if (query.moduleId) {
@@ -106,7 +109,10 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
 
   .get(
     "/by-id/:id",
-    async ({ params, set }) => {
+    async ({ request, params, set }) => {
+      const claims = requireAuth(request, set);
+      if (!claims) return { error: "Unauthorized" };
+
       const row = await db.query.tasks.findFirst({
         where: and(eq(tasks.id, params.id), isNull(tasks.archivedAt)),
       });

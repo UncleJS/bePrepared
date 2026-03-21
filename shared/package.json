@@ -1,0 +1,17 @@
+{
+  "name": "@beprepared/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./alertSeverity": "./src/alertSeverity.ts",
+    "./logger": "./src/logger.ts"
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "bunx tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  }
+}

@@ -1,10 +1,13 @@
-"use client";
-
+import { auth } from "@/auth";
 import { UserManager } from "@/components/settings/UserManager";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+import { AdminAccessNotice } from "@/components/settings/AdminAccessNotice";
 
-export default function UsersPage() {
+export default async function UsersPage() {
+  const session = await auth();
+  const isAdmin = ((session?.user as { isAdmin?: boolean } | undefined)?.isAdmin ?? false) === true;
+
   return (
     <div className="space-y-6">
       <div>
@@ -20,7 +23,7 @@ export default function UsersPage() {
         </p>
       </div>
 
-      <UserManager />
+      {isAdmin ? <UserManager /> : <AdminAccessNotice section="Users" />}
     </div>
   );
 }

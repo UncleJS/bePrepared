@@ -18,7 +18,30 @@ const HOP_BY_HOP_HEADERS = new Set([
   "upgrade",
   "host",
   "content-length",
+  "cookie",
 ]);
+
+const ALLOWED_PREFIXES = [
+  "users",
+  "households",
+  "modules",
+  "tasks",
+  "inventory",
+  "equipment",
+  "maintenance",
+  "alerts",
+  "admin",
+  "planning",
+  "settings",
+] as const;
+
+function isAllowedPath(path: string[]): boolean {
+  const prefix = path[0];
+  return (
+    typeof prefix === "string" &&
+    ALLOWED_PREFIXES.includes(prefix as (typeof ALLOWED_PREFIXES)[number])
+  );
+}
 
 function upstreamUrl(path: string[], request: NextRequest): string {
   const suffix = path.join("/");
@@ -57,6 +80,13 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
   }
 
   const { path } = await context.params;
+  if (!isAllowedPath(path)) {
+    return new Response(JSON.stringify({ error: "Not found" }), {
+      status: 404,
+      headers: { "content-type": "application/json" },
+    });
+  }
+
   const target = upstreamUrl(path, request);
   const method = request.method.toUpperCase();
   const body = method === "GET" || method === "HEAD" ? undefined : await request.arrayBuffer();

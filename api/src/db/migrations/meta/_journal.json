@@ -50,6 +50,13 @@
       "when": 1741305600000,
       "tag": "0006_module_categories",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1774209600000,
+      "tag": "0007_alerts_active_unique",
+      "breakpoints": true
     }
   ]
 }

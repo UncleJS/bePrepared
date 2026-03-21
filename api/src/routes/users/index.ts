@@ -72,7 +72,7 @@ export const usersRoute = new Elysia({ prefix: "/users", tags: ["users"] })
       await db.update(users).set(updates).where(eq(users.id, claims.sub));
 
       const updated = await db.query.users.findFirst({
-        where: eq(users.id, claims.sub),
+        where: and(eq(users.id, claims.sub), isNull(users.archivedAt)),
       });
       if (!updated) {
         set.status = 404;
@@ -159,7 +159,9 @@ export const usersRoute = new Elysia({ prefix: "/users", tags: ["users"] })
 
       await db.update(users).set(updates).where(eq(users.id, params.id));
 
-      const updated = await db.query.users.findFirst({ where: eq(users.id, params.id) });
+      const updated = await db.query.users.findFirst({
+        where: and(eq(users.id, params.id), isNull(users.archivedAt)),
+      });
       if (!updated) {
         set.status = 404;
         return { error: "User not found" };

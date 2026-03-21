@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { apiFetch, fmtTs } from "@/lib/api";
+import { apiFetch, fmtDate, fmtTs } from "@/lib/api";
 import { useActiveHouseholdId } from "@/lib/useActiveHouseholdId";
 import { CheckCircle2, AlertTriangle, RefreshCw } from "lucide-react";
 
@@ -74,7 +74,7 @@ export default function AlertsPage() {
   async function runJob() {
     setRefreshing(true);
     try {
-      await apiFetch("/alerts/run-job", { method: "POST" });
+      await apiFetch("/admin/alerts/run-job", { method: "POST" });
       load();
     } catch (err) {
       console.error("[alerts] run-job failed", err);
@@ -133,7 +133,7 @@ export default function AlertsPage() {
               {a.detail && <p className="text-xs text-muted-foreground mt-0.5">{a.detail}</p>}
               <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
                 <span>{a.category.replace("_", " ")}</span>
-                {a.dueAt && <span>Due: {a.dueAt.slice(0, 10)}</span>}
+                {a.dueAt && <span>Due: {fmtDate(a.dueAt)}</span>}
                 <span>{fmtTs(a.createdAt)}</span>
                 {a.isRead && (
                   <span className="border border-border rounded px-1 text-muted-foreground/60">

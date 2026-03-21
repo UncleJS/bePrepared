@@ -1,221 +1,83 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { apiFetch, fmtDate, daysUntil } from "@/lib/api";
+import { useEffect } from "react";
+import { fmtDate, daysUntil } from "@/lib/api";
 import { useActiveHouseholdId } from "@/lib/useActiveHouseholdId";
 import { Pencil } from "lucide-react";
-
-type Schedule = {
-  id: string;
-  equipmentItemId: string;
-  name: string;
-  calDays?: number;
-  nextDueAt?: string;
-  lastDoneAt?: string;
-  graceDays: number;
-  isActive: boolean;
-};
-
-type ScheduleEditForm = {
-  name: string;
-  calDays: string;
-  graceDays: string;
-  nextDueAt: string;
-  lastDoneAt: string;
-  isActive: boolean;
-};
-
-type EquipmentItem = { id: string; name: string; categorySlug?: string };
-type Template = { id: string; name: string; defaultCalDays?: number; graceDays?: number };
-
-const EMPTY_EDIT_FORM: ScheduleEditForm = {
-  name: "",
-  calDays: "",
-  graceDays: "7",
-  nextDueAt: "",
-  lastDoneAt: "",
-  isActive: true,
-};
-
-function scheduleToForm(s: Schedule): ScheduleEditForm {
-  return {
-    name: s.name,
-    calDays: s.calDays != null ? String(s.calDays) : "",
-    graceDays: String(s.graceDays),
-    nextDueAt: s.nextDueAt ? s.nextDueAt.slice(0, 10) : "",
-    lastDoneAt: s.lastDoneAt ? s.lastDoneAt.slice(0, 10) : "",
-    isActive: s.isActive,
-  };
-}
+import { useMaintenanceActions } from "./useMaintenanceActions";
+import { useMaintenanceData } from "./useMaintenanceData";
 
 export default function MaintenancePage() {
   const { householdId, status } = useActiveHouseholdId();
-
-  const [schedules, setSchedules] = useState<Schedule[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [equipment, setEquipment] = useState<EquipmentItem[]>([]);
-  const [templates, setTemplates] = useState<Template[]>([]);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  // Create form
-  const [form, setForm] = useState({
-    equipmentItemId: "",
-    templateId: "",
-    name: "",
-    calDays: "",
-    graceDays: "7",
-    nextDueAt: "",
-  });
-
-  // Edit state
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<ScheduleEditForm>(EMPTY_EDIT_FORM);
-
-  const equipmentMap = Object.fromEntries(equipment.map((e) => [e.id, e.name]));
-
-  async function loadSchedules() {
-    if (!householdId) return;
-    const rows = await apiFetch<Schedule[]>(`/maintenance/${householdId}/schedules`);
-    setSchedules(rows);
-  }
+  const {
+    equipment,
+    templates,
+    loading,
+    error,
+    setError,
+    loadData,
+    loadSchedules,
+    equipmentMap,
+    sortedSchedules,
+  } = useMaintenanceData();
+  const {
+    saving,
+    message,
+    form,
+    setForm,
+    editingId,
+    editForm,
+    setEditForm,
+    createSchedule,
+    startEdit,
+    cancelEdit,
+    saveScheduleEdit,
+  } = useMaintenanceActions({ householdId, reloadSchedules: loadSchedules, setError });
 
   useEffect(() => {
     if (!householdId) return;
+    void loadData(householdId);
+  }, [householdId, loadData]);
 
-    Promise.all([
-      apiFetch<Schedule[]>(`/maintenance/${householdId}/schedules`),
-      apiFetch<EquipmentItem[]>(`/equipment/${householdId}`),
-      apiFetch<Template[]>(`/maintenance/templates`),
-    ])
-      .then(([s, e, t]) => {
-        setSchedules(s);
-        setEquipment(e);
-        setTemplates(t);
-      })
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load maintenance data."))
-      .finally(() => setLoading(false));
-  }, [householdId]);
-
-  if (status === "loading")
-    return <p className="text-muted-foreground text-sm">Loading session…</p>;
-  if (!householdId)
-    return <p className="text-muted-foreground text-sm">No household in session.</p>;
-  if (loading) return <p className="text-muted-foreground text-sm">Loading maintenance…</p>;
-
-  const sorted = [...schedules].sort((a, b) => {
-    const da = daysUntil(a.nextDueAt) ?? 9999;
-    const db = daysUntil(b.nextDueAt) ?? 9999;
-    return da - db;
-  });
-
-  async function createSchedule() {
-    if (!householdId) return;
-    if (!form.equipmentItemId || !form.name.trim()) {
-      setError("Equipment and schedule name are required.");
-      return;
-    }
-
-    setSaving(true);
-    setError(null);
-    setMessage(null);
-    try {
-      await apiFetch(`/maintenance/${householdId}/${form.equipmentItemId}/schedules`, {
-        method: "POST",
-        body: JSON.stringify({
-          templateId: form.templateId || undefined,
-          name: form.name.trim(),
-          calDays: form.calDays ? Number(form.calDays) : undefined,
-          graceDays: form.graceDays ? Number(form.graceDays) : undefined,
-          nextDueAt: form.nextDueAt || undefined,
-        }),
-      });
-      setForm({
-        equipmentItemId: "",
-        templateId: "",
-        name: "",
-        calDays: "",
-        graceDays: "7",
-        nextDueAt: "",
-      });
-      setMessage("Maintenance schedule created.");
-      await loadSchedules();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to create maintenance schedule.");
-    } finally {
-      setSaving(false);
-    }
+  if (status === "loading") {
+    return <p className="text-sm text-muted-foreground">Loading session…</p>;
   }
-
-  function startEdit(s: Schedule) {
-    setEditingId(s.id);
-    setEditForm(scheduleToForm(s));
+  if (!householdId) {
+    return <p className="text-sm text-muted-foreground">No household in session.</p>;
   }
-
-  function cancelEdit() {
-    setEditingId(null);
-    setEditForm(EMPTY_EDIT_FORM);
-  }
-
-  async function saveScheduleEdit() {
-    if (!householdId || !editingId) return;
-    if (!editForm.name.trim()) {
-      setError("Schedule name is required.");
-      return;
-    }
-
-    setSaving(true);
-    setError(null);
-    setMessage(null);
-    try {
-      await apiFetch(`/maintenance/${householdId}/schedules/${editingId}`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          name: editForm.name.trim(),
-          calDays: editForm.calDays ? Number(editForm.calDays) : undefined,
-          graceDays: editForm.graceDays ? Number(editForm.graceDays) : undefined,
-          nextDueAt: editForm.nextDueAt || undefined,
-          lastDoneAt: editForm.lastDoneAt || undefined,
-          isActive: editForm.isActive,
-        }),
-      });
-      setEditingId(null);
-      setEditForm(EMPTY_EDIT_FORM);
-      setMessage("Maintenance schedule updated.");
-      await loadSchedules();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to update maintenance schedule.");
-    } finally {
-      setSaving(false);
-    }
+  if (loading) {
+    return <p className="text-sm text-muted-foreground">Loading maintenance…</p>;
   }
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Maintenance</h1>
-        <p className="text-muted-foreground text-sm mt-1">{schedules.length} schedules active</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {sortedSchedules.length} schedules active
+        </p>
       </div>
 
-      <section className="rounded-lg border border-border bg-card p-4 space-y-3">
+      <section className="space-y-3 rounded-lg border border-border bg-card p-4">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
           Define Maintenance Schedule
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <div className="space-y-1">
             <label className="block text-xs font-bold uppercase tracking-wide text-primary">
               Equipment Item
             </label>
             <select
               value={form.equipmentItemId}
-              onChange={(e) => setForm((f) => ({ ...f, equipmentItemId: e.target.value }))}
+              onChange={(e) =>
+                setForm((current) => ({ ...current, equipmentItemId: e.target.value }))
+              }
               className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
             >
               <option value="">Select equipment</option>
-              {equipment.map((e) => (
-                <option key={e.id} value={e.id}>
-                  {e.name}
+              {equipment.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
                 </option>
               ))}
             </select>
@@ -228,21 +90,25 @@ export default function MaintenancePage() {
               value={form.templateId}
               onChange={(e) => {
                 const templateId = e.target.value;
-                const t = templates.find((x) => x.id === templateId);
-                setForm((f) => ({
-                  ...f,
+                const template = templates.find((row) => row.id === templateId);
+                setForm((current) => ({
+                  ...current,
                   templateId,
-                  name: t?.name ?? f.name,
-                  calDays: t?.defaultCalDays != null ? String(t.defaultCalDays) : f.calDays,
-                  graceDays: t?.graceDays != null ? String(t.graceDays) : f.graceDays,
+                  name: template?.name ?? current.name,
+                  calDays:
+                    template?.defaultCalDays != null
+                      ? String(template.defaultCalDays)
+                      : current.calDays,
+                  graceDays:
+                    template?.graceDays != null ? String(template.graceDays) : current.graceDays,
                 }));
               }}
               className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
             >
               <option value="">Select template (optional)</option>
-              {templates.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
+              {templates.map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.name}
                 </option>
               ))}
             </select>
@@ -253,7 +119,7 @@ export default function MaintenancePage() {
             </label>
             <input
               value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              onChange={(e) => setForm((current) => ({ ...current, name: e.target.value }))}
               className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
               placeholder="Filter change"
             />
@@ -264,7 +130,7 @@ export default function MaintenancePage() {
             </label>
             <input
               value={form.calDays}
-              onChange={(e) => setForm((f) => ({ ...f, calDays: e.target.value }))}
+              onChange={(e) => setForm((current) => ({ ...current, calDays: e.target.value }))}
               className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
               placeholder="30"
             />
@@ -275,7 +141,7 @@ export default function MaintenancePage() {
             </label>
             <input
               value={form.graceDays}
-              onChange={(e) => setForm((f) => ({ ...f, graceDays: e.target.value }))}
+              onChange={(e) => setForm((current) => ({ ...current, graceDays: e.target.value }))}
               className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
               placeholder="7"
             />
@@ -287,14 +153,14 @@ export default function MaintenancePage() {
             <input
               type="date"
               value={form.nextDueAt}
-              onChange={(e) => setForm((f) => ({ ...f, nextDueAt: e.target.value }))}
+              onChange={(e) => setForm((current) => ({ ...current, nextDueAt: e.target.value }))}
               className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
             />
           </div>
         </div>
         <button
           type="button"
-          onClick={createSchedule}
+          onClick={() => void createSchedule()}
           disabled={saving}
           className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
         >
@@ -305,35 +171,35 @@ export default function MaintenancePage() {
       {message && <p className="text-sm text-emerald-400">{message}</p>}
       {error && <p className="text-sm text-destructive">{error}</p>}
 
-      <div className="rounded-lg border border-border overflow-hidden">
+      <div className="overflow-hidden rounded-lg border border-border">
         <table className="w-full text-sm">
           <thead className="bg-muted/50">
             <tr>
-              <th className="text-left px-4 py-2 font-medium text-muted-foreground">Equipment</th>
-              <th className="text-left px-4 py-2 font-medium text-muted-foreground">Schedule</th>
-              <th className="text-left px-4 py-2 font-medium text-muted-foreground">Interval</th>
-              <th className="text-left px-4 py-2 font-medium text-muted-foreground">Last Done</th>
-              <th className="text-left px-4 py-2 font-medium text-muted-foreground">Next Due</th>
-              <th className="text-left px-4 py-2 font-medium text-muted-foreground">Status</th>
-              <th className="text-right px-4 py-2 font-medium text-muted-foreground">Actions</th>
+              <th className="px-4 py-2 text-left font-medium text-muted-foreground">Equipment</th>
+              <th className="px-4 py-2 text-left font-medium text-muted-foreground">Schedule</th>
+              <th className="px-4 py-2 text-left font-medium text-muted-foreground">Interval</th>
+              <th className="px-4 py-2 text-left font-medium text-muted-foreground">Last Done</th>
+              <th className="px-4 py-2 text-left font-medium text-muted-foreground">Next Due</th>
+              <th className="px-4 py-2 text-left font-medium text-muted-foreground">Status</th>
+              <th className="px-4 py-2 text-right font-medium text-muted-foreground">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {sorted.map((s) => {
-              const days = daysUntil(s.nextDueAt);
+            {sortedSchedules.map((schedule) => {
+              const days = daysUntil(schedule.nextDueAt);
               let statusLabel = "OK";
               let statusClass = "text-primary";
 
-              if (!s.isActive) {
+              if (!schedule.isActive) {
                 statusLabel = "Inactive";
                 statusClass = "text-muted-foreground";
               } else if (days !== null) {
                 if (days < 0) {
                   statusLabel = `Overdue ${Math.abs(days)}d`;
-                  statusClass = "text-destructive font-semibold";
-                } else if (days <= s.graceDays) {
+                  statusClass = "font-semibold text-destructive";
+                } else if (days <= schedule.graceDays) {
                   statusLabel = `Due in ${days}d`;
-                  statusClass = "text-yellow-400 font-medium";
+                  statusClass = "font-medium text-yellow-400";
                 } else {
                   statusLabel = `${days}d`;
                   statusClass = "text-muted-foreground";
@@ -342,23 +208,27 @@ export default function MaintenancePage() {
 
               return (
                 <tr
-                  key={s.id}
-                  className={`hover:bg-accent/30 transition-colors ${!s.isActive ? "opacity-60" : ""}`}
+                  key={schedule.id}
+                  className={`transition-colors hover:bg-accent/30 ${!schedule.isActive ? "opacity-60" : ""}`}
                 >
                   <td className="px-4 py-2.5 text-muted-foreground">
-                    {equipmentMap[s.equipmentItemId] ?? "—"}
+                    {equipmentMap[schedule.equipmentItemId] ?? "—"}
                   </td>
-                  <td className="px-4 py-2.5 font-medium">{s.name}</td>
+                  <td className="px-4 py-2.5 font-medium">{schedule.name}</td>
                   <td className="px-4 py-2.5 text-muted-foreground">
-                    {s.calDays ? `${s.calDays}d` : "—"}
+                    {schedule.calDays ? `${schedule.calDays}d` : "—"}
                   </td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{fmtDate(s.lastDoneAt)}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{fmtDate(s.nextDueAt)}</td>
+                  <td className="px-4 py-2.5 text-muted-foreground">
+                    {fmtDate(schedule.lastDoneAt)}
+                  </td>
+                  <td className="px-4 py-2.5 text-muted-foreground">
+                    {fmtDate(schedule.nextDueAt)}
+                  </td>
                   <td className={`px-4 py-2.5 ${statusClass}`}>{statusLabel}</td>
                   <td className="px-4 py-2.5 text-right">
                     <button
                       type="button"
-                      onClick={() => startEdit(s)}
+                      onClick={() => startEdit(schedule)}
                       className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
                     >
                       <Pencil size={12} /> Edit
@@ -367,7 +237,7 @@ export default function MaintenancePage() {
                 </tr>
               );
             })}
-            {schedules.length === 0 && (
+            {sortedSchedules.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
                   No maintenance schedules configured.
@@ -379,18 +249,18 @@ export default function MaintenancePage() {
       </div>
 
       {editingId && (
-        <section className="rounded-lg border border-border bg-card p-4 space-y-3">
+        <section className="space-y-3 rounded-lg border border-border bg-card p-4">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             Edit Maintenance Schedule
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             <div className="space-y-1">
               <label className="block text-xs font-bold uppercase tracking-wide text-primary">
                 Schedule Name
               </label>
               <input
                 value={editForm.name}
-                onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
+                onChange={(e) => setEditForm((current) => ({ ...current, name: e.target.value }))}
                 className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
               />
             </div>
@@ -400,7 +270,9 @@ export default function MaintenancePage() {
               </label>
               <input
                 value={editForm.calDays}
-                onChange={(e) => setEditForm((f) => ({ ...f, calDays: e.target.value }))}
+                onChange={(e) =>
+                  setEditForm((current) => ({ ...current, calDays: e.target.value }))
+                }
                 className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
                 placeholder="30"
               />
@@ -411,7 +283,9 @@ export default function MaintenancePage() {
               </label>
               <input
                 value={editForm.graceDays}
-                onChange={(e) => setEditForm((f) => ({ ...f, graceDays: e.target.value }))}
+                onChange={(e) =>
+                  setEditForm((current) => ({ ...current, graceDays: e.target.value }))
+                }
                 className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
                 placeholder="7"
               />
@@ -423,7 +297,9 @@ export default function MaintenancePage() {
               <input
                 type="date"
                 value={editForm.lastDoneAt}
-                onChange={(e) => setEditForm((f) => ({ ...f, lastDoneAt: e.target.value }))}
+                onChange={(e) =>
+                  setEditForm((current) => ({ ...current, lastDoneAt: e.target.value }))
+                }
                 className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
               />
             </div>
@@ -434,7 +310,9 @@ export default function MaintenancePage() {
               <input
                 type="date"
                 value={editForm.nextDueAt}
-                onChange={(e) => setEditForm((f) => ({ ...f, nextDueAt: e.target.value }))}
+                onChange={(e) =>
+                  setEditForm((current) => ({ ...current, nextDueAt: e.target.value }))
+                }
                 className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
               />
             </div>
@@ -442,12 +320,14 @@ export default function MaintenancePage() {
               <label className="block text-xs font-bold uppercase tracking-wide text-primary">
                 Active
               </label>
-              <div className="flex items-center h-[38px]">
+              <div className="flex h-[38px] items-center">
                 <button
                   type="button"
                   role="switch"
                   aria-checked={editForm.isActive}
-                  onClick={() => setEditForm((f) => ({ ...f, isActive: !f.isActive }))}
+                  onClick={() =>
+                    setEditForm((current) => ({ ...current, isActive: !current.isActive }))
+                  }
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
                     editForm.isActive ? "bg-primary" : "bg-muted-foreground/30"
                   }`}
@@ -467,7 +347,7 @@ export default function MaintenancePage() {
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={saveScheduleEdit}
+              onClick={() => void saveScheduleEdit()}
               disabled={saving}
               className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
             >
