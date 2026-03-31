@@ -110,7 +110,6 @@ export function useInventoryItemActions({
   const archiveItem = useCallback(
     async (itemId: string) => {
       if (!householdId) return;
-      if (!window.confirm("Archive this inventory item?")) return;
 
       setSaving(true);
       setError(null);

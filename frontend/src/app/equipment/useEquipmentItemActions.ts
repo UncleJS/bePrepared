@@ -107,7 +107,6 @@ export function useEquipmentItemActions({
   const archiveItem = useCallback(
     async (id: string) => {
       if (!householdId) return;
-      if (!window.confirm("Archive this equipment item?")) return;
 
       setSaving(true);
       setError(null);
@@ -128,7 +127,6 @@ export function useEquipmentItemActions({
   const restoreItem = useCallback(
     async (id: string) => {
       if (!householdId) return;
-      if (!window.confirm("Restore this equipment item?")) return;
 
       setSaving(true);
       setError(null);

@@ -13,7 +13,6 @@ import {
   Bell,
   Settings,
   Calculator,
-  ShieldCheck,
   ChevronDown,
   ChevronRight,
   Home,
@@ -27,24 +26,40 @@ const mainNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/modules", label: "Modules", icon: BookOpen },
   { href: "/tasks", label: "Ticksheets", icon: CheckSquare },
-  { href: "/inventory", label: "Inventory", icon: Package },
-  { href: "/equipment", label: "Equipment", icon: ShieldCheck },
+  { href: "/supplies", label: "Supplies", icon: Package },
   { href: "/maintenance", label: "Maintenance", icon: Wrench },
   { href: "/planning", label: "Planning", icon: Calculator },
   { href: "/alerts", label: "Alerts", icon: Bell },
 ];
 
 const settingsSubLinks = [
+  { href: "/settings", label: "Overview", icon: Settings },
   { href: "/settings/household", label: "Household", icon: Home },
-  { href: "/settings/users", label: "Users", icon: Users },
+  { href: "/settings/users", label: "Users", icon: Users, adminOnly: true },
   { href: "/settings/policies", label: "Policies", icon: SlidersHorizontal },
-  { href: "/settings/modules", label: "Module Content", icon: BookOpen },
-  { href: "/settings/inventory-categories", label: "Inventory Categories", icon: Package },
-  { href: "/settings/equipment-categories", label: "Equipment Categories", icon: ShieldCheck },
-  { href: "/settings/families", label: "Families", icon: Building2 },
+  { href: "/settings/modules", label: "Module Content", icon: BookOpen, adminOnly: true },
+  {
+    href: "/settings/inventory-categories",
+    label: "Inventory Categories",
+    icon: Package,
+    adminOnly: true,
+  },
+  {
+    href: "/settings/equipment-categories",
+    label: "Equipment Categories",
+    icon: Package,
+    adminOnly: true,
+  },
+  { href: "/settings/families", label: "Families", icon: Building2, adminOnly: true },
 ];
 
-export function SideNav() {
+export function SideNav({
+  className,
+  onNavigate,
+}: {
+  className?: string;
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const inSettings = pathname.startsWith("/settings");
@@ -61,8 +76,12 @@ export function SideNav() {
     if (inSettings) setSettingsOpen(true);
   }, [inSettings]);
 
+  const visibleSettingsSubLinks = settingsSubLinks.filter(
+    (item) => !("adminOnly" in item && item.adminOnly && !isAdmin)
+  );
+
   return (
-    <nav className="w-56 shrink-0 border-r border-border bg-card flex flex-col py-4">
+    <nav className={clsx("flex shrink-0 flex-col border-r border-border bg-card py-4", className)}>
       {/* Main nav items */}
       {mainNavItems.map(({ href, label, icon: Icon }) => {
         const active = pathname.startsWith(href);
@@ -70,6 +89,7 @@ export function SideNav() {
           <Link
             key={href}
             href={href}
+            onClick={onNavigate}
             className={clsx(
               "flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors",
               active
@@ -102,14 +122,15 @@ export function SideNav() {
       </button>
 
       {/* Settings sub-links — admin only */}
-      {settingsOpen && isAdmin && (
+      {settingsOpen && (
         <div className="flex flex-col">
-          {settingsSubLinks.map(({ href, label, icon: Icon }) => {
+          {visibleSettingsSubLinks.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || pathname.startsWith(href + "/");
             return (
               <Link
                 key={href}
                 href={href}
+                onClick={onNavigate}
                 className={clsx(
                   "flex items-center gap-2 pl-9 pr-4 py-2 text-xs font-medium transition-colors",
                   active

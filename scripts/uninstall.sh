@@ -11,6 +11,28 @@ AUTO_YES=false
 REMOVE_VOLUMES=false
 REMOVE_IMAGES=false
 
+PROJECT_UNITS=(
+  beprepared-pod
+  beprepared-db
+  beprepared-api
+  beprepared-worker
+  beprepared-frontend
+  beprepared-db-volume
+)
+
+PROJECT_UNIT_FILES=(
+  beprepared.pod
+  beprepared-db.container
+  beprepared-api.container
+  beprepared-worker.container
+  beprepared-frontend.container
+  beprepared-db.volume
+)
+
+PROJECT_CONTAINERS=(beprepared-db beprepared-api beprepared-worker beprepared-frontend)
+PROJECT_IMAGES=(beprepared-api:latest beprepared-worker:latest beprepared-frontend:latest)
+PROJECT_VOLUMES=(beprepared-db)
+
 # ---- Parse args ----
 for arg in "$@"; do
   case "$arg" in
@@ -44,40 +66,67 @@ confirm() {
 echo "==> bePrepared uninstall.sh"
 echo ""
 
-# ---- 1. Stop pod ----
-echo "==> Stopping beprepared-pod..."
-systemctl --user stop beprepared-pod 2>/dev/null || echo "    (pod was not running)"
+stop_units() {
+  echo "==> Stopping systemd user units..."
+  for unit in "${PROJECT_UNITS[@]}"; do
+    systemctl --user stop "$unit" >/dev/null 2>&1 || true
+  done
+}
 
-# ---- 2. Remove Quadlet unit files ----
-echo "==> Removing Quadlet units from $QUADLET_DIR..."
-UNITS_REMOVED=0
-for f in beprepared.pod beprepared-api.container beprepared-worker.container beprepared-frontend.container beprepared-db.container; do
-  if [[ -f "$QUADLET_DIR/$f" ]]; then
-    rm -f "$QUADLET_DIR/$f"
-    echo "    removed: $f"
-    UNITS_REMOVED=$((UNITS_REMOVED + 1))
+disable_units() {
+  echo "==> Disabling and clearing failed state..."
+  for unit in "${PROJECT_UNITS[@]}"; do
+    systemctl --user disable "$unit" >/dev/null 2>&1 || true
+    systemctl --user reset-failed "$unit" >/dev/null 2>&1 || true
+  done
+}
+
+remove_runtime() {
+  echo "==> Removing Podman runtime artifacts..."
+  podman pod rm -f beprepared >/dev/null 2>&1 || true
+  for container in "${PROJECT_CONTAINERS[@]}"; do
+    podman rm -f "$container" >/dev/null 2>&1 || true
+  done
+}
+
+remove_unit_files() {
+  echo "==> Removing Quadlet units from $QUADLET_DIR..."
+  local removed=0
+  for file in "${PROJECT_UNIT_FILES[@]}"; do
+    if [[ -f "$QUADLET_DIR/$file" ]]; then
+      rm -f "$QUADLET_DIR/$file"
+      echo "    removed: $file"
+      removed=$((removed + 1))
+    fi
+  done
+  if [[ "$removed" -eq 0 ]]; then
+    echo "    (no units found — already removed?)"
   fi
-done
-if [[ "$UNITS_REMOVED" -eq 0 ]]; then
-  echo "    (no units found — already removed?)"
-fi
+}
 
-# ---- 3. Reload systemd ----
+stop_units
+disable_units
+remove_runtime
+remove_unit_files
+
+# ---- Reload systemd ----
 echo "==> Reloading systemd user daemon..."
 systemctl --user daemon-reload
 
-# ---- 4. Optionally remove volume ----
+# ---- Optionally remove volume ----
 if [[ "$REMOVE_VOLUMES" == "true" ]] || confirm "==> Delete Podman volume 'beprepared-db'? (DESTROYS ALL DATABASE DATA)"; then
-  echo "==> Removing volume: beprepared-db..."
-  podman volume rm beprepared-db 2>/dev/null && echo "    Volume removed." || echo "    (volume not found)"
+  echo "==> Removing named volumes..."
+  for volume in "${PROJECT_VOLUMES[@]}"; do
+    podman volume rm -f "$volume" >/dev/null 2>&1 && echo "    removed: $volume" || echo "    (not found: $volume)"
+  done
 else
   echo "==> Volume 'beprepared-db' kept."
 fi
 
-# ---- 5. Optionally remove images ----
+# ---- Optionally remove images ----
 if [[ "$REMOVE_IMAGES" == "true" ]] || confirm "==> Remove local bePrepared container images?"; then
   echo "==> Removing container images..."
-  for img in beprepared-api:latest beprepared-worker:latest beprepared-frontend:latest; do
+  for img in "${PROJECT_IMAGES[@]}"; do
     podman rmi "$img" 2>/dev/null && echo "    removed: $img" || echo "    (not found: $img)"
   done
 else

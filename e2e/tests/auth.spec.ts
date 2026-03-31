@@ -37,7 +37,7 @@ test("signs in and out with the seeded admin user", async ({ page }) => {
   await loginViaUi(page);
   await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
 
-  await page.getByTitle("Sign out").click();
+  await page.locator('button[title="Sign out"]').click();
 
   await expect(page).toHaveURL(/\/login(?:\?.*)?$/);
   await expect(page.locator("#username")).toBeVisible();

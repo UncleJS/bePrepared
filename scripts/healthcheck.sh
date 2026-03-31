@@ -154,30 +154,7 @@ check_podman_health() {
 }
 
 # ── Check 3: HTTP endpoint reachability ───────────────────────────────────────
-# check_http_host: probe a URL from the host (for published ports only)
-check_http_host() {
-  local label="$1"
-  local url="$2"
-  local expect_pattern="$3"   # regex matched against HTTP status code
-  local description="$4"
-  local code
-
-  code="$(curl -s -o /dev/null -w "%{http_code}" --max-time 8 "$url" 2>/dev/null || true)"
-
-  if [[ "$code" =~ $expect_pattern ]]; then
-    say "  [ok]   http (host)      : $label  (HTTP $code)"
-  else
-    fail "  [FAIL] http (host)      : $label  (HTTP ${code:-no response})"
-    fail "         → $description"
-    fail "           URL checked : $url"
-    [[ -n "$code" ]] && fail "           Received HTTP $code — expected pattern: $expect_pattern"
-    [[ -z "$code" ]] && fail "           No response — the service may be down or not yet ready"
-    fail "           Fix: ./scripts/restart.sh ${label%%/*}"
-    fail "           Logs: ./scripts/logs.sh ${label%%/*}"
-  fi
-}
-
-# check_http_container: probe a URL from inside a container (for non-published ports)
+# check_http_container: probe a URL from inside a container
 check_http_container() {
   local label="$1"
   local container="$2"
@@ -271,8 +248,9 @@ check_http_container "api/health" "beprepared-api" \
   "http://127.0.0.1:${API_PORT}/health" "^2" \
   "The API /health endpoint did not return a 2xx status code."
 
-# Frontend port 9999 IS published to the host — probe from outside.
-check_http_host "frontend" "http://127.0.0.1:${FRONTEND_PORT}/" "^[234]" \
+# Frontend is probed from inside its own container to avoid host-runtime dependencies.
+check_http_container "frontend" "beprepared-frontend" \
+  "http://127.0.0.1:${FRONTEND_PORT}/" "^[234]" \
   "The Next.js frontend did not return a 2xx/3xx/4xx status code."
 # ── Summary & log flush ───────────────────────────────────────────────────────
 say ""

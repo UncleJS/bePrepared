@@ -89,7 +89,9 @@ check_api_health() {
 
 check_frontend() {
   local code
-  code="$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:${FRONTEND_PORT}/" || true)"
+  code="$(podman exec beprepared-frontend \
+    wget --server-response -q -O /dev/null "http://127.0.0.1:${FRONTEND_PORT}/" 2>&1 \
+    | grep -oP 'HTTP/[0-9.]+ \K[0-9]+' | head -1 || true)"
   if [[ "$code" =~ ^[234] ]]; then
     say "  [ok]   frontend      : HTTP ${code} on :${FRONTEND_PORT}"
   else

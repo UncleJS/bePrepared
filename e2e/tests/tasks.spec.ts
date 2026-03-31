@@ -54,6 +54,13 @@ test("toggles a seeded task from the level 1 ticksheet", async ({ page }) => {
       })
       .toBe(expectedAfterToggle);
 
+    await taskRow.locator("button").first().click();
+    await expect
+      .poll(async () => getCompletedCount(levelHeader), {
+        message: "task count returns after second toggle",
+      })
+      .toBe(beforeCount);
+  } finally {
     const refreshedProgress = await api.listTaskProgress();
     const currentProgress = refreshedProgress.find((row) => row.taskId === candidate?.id) ?? null;
 
@@ -62,9 +69,6 @@ test("toggles a seeded task from the level 1 ticksheet", async ({ page }) => {
       await api.updateTaskProgress(currentProgress.id, { status: restoreStatus });
     }
 
-    await page.reload();
-    await expect.poll(async () => getCompletedCount(levelHeader)).toBe(beforeCount);
-  } finally {
     await api.dispose();
   }
 });

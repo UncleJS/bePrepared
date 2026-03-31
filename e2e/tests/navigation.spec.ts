@@ -1,5 +1,9 @@
 import { expect, test } from "@playwright/test";
 
+function escapeRegex(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 test("navigates through the primary application sections", async ({ page }) => {
   await page.goto("/dashboard");
   await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
@@ -7,14 +11,14 @@ test("navigates through the primary application sections", async ({ page }) => {
   const navCases = [
     { href: "/modules", heading: "Preparedness Modules" },
     { href: "/tasks", heading: "Ticksheets" },
-    { href: "/inventory", heading: "Inventory" },
-    { href: "/equipment", heading: "Equipment" },
+    { href: "/supplies", heading: "Supplies" },
+    { href: "/maintenance", heading: "Maintenance" },
     { href: "/alerts", heading: "Alerts" },
   ];
 
   for (const navCase of navCases) {
     await page.locator(`nav a[href="${navCase.href}"]`).click();
-    await expect(page).toHaveURL(new RegExp(`${navCase.href}$`));
+    await expect(page).toHaveURL(new RegExp(`${escapeRegex(navCase.href)}(?:\\?.*)?$`));
     await expect(
       page.getByRole("heading", { name: navCase.heading, exact: true, level: 1 })
     ).toBeVisible();

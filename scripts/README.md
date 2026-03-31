@@ -21,6 +21,10 @@ For full operational context — Quadlet unit files, backup/restore procedures, 
 10. [logs.sh](#10-logssh)
 11. [db.sh](#11-dbsh)
 12. [update.sh](#12-updatesh)
+13. [install-dev.sh](#13-install-devsh)
+14. [uninstall-dev.sh](#14-uninstall-devsh)
+15. [dev-validate.sh](#15-dev-validatesh)
+16. [e2e.sh](#16-e2esh)
 
 ---
 
@@ -53,18 +57,22 @@ $EDITOR deploy/.env
 
 [↑ TOC](#table-of-contents)
 
-| Script         | Purpose                                                                        | Key Options                                                                                        |
-| -------------- | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
-| `install.sh`   | First-run setup: build images, install Quadlet units, start pod, migrate, seed | `--skip-seed`                                                                                      |
-| `uninstall.sh` | Stop pod, remove Quadlet units; optionally wipe volume and images              | `--yes`, `--remove-volumes`, `--remove-images`                                                     |
-| `rebuild.sh`   | Rebuild one or more container images and restart affected services             | `api`, `worker`, `frontend` (positional, default: all)                                             |
-| `start.sh`     | Start the full pod                                                             | —                                                                                                  |
-| `stop.sh`      | Stop the full pod                                                              | —                                                                                                  |
-| `restart.sh`   | Restart the pod or a single service                                            | `api`, `worker`, `frontend`, `db` (positional, default: pod)                                       |
-| `status.sh`    | Check systemd unit status + API `/health` + frontend reachability              | —                                                                                                  |
-| `logs.sh`      | Tail journalctl logs                                                           | `api`, `worker`, `frontend`, `db` (positional, default: all); extra args forwarded to `journalctl` |
-| `db.sh`        | Run DB migrations and/or seed inside the API container                         | `migrate`, `seed`, `migrate+seed` (required subcommand)                                            |
-| `update.sh`    | `git pull` → rebuild all → restart → migrate → status                          | `--skip-pull`, `--skip-migrate`                                                                    |
+| Script             | Purpose                                                                        | Key Options                                                                                        |
+| ------------------ | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| `install.sh`       | First-run setup: build images, install Quadlet units, start pod, migrate, seed | `--skip-seed`                                                                                      |
+| `uninstall.sh`     | Stop pod, remove Quadlet units; optionally wipe volume and images              | `--yes`, `--remove-volumes`, `--remove-images`                                                     |
+| `rebuild.sh`       | Rebuild one or more container images and restart affected services             | `api`, `worker`, `frontend` (positional, default: all)                                             |
+| `start.sh`         | Start the full pod                                                             | —                                                                                                  |
+| `stop.sh`          | Stop the full pod                                                              | —                                                                                                  |
+| `restart.sh`       | Restart the pod or a single service                                            | `api`, `worker`, `frontend`, `db` (positional, default: pod)                                       |
+| `status.sh`        | Check systemd unit status + API `/health` + frontend reachability              | —                                                                                                  |
+| `logs.sh`          | Tail journalctl logs                                                           | `api`, `worker`, `frontend`, `db` (positional, default: all); extra args forwarded to `journalctl` |
+| `db.sh`            | Run DB migrations and/or seed inside the API container                         | `migrate`, `seed`, `migrate+seed` (required subcommand)                                            |
+| `update.sh`        | `git pull` → rebuild all → restart → migrate → status                          | `--skip-pull`, `--skip-migrate`                                                                    |
+| `install-dev.sh`   | Build the dev image and install/start the `beprepared-dev` unit                | —                                                                                                  |
+| `uninstall-dev.sh` | Stop/remove the `beprepared-dev` unit and container                            | `--yes`, `--remove-image`                                                                          |
+| `dev-validate.sh`  | Run typecheck, lint, tests, and builds inside `beprepared-dev`                 | —                                                                                                  |
+| `e2e.sh`           | Start/reuse the E2E DB and run Playwright inside `beprepared-dev`              | Optional Playwright args forwarded                                                                 |
 
 All scripts accept `-h` / `--help`.
 
@@ -74,7 +82,7 @@ All scripts accept `-h` / `--help`.
 
 [↑ TOC](#table-of-contents)
 
-**First-run setup.** Creates the database volume, builds all container images, installs Quadlet systemd units, starts the pod, waits for MariaDB, runs migrations, and optionally seeds reference data.
+**First-run setup.** Builds all container images, installs Quadlet pod/container/volume units, starts the pod, waits for MariaDB, runs migrations, and optionally seeds reference data.
 
 ### Synopsis
 
@@ -92,15 +100,14 @@ All scripts accept `-h` / `--help`.
 ### Steps performed
 
 1. Verify `deploy/.env` exists
-2. Create Podman volume `beprepared-db`
-3. Build images: `beprepared-api:latest`, `beprepared-worker:latest`, `beprepared-frontend:latest`
-4. Copy Quadlet unit files to `~/.config/containers/systemd/`
-5. `systemctl --user daemon-reload`
-6. `systemctl --user start beprepared-pod`
-7. Wait up to 60 s for MariaDB to accept connections
-8. Run `db:migrate`
-9. Run `db:seed` (unless `--skip-seed`)
-10. Call `status.sh` to verify all services are healthy
+2. Build images: `beprepared-api:latest`, `beprepared-worker:latest`, `beprepared-frontend:latest`
+3. Copy Quadlet `.pod`, `.container`, and `.volume` files to `~/.config/containers/systemd/`
+4. `systemctl --user daemon-reload`
+5. `systemctl --user start beprepared-pod`
+6. Wait up to 60 s for MariaDB to accept connections
+7. Run `db:migrate`
+8. Run `db:seed` (unless `--skip-seed`)
+9. Call `status.sh` to verify all services are healthy
 
 ### Examples
 
@@ -118,7 +125,7 @@ All scripts accept `-h` / `--help`.
 
 [↑ TOC](#table-of-contents)
 
-**Full teardown.** Stops the pod, removes Quadlet unit files from systemd, and reloads the daemon. Optionally removes the database volume (destructive) and local container images.
+**Full teardown.** Stops and disables project units, removes Podman runtime artifacts, removes Quadlet source files, reloads the daemon, and optionally purges the database volume and local images.
 
 ### Synopsis
 
@@ -270,7 +277,7 @@ All scripts accept `-h` / `--help`.
 
 [↑ TOC](#table-of-contents)
 
-**Health check for all services.** Checks the systemd active state for all five units, probes the API `/health` endpoint from inside the container, and checks frontend reachability via curl. Exits `0` if all checks pass, `1` if any fail.
+**Health check for all services.** Checks the systemd active state for all five units, probes the API `/health` endpoint from inside the API container, and checks frontend reachability from inside the frontend container. Exits `0` if all checks pass, `1` if any fail.
 
 ### Synopsis
 
@@ -280,15 +287,15 @@ All scripts accept `-h` / `--help`.
 
 ### Checks performed
 
-| Check                        | Method                                 | Pass condition       |
-| ---------------------------- | -------------------------------------- | -------------------- |
-| `beprepared-pod` active      | `systemctl --user is-active`           | active               |
-| `beprepared-db` active       | `systemctl --user is-active`           | active               |
-| `beprepared-api` active      | `systemctl --user is-active`           | active               |
-| `beprepared-worker` active   | `systemctl --user is-active`           | active               |
-| `beprepared-frontend` active | `systemctl --user is-active`           | active               |
-| API `/health`                | `podman exec` → `fetch`                | HTTP 200             |
-| Frontend reachable           | `curl` to `127.0.0.1:${FRONTEND_PORT}` | HTTP 2xx / 3xx / 4xx |
+| Check                        | Method                                | Pass condition       |
+| ---------------------------- | ------------------------------------- | -------------------- |
+| `beprepared-pod` active      | `systemctl --user is-active`          | active               |
+| `beprepared-db` active       | `systemctl --user is-active`          | active               |
+| `beprepared-api` active      | `systemctl --user is-active`          | active               |
+| `beprepared-worker` active   | `systemctl --user is-active`          | active               |
+| `beprepared-frontend` active | `systemctl --user is-active`          | active               |
+| API `/health`                | `podman exec beprepared-api` → `wget` | HTTP 200             |
+| Frontend reachable           | `podman exec beprepared-frontend`     | HTTP 2xx / 3xx / 4xx |
 
 ### Examples
 
@@ -421,4 +428,97 @@ Default behaviour (no extra journalctl args) is `-f` (follow / live tail).
 
 # Update but do not run migrations (e.g. no schema changes in this release)
 ./scripts/update.sh --skip-migrate
+```
+
+---
+
+## 13. install-dev.sh
+
+[↑ TOC](#table-of-contents)
+
+**Install the development container.** Builds `localhost/beprepared-dev:latest`, copies `.quadlet/beprepared-dev.container` into the user Quadlet directory, reloads systemd, and starts the dev unit.
+
+### Synopsis
+
+```bash
+./scripts/install-dev.sh
+```
+
+### Example
+
+```bash
+./scripts/install-dev.sh
+podman exec -it beprepared-dev bash
+```
+
+---
+
+## 14. uninstall-dev.sh
+
+[↑ TOC](#table-of-contents)
+
+**Remove the development container.** Stops and disables the `beprepared-dev` unit, removes the container runtime, removes the Quadlet file, reloads systemd, and optionally deletes the local dev image.
+
+### Synopsis
+
+```bash
+./scripts/uninstall-dev.sh [--yes] [--remove-image]
+```
+
+### Example
+
+```bash
+./scripts/uninstall-dev.sh --yes
+./scripts/uninstall-dev.sh --yes --remove-image
+```
+
+---
+
+## 15. dev-validate.sh
+
+[↑ TOC](#table-of-contents)
+
+**Run validation inside the development container.** Executes the standard checks via `podman exec beprepared-dev ...` so validation stays containerized.
+
+### Synopsis
+
+```bash
+./scripts/dev-validate.sh
+```
+
+---
+
+## 16. e2e.sh
+
+[↑ TOC](#table-of-contents)
+
+**Run full E2E in one command.** Starts or reuses the dedicated Podman E2E MariaDB container, waits for readiness, then runs migrate + seed + Playwright inside `beprepared-dev`.
+
+### Synopsis
+
+```bash
+./scripts/e2e.sh [playwright args...]
+```
+
+### Examples
+
+```bash
+./scripts/e2e.sh
+./scripts/e2e.sh tests/auth.spec.ts
+./scripts/e2e.sh --grep "signs in"
+```
+
+### Checks performed
+
+1. `bun run typecheck`
+2. `bun run lint`
+3. `bun run test`
+4. `bun run --cwd worker test` _(only if worker test files exist)_
+5. `bun run build:api`
+6. `bun run build:frontend`
+
+### Example
+
+```bash
+./scripts/dev-validate.sh
 ```

@@ -1,33 +1,39 @@
-import { ShieldCheck } from "lucide-react";
-import Link from "next/link";
-import { auth } from "@/auth";
+"use client";
+
+import { Menu, ShieldCheck } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useActiveHouseholdId } from "@/lib/useActiveHouseholdId";
+import { AlertBadge } from "./AlertBadge";
 import { UserMenu } from "./UserMenu";
 import { HouseholdSwitcher } from "./HouseholdSwitcher";
 
-export async function TopBar() {
-  const session = await auth();
-
+export function TopBar({ onOpenNav }: { onOpenNav: () => void }) {
+  const { data: session } = useSession();
+  const { householdId } = useActiveHouseholdId();
+  const sessionUser = session?.user as
+    | { householdId?: string; isAdmin?: boolean; name?: string | null }
+    | undefined;
   return (
-    <header className="h-12 border-b border-border bg-card flex items-center px-4 gap-3 shrink-0">
+    <header className="flex h-14 items-center gap-3 border-b border-border bg-card px-4 shrink-0">
+      <button
+        type="button"
+        onClick={onOpenNav}
+        className="inline-flex rounded-md border border-border p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:hidden"
+        aria-label="Open navigation"
+      >
+        <Menu size={16} />
+      </button>
       <ShieldCheck size={20} className="text-primary" />
       <span className="font-bold text-base tracking-tight">bePrepared</span>
-      <span className="text-xs text-muted-foreground ml-auto mr-3">v0.1.0</span>
-      {session?.user ? (
-        <>
-          <HouseholdSwitcher
-            sessionHouseholdId={(session.user as { householdId?: string }).householdId}
-            isAdmin={(session.user as { isAdmin?: boolean }).isAdmin}
-          />
-          <UserMenu name={session.user.name} />
-        </>
-      ) : (
-        <Link
-          href="/login"
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          Sign in
-        </Link>
-      )}
+      <span className="ml-auto mr-1 hidden text-xs text-muted-foreground sm:inline">v0.1.0</span>
+      {sessionUser ? (
+        <HouseholdSwitcher
+          sessionHouseholdId={sessionUser.householdId}
+          isAdmin={sessionUser.isAdmin}
+        />
+      ) : null}
+      {householdId ? <AlertBadge /> : null}
+      <UserMenu name={sessionUser?.name} />
     </header>
   );
 }

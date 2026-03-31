@@ -41,34 +41,30 @@ if [[ ! -f "$ENV_FILE" ]]; then
   exit 1
 fi
 
-# ---- 2. Create named volume for MariaDB data ----
-echo "==> Creating named volume: beprepared-db..."
-podman volume create beprepared-db 2>/dev/null || true
-echo "    Mount: $(podman volume inspect beprepared-db --format '{{.Mountpoint}}')"
-
-# ---- 3. Build container images ----
+# ---- 2. Build container images ----
 echo "==> Building container images..."
-podman build --format docker -f "$DEPLOY_DIR/Containerfile.api"      -t beprepared-api:latest      "$PROJECT_ROOT"
-podman build --format docker -f "$DEPLOY_DIR/Containerfile.worker"   -t beprepared-worker:latest   "$PROJECT_ROOT"
-podman build --format docker -f "$DEPLOY_DIR/Containerfile.frontend" -t beprepared-frontend:latest "$PROJECT_ROOT"
+podman build -f "$DEPLOY_DIR/Containerfile.api"      -t beprepared-api:latest      "$PROJECT_ROOT"
+podman build -f "$DEPLOY_DIR/Containerfile.worker"   -t beprepared-worker:latest   "$PROJECT_ROOT"
+podman build -f "$DEPLOY_DIR/Containerfile.frontend" -t beprepared-frontend:latest "$PROJECT_ROOT"
 echo "==> Images built."
 
-# ---- 4. Install Quadlet unit files ----
+# ---- 3. Install Quadlet unit files ----
 echo "==> Installing Quadlet units to $QUADLET_DIR..."
 mkdir -p "$QUADLET_DIR"
 cp "$DEPLOY_DIR/quadlet/"*.container "$QUADLET_DIR/"
+cp "$DEPLOY_DIR/quadlet/"*.volume    "$QUADLET_DIR/"
 cp "$DEPLOY_DIR/quadlet/"*.pod       "$QUADLET_DIR/"
 echo "==> Units installed."
 
-# ---- 5. Reload systemd ----
+# ---- 4. Reload systemd ----
 echo "==> Reloading systemd user daemon..."
 systemctl --user daemon-reload
 
-# ---- 6. Start pod ----
+# ---- 5. Start pod ----
 echo "==> Starting beprepared-pod..."
 systemctl --user start beprepared-pod
 
-# ---- 7. Wait for MariaDB ----
+# ---- 6. Wait for MariaDB ----
 echo "==> Waiting for MariaDB to initialise (up to 60s)..."
 DB_ROOT_PASSWORD="$(grep '^DB_ROOT_PASSWORD=' "$ENV_FILE" | cut -d= -f2-)"
 for i in $(seq 1 60); do
@@ -85,11 +81,11 @@ for i in $(seq 1 60); do
   sleep 1
 done
 
-# ---- 8. Run migrations ----
+# ---- 7. Run migrations ----
 echo "==> Running DB migrations..."
 "$SCRIPT_DIR/db.sh" migrate
 
-# ---- 9. Run seed (optional) ----
+# ---- 8. Run seed (optional) ----
 if [[ "$SKIP_SEED" == "false" ]]; then
   echo "==> Running DB seed..."
   "$SCRIPT_DIR/db.sh" seed
@@ -97,7 +93,7 @@ else
   echo "==> Skipping DB seed (--skip-seed)."
 fi
 
-# ---- 10. Verify ----
+# ---- 9. Verify ----
 echo ""
 echo "==> Verifying services..."
 "$SCRIPT_DIR/status.sh"

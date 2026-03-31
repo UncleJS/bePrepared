@@ -7,19 +7,19 @@ test("creates, archives, and restores an equipment item", async ({ page }) => {
 
   try {
     await page.goto("/equipment");
+    await page.getByRole("button", { name: "Add item" }).click();
 
-    const createSection = page.locator("section").filter({
-      has: page.getByRole("heading", { name: "Add Equipment Item", level: 2 }),
-    });
+    const createDialog = page.getByRole("dialog");
+    await expect(createDialog.getByRole("heading", { name: "Add equipment item" })).toBeVisible();
 
-    await createSection.locator('label:has-text("Equipment Name *") + input').fill(itemName);
-    await createSection.locator('label:has-text("Model") + input').fill("FRS-1");
-    await createSection.locator('label:has-text("Storage Location") + input').fill("E2E shelf");
-    await createSection
+    await createDialog.locator('label:has-text("Equipment Name *") + input').fill(itemName);
+    await createDialog.locator('label:has-text("Model") + input').fill("FRS-1");
+    await createDialog.locator('label:has-text("Storage Location") + input').fill("E2E shelf");
+    await createDialog
       .locator('label:has-text("Operational Status") + select')
       .selectOption("needs_service");
-    await createSection.locator('label:has-text("Acquired Date") + input').fill("2026-03-20");
-    await page.getByRole("button", { name: "Add Item" }).click();
+    await createDialog.locator('label:has-text("Acquired Date") + input').fill("2026-03-20");
+    await createDialog.getByRole("button", { name: "Add item" }).click();
 
     await expect(page.getByText("Equipment item added.")).toBeVisible();
 
@@ -27,16 +27,16 @@ test("creates, archives, and restores an equipment item", async ({ page }) => {
     await expect(activeRow).toBeVisible();
     await expect(activeRow.getByText("needs service", { exact: true })).toBeVisible();
 
-    page.once("dialog", (dialog) => dialog.accept());
     await activeRow.getByRole("button", { name: "Archive" }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Archive" }).click();
     await expect(page.getByText("Equipment item archived.")).toBeVisible();
 
     await page.getByRole("button", { name: "Show archived" }).click();
     const archivedRow = page.locator("tr", { hasText: itemName }).first();
     await expect(archivedRow).toBeVisible();
 
-    page.once("dialog", (dialog) => dialog.accept());
     await archivedRow.getByRole("button", { name: "Restore" }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Restore" }).click();
     await expect(page.getByText("Equipment item restored.")).toBeVisible();
     await expect(page.locator("tr", { hasText: itemName }).first()).toBeVisible();
   } finally {

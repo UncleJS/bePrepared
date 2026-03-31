@@ -12,7 +12,7 @@ ContainerName=beprepared-db
 
 EnvironmentFile=%h/0_opencode/bePrepared/deploy/.env
 
-Volume=beprepared-db:/var/lib/mysql:Z
+Volume=beprepared-db.volume:/var/lib/mysql:Z
 
 # The official mariadb:11 image ships with healthcheck.sh which validates
 # that the server is accepting connections and InnoDB is fully initialised.

@@ -50,7 +50,16 @@ test("surfaces an expiry alert and lets an admin read and resolve it", async ({ 
     await expect(alertCard.getByText("read", { exact: true })).toBeVisible();
 
     await alertCard.getByRole("button", { name: "Resolve" }).click();
-    await expect(page.getByText(alertTitle, { exact: true })).toHaveCount(0);
+    await expect(
+      page
+        .locator("div", {
+          has: page.getByText(alertTitle, { exact: true }),
+        })
+        .filter({ has: page.getByRole("button", { name: "Resolve" }) })
+    ).toHaveCount(0);
+    await expect(
+      page.locator("section", { has: page.getByRole("heading", { name: "Resolved" }) })
+    ).toContainText(alertTitle);
 
     const alerts = await api.listAlerts();
     const matchingAlert = alerts.find((row) => row.entityId === lot.id);

@@ -100,7 +100,6 @@ export function useInventoryLotActions({
   const archiveLot = useCallback(
     async (lotId: string) => {
       if (!householdId || !selectedItemId) return;
-      if (!window.confirm("Archive this lot?")) return;
 
       setSaving(true);
       setError(null);
