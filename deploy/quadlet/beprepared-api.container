@@ -18,7 +18,6 @@ PodmanArgs=--cap-drop=all
 
 # Automatically restart the container when its HEALTHCHECK transitions to
 # "unhealthy" (i.e. 3 consecutive /health probe failures).
-PodmanArgs=--health-on-failure=restart
 
 [Service]
 Restart=on-failure

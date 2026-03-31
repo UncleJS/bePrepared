@@ -22,7 +22,6 @@ PodmanArgs=--health-interval=30s
 PodmanArgs=--health-timeout=10s
 PodmanArgs=--health-start-period=60s
 PodmanArgs=--health-retries=3
-PodmanArgs=--health-on-failure=restart
 
 [Service]
 Restart=on-failure

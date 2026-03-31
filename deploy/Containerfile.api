@@ -9,6 +9,7 @@ COPY api/package.json ./api/
 COPY frontend/package.json ./frontend/
 COPY shared/package.json ./shared/
 COPY worker/package.json ./worker/
+COPY e2e/package.json ./e2e/
 COPY api/src ./api/src
 COPY api/drizzle.config.ts ./api/
 COPY shared/src ./shared/src

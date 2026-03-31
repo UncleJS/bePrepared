@@ -60,9 +60,9 @@ echo "==> Units installed."
 echo "==> Reloading systemd user daemon..."
 systemctl --user daemon-reload
 
-# ---- 5. Start pod ----
-echo "==> Starting beprepared-pod..."
-systemctl --user start beprepared-pod
+# ---- 5. Start pod + app units ----
+echo "==> Starting beprepared units..."
+systemctl --user start beprepared-pod beprepared-db beprepared-api beprepared-worker beprepared-frontend
 
 # ---- 6. Wait for MariaDB ----
 echo "==> Waiting for MariaDB to initialise (up to 60s)..."

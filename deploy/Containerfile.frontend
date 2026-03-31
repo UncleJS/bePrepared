@@ -24,7 +24,7 @@ FROM docker.io/library/node:20-alpine
 WORKDIR /app/frontend
 
 COPY --from=builder /app/frontend/.next/standalone ./
-COPY --from=builder /app/frontend/.next/static ./.next/static
+COPY --from=builder /app/frontend/.next/static ./frontend/.next/static
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -49,4 +49,4 @@ HEALTHCHECK \
 
 # Use a shell wrapper to ensure HOSTNAME=0.0.0.0 is set at process start,
 # overriding any value Podman injects for the container hostname.
-CMD ["/bin/sh", "-c", "HOSTNAME=0.0.0.0 node server.js"]
+CMD ["/bin/sh", "-c", "HOSTNAME=0.0.0.0 node frontend/server.js"]

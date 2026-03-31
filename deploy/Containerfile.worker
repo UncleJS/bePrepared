@@ -8,6 +8,7 @@ COPY package.json bun.lock* ./
 COPY api/package.json ./api/
 COPY frontend/package.json ./frontend/
 COPY shared/package.json ./shared/
+COPY e2e/package.json ./e2e/
 COPY shared/src ./shared/src
 COPY api/src ./api/src
 COPY worker/package.json ./worker/
