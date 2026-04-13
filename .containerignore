@@ -1,0 +1,18 @@
+# Exclude heavyweight / generated directories from COPY layers.
+# Keeps dev container builds fast.
+
+node_modules
+**/node_modules
+.git
+dist
+build
+.next
+.turbo
+coverage
+playwright-report
+blob-report
+test-results
+*.log
+.env
+.env.*
+!.env.example

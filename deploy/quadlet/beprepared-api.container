@@ -12,7 +12,7 @@ Image=localhost/beprepared-api:latest
 Pod=beprepared.pod
 ContainerName=beprepared-api
 
-EnvironmentFile=%h/0_opencode/bePrepared/deploy/.env
+EnvironmentFile=%h/0_opencode/bePrepared/.env
 PodmanArgs=--read-only
 PodmanArgs=--tmpfs=/tmp:rw,nosuid,nodev,noexec,size=64m
 PodmanArgs=--security-opt=no-new-privileges

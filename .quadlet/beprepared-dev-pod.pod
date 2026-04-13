@@ -1,0 +1,11 @@
+# bePrepared — dev pod
+# Quadlet file: copy to ~/.config/containers/systemd/beprepared-dev-pod.pod
+# (or use dev.sh which handles this automatically)
+
+[Pod]
+PodName=beprepared-dev
+
+# API port (internal only — connect via podman exec or published port below)
+PublishPort=3001:3001
+# Frontend dev server
+PublishPort=9999:9999

@@ -194,19 +194,19 @@ Generator full service:
 
 ```mermaid
 flowchart TD
-  A[Maintenance event\nrecorded] --> B[System calculates\nnext_due_at]
-  B --> C{Usage-based\nschedule?}
-  C -- Yes --> D[System calculates\nnext_due_meter]
-  C -- No  --> E[Calendar-only;\nnext_due_at only]
-  D --> F[Update schedule\nlast_done + next_due]
+  A["Maintenance event<br/>recorded"] --> B["System calculates<br/>next_due_at"]
+  B --> C{"Usage-based<br/>schedule?"}
+  C -- Yes --> D["System calculates<br/>next_due_meter"]
+  C -- No  --> E["Calendar-only;<br/>next_due_at only"]
+  D --> F["Update schedule<br/>last_done + next_due"]
   E --> F
-  F --> G[Worker runs\nhourly]
-  G --> H{Is next_due_at\nwithin upcoming_days?}
-  H -- Yes --> I{Is it today\nor past?}
-  I -- No  --> J[Create/update\nupcoming alert]
-  I -- Yes --> K{Is it within\ngrace_days?}
-  K -- Yes --> L[Create/update\ndue alert]
-  K -- No  --> M[Create/update\noverdue alert]
+  F --> G["Worker runs<br/>hourly"]
+  G --> H{"Is next_due_at<br/>within upcoming_days?"}
+  H -- Yes --> I{"Is it today<br/>or past?"}
+  I -- No  --> J["Create/update<br/>upcoming alert"]
+  I -- Yes --> K{"Is it within<br/>grace_days?"}
+  K -- Yes --> L["Create/update<br/>due alert"]
+  K -- No  --> M["Create/update<br/>overdue alert"]
   H -- No  --> N[No alert needed]
 ```
 

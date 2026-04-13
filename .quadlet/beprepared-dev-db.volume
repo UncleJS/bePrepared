@@ -1,0 +1,4 @@
+# bePrepared — dev MariaDB named volume
+# Quadlet file: copy to ~/.config/containers/systemd/beprepared-dev-db.volume
+
+[Volume]

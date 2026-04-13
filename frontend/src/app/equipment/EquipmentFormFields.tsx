@@ -1,5 +1,6 @@
 import type { Dispatch, SetStateAction } from "react";
 import type { EquipmentCategory, EquipmentForm } from "./types";
+import { DateOnlyInput } from "@/components/ui/date-only-input";
 
 export function EquipmentFormFields({
   form,
@@ -96,11 +97,9 @@ export function EquipmentFormFields({
         <label className="block text-xs font-bold uppercase tracking-wide text-primary">
           Acquired Date
         </label>
-        <input
-          type="date"
-          className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+        <DateOnlyInput
           value={form.acquiredAt}
-          onChange={(e) => setForm((prev) => ({ ...prev, acquiredAt: e.target.value }))}
+          onChange={(v) => setForm((prev) => ({ ...prev, acquiredAt: v }))}
         />
       </div>
     </>

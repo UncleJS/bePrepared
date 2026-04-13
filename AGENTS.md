@@ -1,58 +1,87 @@
-# context-mode — MANDATORY routing rules
+# bePrepared — project AGENTS
 
-You have context-mode MCP tools available. These rules are NOT optional — they protect your context window from flooding. A single unrouted command can dump 56 KB into context and waste the entire session.
+## Project overview
 
-## BLOCKED commands — do NOT attempt these
+Disaster preparedness system — household readiness from 72h to 90-day self-sufficiency.
+Monorepo: `api` (Bun + Elysia) · `frontend` (Next.js 15) · `worker` (Bun) · `shared` · `e2e` (Playwright).
 
-### curl / wget — BLOCKED
-Any shell command containing `curl` or `wget` will be intercepted and blocked by the context-mode plugin. Do NOT retry.
-Instead use:
-- `context-mode_ctx_fetch_and_index(url, source)` to fetch and index web pages
-- `context-mode_ctx_execute(language: "javascript", code: "const r = await fetch(...)")` to run HTTP calls in sandbox
+## Dev container
 
-### Inline HTTP — BLOCKED
-Any shell command containing `fetch('http`, `requests.get(`, `requests.post(`, `http.get(`, or `http.request(` will be intercepted and blocked. Do NOT retry with shell.
-Instead use:
-- `context-mode_ctx_execute(language, code)` to run HTTP calls in sandbox — only stdout enters context
+Project: `beprepared` | Image: `localhost/beprepared-dev:latest`
 
-### Direct web fetching — BLOCKED
-Do NOT use any direct URL fetching tool. Use the sandbox equivalent.
-Instead use:
-- `context-mode_ctx_fetch_and_index(url, source)` then `context-mode_ctx_search(queries)` to query the indexed content
+### Rebuild and restart (after any source change)
 
-## REDIRECTED tools — use sandbox equivalents
+```bash
+./dev.sh
+```
 
-### Shell (>20 lines output)
-Shell is ONLY for: `git`, `mkdir`, `rm`, `mv`, `cd`, `ls`, `npm install`, `pip install`, and other short-output commands.
-For everything else, use:
-- `context-mode_ctx_batch_execute(commands, queries)` — run multiple commands + search in ONE call
-- `context-mode_ctx_execute(language: "shell", code: "...")` — run in sandbox, only stdout enters context
+`dev.sh` builds the image and restarts the Quadlet unit. **Only ever rebuild dev — never prod.**
 
-### File reading (for analysis)
-If you are reading a file to **edit** it → reading is correct (edit needs content in context).
-If you are reading to **analyze, explore, or summarize** → use `context-mode_ctx_execute_file(path, language, code)` instead. Only your printed summary enters context.
+### First-time setup
 
-### grep / search (large results)
-Search results can flood context. Use `context-mode_ctx_execute(language: "shell", code: "grep ...")` to run searches in sandbox. Only your printed summary enters context.
+```bash
+cp .env.example .env   # fill in real values
+# Install quadlet units (copy .quadlet/ files to systemd)
+cp .quadlet/*.container .quadlet/*.pod .quadlet/*.volume \
+   ~/.config/containers/systemd/
+systemctl --user daemon-reload
+systemctl --user start beprepared-dev-pod beprepared-dev-db beprepared-dev
+```
 
-## Tool selection hierarchy
+### Exec into the dev container
 
-1. **GATHER**: `context-mode_ctx_batch_execute(commands, queries)` — Primary tool. Runs all commands, auto-indexes output, returns search results. ONE call replaces 30+ individual calls.
-2. **FOLLOW-UP**: `context-mode_ctx_search(queries: ["q1", "q2", ...])` — Query indexed content. Pass ALL questions as array in ONE call.
-3. **PROCESSING**: `context-mode_ctx_execute(language, code)` | `context-mode_ctx_execute_file(path, language, code)` — Sandbox execution. Only stdout enters context.
-4. **WEB**: `context-mode_ctx_fetch_and_index(url, source)` then `context-mode_ctx_search(queries)` — Fetch, chunk, index, query. Raw HTML never enters context.
-5. **INDEX**: `context-mode_ctx_index(content, source)` — Store content in FTS5 knowledge base for later search.
+```bash
+podman exec -it beprepared-dev bun run dev:api
+podman exec -it beprepared-dev bun run dev:frontend
+podman exec -it beprepared-dev bun run dev:worker
+podman exec -it beprepared-dev bun run db:migrate
+podman exec -it beprepared-dev bun run db:seed
+podman exec -it beprepared-dev bun test
+podman exec -it beprepared-dev bun run typecheck
+```
 
-## Output constraints
+## Ports
 
-- Keep responses under 500 words.
-- Write artifacts (code, configs, PRDs) to FILES — never return them as inline text. Return only: file path + 1-line description.
-- When indexing content, use descriptive source labels so others can `search(source: "label")` later.
+| Service                 | Port                       |
+| ----------------------- | -------------------------- |
+| Frontend (Next.js)      | 9999                       |
+| API (Elysia)            | 3001                       |
+| API Swagger docs        | http://localhost:3001/docs |
+| MariaDB (dev, internal) | 3306                       |
 
-## ctx commands
+## Container names
 
-| Command | Action |
-|---------|--------|
-| `ctx stats` | Call the `stats` MCP tool and display the full output verbatim |
-| `ctx doctor` | Call the `doctor` MCP tool, run the returned shell command, display as checklist |
-| `ctx upgrade` | Call the `upgrade` MCP tool, run the returned shell command, display as checklist |
+| Container     | Name                  |
+| ------------- | --------------------- |
+| Dev workspace | `beprepared-dev`      |
+| Dev database  | `beprepared-dev-db`   |
+| Prod API      | `beprepared-api`      |
+| Prod frontend | `beprepared-frontend` |
+| Prod worker   | `beprepared-worker`   |
+| Prod database | `beprepared-db`       |
+
+## Prod images (never rebuild unless explicitly requested)
+
+| Image                                  | Containerfile                   |
+| -------------------------------------- | ------------------------------- |
+| `localhost/beprepared-api:latest`      | `deploy/Containerfile.api`      |
+| `localhost/beprepared-frontend:latest` | `deploy/Containerfile.frontend` |
+| `localhost/beprepared-worker:latest`   | `deploy/Containerfile.worker`   |
+
+## Env files
+
+- `.env.example` — committed; canonical placeholder at **repo root**
+- `.env` — gitignored; real secrets at **repo root**
+- `deploy/.env.example` — prod-ops reference only; canonical is repo root
+
+## Teardown helpers
+
+```bash
+systemctl --user stop beprepared-dev beprepared-dev-db beprepared-dev-pod-pod
+systemctl --user disable beprepared-dev beprepared-dev-db beprepared-dev-pod-pod
+podman rm -f beprepared-dev beprepared-dev-db
+podman image rm -f localhost/beprepared-dev:latest
+systemctl --user daemon-reload
+# Purge data volumes (destructive — only when needed):
+# podman volume rm beprepared-dev beprepared-dev-db
+```

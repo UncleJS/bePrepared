@@ -1,0 +1,4 @@
+# bePrepared — dev workspace named volume
+# Quadlet file: copy to ~/.config/containers/systemd/beprepared-dev.volume
+
+[Volume]

@@ -165,21 +165,21 @@ Storage shelf:
 
 ```mermaid
 flowchart TD
-  A[Lot approaching expiry\nor replacement date] --> B{Is it a replacement\ncycle or expiry?}
+  A["Lot approaching expiry<br/>or replacement date"] --> B{"Is it a replacement<br/>cycle or expiry?"}
 
-  B -- Expiry --> C{Still safe/effective\nafter expiry?}
-  C -- No --> D[Consume before expiry\nor dispose safely]
-  C -- Yes/Unknown --> E[Apply judgement;\nupdate notes]
-  D --> F[Archive lot\narchivedAt = now]
+  B -- Expiry --> C{"Still safe/effective<br/>after expiry?"}
+  C -- No --> D["Consume before expiry<br/>or dispose safely"]
+  C -- Yes/Unknown --> E["Apply judgement;<br/>update notes"]
+  D --> F["Archive lot<br/>archivedAt = now"]
   E --> F
 
-  B -- Replacement --> G{Still serviceable\nfor longer?}
-  G -- No --> H[Replace now;\nadd new lot]
-  G -- Yes --> I[Extend replace date;\nupdate lot]
-  H --> J[Add new lot\nwith fresh dates]
+  B -- Replacement --> G{"Still serviceable<br/>for longer?"}
+  G -- No --> H["Replace now;<br/>add new lot"]
+  G -- Yes --> I["Extend replace date;<br/>update lot"]
+  H --> J["Add new lot<br/>with fresh dates"]
   J --> F
 
-  F --> K[Resolve alert\nin Alerts queue]
+  F --> K["Resolve alert<br/>in Alerts queue"]
 ```
 
 [↑ Go to TOC](#table-of-contents)

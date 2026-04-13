@@ -101,14 +101,14 @@ The four readiness levels correspond to recognisable disaster timelines:
 
 ```mermaid
 flowchart LR
-  L1["L1 — 72h\n(Baseline)"] --> L2["L2 — 14d\n(Stability)"]
-  L2 --> L3["L3 — 30d\n(Resilience)"]
-  L3 --> L4["L4 — 90d\n(Self-Sufficiency)"]
+  L1["L1 — 72h<br/>(Baseline)"] --> L2["L2 — 14d<br/>(Stability)"]
+  L2 --> L3["L3 — 30d<br/>(Resilience)"]
+  L3 --> L4["L4 — 90d<br/>(Self-Sufficiency)"]
 
-  L1 --- n1["Power + water\nbaseline"]
-  L2 --- n2["Routine +\nhygiene depth"]
-  L3 --- n3["Redundancy +\nrotation"]
-  L4 --- n4["Sustained ops +\ntested plans"]
+  L1 --- n1["Power + water<br/>baseline"]
+  L2 --- n2["Routine +<br/>hygiene depth"]
+  L3 --- n3["Redundancy +<br/>rotation"]
+  L4 --- n4["Sustained ops +<br/>tested plans"]
 ```
 
 Each level **unlocks** the next. You cannot achieve L2 without completing all L1 tasks.
@@ -123,12 +123,12 @@ Every configurable value (water, calories, alert windows) resolves through a thr
 
 ```mermaid
 flowchart TD
-  A[Request for effective value\n household + scenario] --> B{Scenario-specific\noverride exists?}
-  B -- Yes --> C[Use scenario override\nscenario_policies table]
-  B -- No  --> D{Household global\noverride exists?}
-  D -- Yes --> E[Use household override\nhousehold_policies table]
-  D -- No  --> F[Use system default\npolicy_defaults table]
-  C --> G[Return effective value\nwith source label]
+  A["Request for effective value<br/>household + scenario"] --> B{"Scenario-specific<br/>override exists?"}
+  B -- Yes --> C["Use scenario override<br/>scenario_policies table"]
+  B -- No  --> D{"Household global<br/>override exists?"}
+  D -- Yes --> E["Use household override<br/>household_policies table"]
+  D -- No  --> F["Use system default<br/>policy_defaults table"]
+  C --> G["Return effective value<br/>with source label"]
   E --> G
   F --> G
 ```
@@ -155,13 +155,13 @@ The effective people count for all calculations resolves through four levels:
 
 ```mermaid
 flowchart TD
-  A[Request for effective\npeople count] --> B{Manual session\noverride set?}
-  B -- Yes --> C[Use manual override\nTemporary until cleared]
-  B -- No  --> D{Scenario-bound profile\nexists for active scenario?}
-  D -- Yes --> E[Auto-switch to\nscenario-bound profile]
-  D -- No  --> F{Active profile\nset on household?}
+  A["Request for effective<br/>people count"] --> B{"Manual session<br/>override set?"}
+  B -- Yes --> C["Use manual override<br/>Temporary until cleared"]
+  B -- No  --> D{"Scenario-bound profile<br/>exists for active scenario?"}
+  D -- Yes --> E["Auto-switch to<br/>scenario-bound profile"]
+  D -- No  --> F{"Active profile<br/>set on household?"}
   F -- Yes --> G[Use active profile]
-  F -- No  --> H[Use household\nbaseline target_people]
+  F -- No  --> H["Use household<br/>baseline target_people"]
   C --> I[Return count + source label]
   E --> I
   G --> I

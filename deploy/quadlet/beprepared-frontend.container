@@ -12,7 +12,7 @@ Image=localhost/beprepared-frontend:latest
 Pod=beprepared.pod
 ContainerName=beprepared-frontend
 
-EnvironmentFile=%h/0_opencode/bePrepared/deploy/.env
+EnvironmentFile=%h/0_opencode/bePrepared/.env
 Environment=PORT=9999
 # Bind Next.js standalone server to all interfaces so the health probe
 # can reach it via 127.0.0.1 inside the shared Podman pod network namespace.

@@ -67,9 +67,9 @@ Operational strengths already in place:
 flowchart LR
   H[Host user session]
   P[Rootless Podman Pod]
-  FE[Frontend :9999]
-  API[API :3001 internal]
-  DB[MariaDB :3306 internal]
+  FE["Frontend :9999"]
+  API["API :3001 internal"]
+  DB["MariaDB :3306 internal"]
   W[Worker internal]
   E[deploy/.env secrets]
 

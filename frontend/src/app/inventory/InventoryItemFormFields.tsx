@@ -1,5 +1,6 @@
 import type { Dispatch, SetStateAction } from "react";
 import type { InventoryCategory, ItemForm } from "./types";
+import { DateOnlyInput } from "@/components/ui/date-only-input";
 
 export function InventoryItemFormFields({
   form,
@@ -116,11 +117,9 @@ export function InventoryItemFormFields({
             <label className="block text-xs font-bold uppercase tracking-wide text-primary">
               Initial Acquired Date
             </label>
-            <input
-              type="date"
-              className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+            <DateOnlyInput
               value={form.initialAcquiredAt}
-              onChange={(e) => setForm((prev) => ({ ...prev, initialAcquiredAt: e.target.value }))}
+              onChange={(v) => setForm((prev) => ({ ...prev, initialAcquiredAt: v }))}
             />
           </div>
 
@@ -128,11 +127,9 @@ export function InventoryItemFormFields({
             <label className="block text-xs font-bold uppercase tracking-wide text-primary">
               Initial Expiry Date
             </label>
-            <input
-              type="date"
-              className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+            <DateOnlyInput
               value={form.initialExpiresAt}
-              onChange={(e) => setForm((prev) => ({ ...prev, initialExpiresAt: e.target.value }))}
+              onChange={(v) => setForm((prev) => ({ ...prev, initialExpiresAt: v }))}
             />
           </div>
         </>

@@ -196,19 +196,19 @@ Work through levels sequentially. Each level builds on the last.
 ```mermaid
 flowchart LR
   start([Start]) --> L1
-  L1{L1 — 72h\nAll tasks complete?}
+  L1{"L1 — 72h<br/>All tasks complete?"}
   L1 -- No  --> T1[Work L1 tasks]
   T1 --> L1
   L1 -- Yes --> L2
-  L2{L2 — 14d\nAll tasks complete?}
+  L2{"L2 — 14d<br/>All tasks complete?"}
   L2 -- No  --> T2[Work L2 tasks]
   T2 --> L2
   L2 -- Yes --> L3
-  L3{L3 — 30d\nAll tasks complete?}
+  L3{"L3 — 30d<br/>All tasks complete?"}
   L3 -- No  --> T3[Work L3 tasks]
   T3 --> L3
   L3 -- Yes --> L4
-  L4{L4 — 90d\nAll tasks complete?}
+  L4{"L4 — 90d<br/>All tasks complete?"}
   L4 -- No  --> T4[Work L4 tasks + maintain]
   T4 --> L4
   L4 -- Yes --> done([Sustained Readiness])

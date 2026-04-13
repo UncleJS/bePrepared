@@ -1,5 +1,6 @@
 import type { Dispatch, SetStateAction } from "react";
 import type { LotForm } from "./types";
+import { DateOnlyInput } from "@/components/ui/date-only-input";
 
 export function InventoryLotFormFields({
   form,
@@ -25,11 +26,9 @@ export function InventoryLotFormFields({
         <label className="block text-xs font-bold uppercase tracking-wide text-primary">
           Lot Acquired Date
         </label>
-        <input
-          type="date"
-          className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+        <DateOnlyInput
           value={form.acquiredAt}
-          onChange={(e) => setForm((prev) => ({ ...prev, acquiredAt: e.target.value }))}
+          onChange={(v) => setForm((prev) => ({ ...prev, acquiredAt: v }))}
         />
       </div>
 
@@ -37,11 +36,9 @@ export function InventoryLotFormFields({
         <label className="block text-xs font-bold uppercase tracking-wide text-primary">
           Lot Expiry Date
         </label>
-        <input
-          type="date"
-          className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+        <DateOnlyInput
           value={form.expiresAt}
-          onChange={(e) => setForm((prev) => ({ ...prev, expiresAt: e.target.value }))}
+          onChange={(v) => setForm((prev) => ({ ...prev, expiresAt: v }))}
         />
       </div>
 

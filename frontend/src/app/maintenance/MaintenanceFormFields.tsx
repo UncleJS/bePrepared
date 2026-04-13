@@ -1,4 +1,5 @@
 import type { EquipmentItem, Template } from "./types";
+import { DateOnlyInput } from "@/components/ui/date-only-input";
 
 type MaintenanceFormValue = {
   equipmentItemId?: string;
@@ -117,11 +118,9 @@ export function MaintenanceFormFields<T extends MaintenanceFormValue>({
           <label className="block text-xs font-bold uppercase tracking-wide text-primary">
             Last Done Date
           </label>
-          <input
-            type="date"
+          <DateOnlyInput
             value={form.lastDoneAt ?? ""}
-            onChange={(e) => setForm((current) => ({ ...current, lastDoneAt: e.target.value }))}
-            className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+            onChange={(v) => setForm((current) => ({ ...current, lastDoneAt: v }))}
           />
         </div>
       ) : null}
@@ -130,11 +129,9 @@ export function MaintenanceFormFields<T extends MaintenanceFormValue>({
         <label className="block text-xs font-bold uppercase tracking-wide text-primary">
           Next Due Date
         </label>
-        <input
-          type="date"
+        <DateOnlyInput
           value={form.nextDueAt}
-          onChange={(e) => setForm((current) => ({ ...current, nextDueAt: e.target.value }))}
-          className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+          onChange={(v) => setForm((current) => ({ ...current, nextDueAt: v }))}
         />
       </div>
 

@@ -98,13 +98,13 @@ Profile 3: "Extended family — 5 people"
 
 ```mermaid
 flowchart TD
-  A[User switches\nscenario] --> B{Scenario-bound\nprofile exists for\nnew scenario?}
-  B -- Yes --> C[Auto-select\nscenario profile]
-  B -- No  --> D{Manual override\nactive?}
-  D -- Yes --> E[Keep manual override\nuntil cleared]
-  D -- No  --> F{Default profile\nset?}
+  A["User switches<br/>scenario"] --> B{"Scenario-bound<br/>profile exists for<br/>new scenario?"}
+  B -- Yes --> C["Auto-select<br/>scenario profile"]
+  B -- No  --> D{"Manual override<br/>active?"}
+  D -- Yes --> E["Keep manual override<br/>until cleared"]
+  D -- No  --> F{"Default profile<br/>set?"}
   F -- Yes --> G[Use default profile]
-  F -- No  --> H[Use household\nbaseline target_people]
+  F -- No  --> H["Use household<br/>baseline target_people"]
   C --> I[Recalculate all totals]
   E --> I
   G --> I

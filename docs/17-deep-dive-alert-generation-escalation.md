@@ -77,7 +77,7 @@ For each due date candidate, severity is computed as:
 
 ```mermaid
 flowchart TD
-  C[Candidate alert] --> E{Existing unresolved alert\nsame household+entityType+entityId?}
+  C[Candidate alert] --> E{"Existing unresolved alert<br/>same household+entityType+entityId?"}
   E -- No --> I[Insert alert]
   E -- Yes --> S{Severity escalation?}
   S -- Yes --> U[Update severity]

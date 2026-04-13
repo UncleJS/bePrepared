@@ -1,10 +1,10 @@
-# Containerfile.frontend — bePrepared Next.js frontend (Node runtime)
-FROM docker.io/library/node:20-alpine AS builder
+# Containerfile.frontend — bePrepared Next.js frontend (Bun build / Node runtime)
+FROM docker.io/oven/bun:1.2-alpine AS builder
 
 WORKDIR /app/frontend
 
 COPY frontend/package.json ./
-RUN npm install
+RUN bun install --frozen-lockfile
 COPY frontend/next.config.ts ./next.config.ts
 COPY frontend/postcss.config.mjs ./postcss.config.mjs
 COPY frontend/tailwind.config.ts ./tailwind.config.ts
@@ -16,7 +16,7 @@ ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
-RUN npm run build
+RUN bun run build
 
 # ---- Runtime stage ----
 FROM docker.io/library/node:20-alpine

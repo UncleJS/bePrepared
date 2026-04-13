@@ -1,0 +1,31 @@
+# bePrepared — dev MariaDB container
+# Quadlet file: copy to ~/.config/containers/systemd/beprepared-dev-db.container
+
+[Unit]
+Description=bePrepared dev MariaDB database
+After=beprepared-dev-pod.service
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Container]
+Image=docker.io/library/mariadb:11
+Pod=beprepared-dev-pod.pod
+ContainerName=beprepared-dev-db
+
+EnvironmentFile=%h/0_opencode/bePrepared/.env
+
+Volume=beprepared-dev-db.volume:/var/lib/mysql:Z
+
+HealthCmd=healthcheck.sh --connect --innodb_initialized
+HealthInterval=15s
+HealthTimeout=10s
+HealthStartPeriod=60s
+HealthRetries=5
+HealthOnFailure=kill
+
+[Service]
+Restart=on-failure
+RestartSec=10s
+
+[Install]
+WantedBy=default.target

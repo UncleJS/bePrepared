@@ -62,31 +62,31 @@ Filtering by class helps you batch similar work (e.g. a single shopping run for 
 flowchart TB
   subgraph L1["Level 1 — 72 Hours (Baseline)"]
     direction LR
-    L1a[Water + Food\n72h supply]
-    L1b[Basic First Aid\n+ Meds 30d]
-    L1c[Light + Power\nbaseline]
-    L1d[Evacuation\ncontact plan]
+    L1a["Water + Food<br/>72h supply"]
+    L1b["Basic First Aid<br/>+ Meds 30d"]
+    L1c["Light + Power<br/>baseline"]
+    L1d["Evacuation<br/>contact plan"]
   end
   subgraph L2["Level 2 — 14 Days (Stability)"]
     direction LR
-    L2a[14-day food +\nwater depth]
-    L2b[Sanitation\nsolution]
-    L2c[Solar charger\n+ walkie-talkies]
-    L2d[Routine +\nrotation plan]
+    L2a["14-day food +<br/>water depth"]
+    L2b["Sanitation<br/>solution"]
+    L2c["Solar charger<br/>+ walkie-talkies"]
+    L2d["Routine +<br/>rotation plan"]
   end
   subgraph L3["Level 3 — 30 Days (Resilience)"]
     direction LR
-    L3a[30-day stocks\nwith variety]
-    L3b[Generator or\nbattery station]
-    L3c[Water filter +\ngravity system]
-    L3d[CPR training\n+ first aid cert]
+    L3a["30-day stocks<br/>with variety"]
+    L3b["Generator or<br/>battery station"]
+    L3c["Water filter +<br/>gravity system"]
+    L3d["CPR training<br/>+ first aid cert"]
   end
   subgraph L4["Level 4 — 90 Days (Self-Sufficiency)"]
     direction LR
-    L4a[90-day deep\nstores]
-    L4b[Solar + battery\nstorage]
-    L4c[Ham radio\nlicense]
-    L4d[Tested plans\n+ drills]
+    L4a["90-day deep<br/>stores"]
+    L4b["Solar + battery<br/>storage"]
+    L4c["Ham radio<br/>license"]
+    L4d["Tested plans<br/>+ drills"]
   end
   L1 --> L2 --> L3 --> L4
 ```

@@ -1,0 +1,26 @@
+# Containerfile.dev — bePrepared development container
+# Runtime: Bun (api, worker, shared) + Next.js dev server via Bun compat
+# Workflow: exec-based — source is baked in at build time.
+#   Rebuild: ./dev.sh
+#   Exec:    podman exec -it beprepared-dev bun run dev:api
+
+FROM docker.io/oven/bun:1.2-alpine
+
+WORKDIR /app
+
+# Copy workspace manifests first for layer caching
+COPY package.json bun.lock* ./
+COPY api/package.json     ./api/
+COPY frontend/package.json ./frontend/
+COPY shared/package.json  ./shared/
+COPY worker/package.json  ./worker/
+COPY e2e/package.json     ./e2e/
+
+# Install all workspace dependencies
+RUN bun install --frozen-lockfile
+
+# Copy full source after deps so dep layer is cached on source-only changes
+COPY . .
+
+# Keep container alive; commands are run via podman exec
+CMD ["sleep", "infinity"]

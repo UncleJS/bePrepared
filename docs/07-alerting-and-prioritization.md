@@ -78,20 +78,20 @@ Additional enum values (`low_stock`, `task_due`, `policy`) exist in schema for f
 
 ```mermaid
 flowchart TD
-  W[Worker runs\nevery hour] --> Q1[Query expiring lots\nwithin upcoming_days]
-  W --> Q2[Query replacement_due\nlots]
-  W --> Q3[Query maintenance_due\nschedules]
+  W["Worker runs<br/>every hour"] --> Q1["Query expiring lots<br/>within upcoming_days"]
+  W --> Q2["Query replacement_due<br/>lots"]
+  W --> Q3["Query maintenance_due<br/>schedules"]
 
-  Q1 --> P[Process each row\nfor each household]
+  Q1 --> P["Process each row<br/>for each household"]
   Q2 --> P
   Q3 --> P
 
-  P --> SEV{Determine\nseverity}
-  SEV -- due date reached --> DUE[severity: due]
-  SEV -- date passed --> OVR[severity: overdue]
-  SEV -- within upcoming --> UPC[severity: upcoming]
+  P --> SEV{"Determine<br/>severity"}
+  SEV -- due date reached --> DUE["severity: due"]
+  SEV -- date passed --> OVR["severity: overdue"]
+  SEV -- within upcoming --> UPC["severity: upcoming"]
 
-  DUE --> CHK{Active unresolved\nalert exists?}
+  DUE --> CHK{"Active unresolved<br/>alert exists?"}
   OVR --> CHK
   UPC --> CHK
 

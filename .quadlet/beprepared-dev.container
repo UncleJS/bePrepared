@@ -1,0 +1,30 @@
+# bePrepared — dev container (Bun workspace)
+# Quadlet file: copy to ~/.config/containers/systemd/beprepared-dev.container
+#
+# Rebuild and restart: ./dev.sh
+# Exec into container: podman exec -it beprepared-dev <cmd>
+# Examples:
+#   podman exec -it beprepared-dev bun run dev:api
+#   podman exec -it beprepared-dev bun run dev:frontend
+#   podman exec -it beprepared-dev bun run dev:worker
+#   podman exec -it beprepared-dev bun run db:migrate
+#   podman exec -it beprepared-dev bun test
+
+[Unit]
+Description=bePrepared dev container (Bun workspace)
+After=beprepared-dev-pod.service beprepared-dev-db.service
+
+[Container]
+Image=localhost/beprepared-dev:latest
+Pod=beprepared-dev-pod.pod
+ContainerName=beprepared-dev
+
+Volume=beprepared-dev.volume:/workspace:Z
+EnvironmentFile=%h/0_opencode/bePrepared/.env
+
+[Service]
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=default.target
