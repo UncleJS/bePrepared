@@ -57,13 +57,13 @@ export function HouseholdSwitcher({
   return (
     <label className="flex items-center gap-2">
       <span className="block text-xs font-bold uppercase tracking-wide text-primary">
-        Active Family
+        Active Household
       </span>
       <span className="rounded border border-border px-2 py-0.5 text-foreground">
         {active?.name ?? "Unknown"}
       </span>
       <select
-        aria-label="Active family"
+        aria-label="Active household"
         value={selected}
         onChange={(e) => {
           const id = e.target.value;

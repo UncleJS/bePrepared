@@ -1,21 +1,13 @@
 import { auth } from "@/auth";
 import Link from "next/link";
-import {
-  Home,
-  Users,
-  BookOpen,
-  Package,
-  ShieldCheck,
-  SlidersHorizontal,
-  Building2,
-} from "lucide-react";
+import { Home, Users, BookOpen, Package, ShieldCheck, SlidersHorizontal } from "lucide-react";
 
 const settingsSections = [
   {
     href: "/settings/household",
     icon: Home,
     label: "Household",
-    description: "Family size, household name, and notes.",
+    description: "Edit your household name, size, and notes.",
   },
   {
     href: "/settings/users",
@@ -49,13 +41,6 @@ const settingsSections = [
     icon: ShieldCheck,
     label: "Equipment Categories",
     description: "System and custom equipment categories.",
-    adminOnly: true,
-  },
-  {
-    href: "/settings/families",
-    icon: Building2,
-    label: "Families",
-    description: "Create and manage household families.",
     adminOnly: true,
   },
 ];

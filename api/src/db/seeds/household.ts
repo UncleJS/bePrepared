@@ -4,7 +4,7 @@ import { randomUUID } from "crypto";
 
 export async function seedHousehold() {
   console.log("  Seeding demo household...");
-  const id = "demo-household-001";
+  const id = "00000000-0000-0000-0000-000000000001";
 
   await db
     .insert(households)

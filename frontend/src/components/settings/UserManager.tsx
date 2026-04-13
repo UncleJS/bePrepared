@@ -123,7 +123,7 @@ function AdminUserManager({
     if (!newUsername.trim()) return flash("Username is required.", true);
     if (!newPassword) return flash("Password is required.", true);
     if (newPassword.length < 8) return flash("Password must be at least 8 characters.", true);
-    if (!newHouseholdId) return flash("Please select a family.", true);
+    if (!newHouseholdId) return flash("Please select a household.", true);
 
     try {
       await apiFetch("/users", {
@@ -165,7 +165,7 @@ function AdminUserManager({
             <tr>
               <th className="text-left px-4 py-2">Username</th>
               <th className="text-left px-4 py-2">Email</th>
-              <th className="text-left px-4 py-2">Family</th>
+              <th className="text-left px-4 py-2">Household</th>
               <th className="text-left px-4 py-2">Role</th>
               <th className="text-left px-4 py-2">Actions</th>
             </tr>
@@ -327,7 +327,7 @@ function AdminUserManager({
           </label>
           <label className="space-y-1">
             <span className="block text-xs font-bold uppercase tracking-wide text-primary">
-              Family
+              Household
             </span>
             <select
               value={newHouseholdId}

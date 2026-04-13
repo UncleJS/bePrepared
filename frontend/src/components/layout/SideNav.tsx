@@ -18,7 +18,6 @@ import {
   Home,
   Users,
   SlidersHorizontal,
-  Building2,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -50,7 +49,6 @@ const settingsSubLinks = [
     icon: Package,
     adminOnly: true,
   },
-  { href: "/settings/families", label: "Families", icon: Building2, adminOnly: true },
 ];
 
 export function SideNav({

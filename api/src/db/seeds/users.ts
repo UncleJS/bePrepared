@@ -18,7 +18,7 @@ export async function seedUsers() {
   console.log("  Seeding demo admin user...");
 
   const id = "demo-user-001";
-  const householdId = "demo-household-001";
+  const householdId = "00000000-0000-0000-0000-000000000001";
   const username = "admin";
   const configuredPassword = process.env.SEED_ADMIN_PASSWORD?.trim();
   const generatedPassword = randomBytes(18).toString("base64url");
