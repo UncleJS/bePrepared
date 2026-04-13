@@ -4,6 +4,8 @@
 [Unit]
 Description=bePrepared background worker (alert scheduler)
 After=beprepared-api.container
+StartLimitIntervalSec=300
+StartLimitBurst=5
 
 [Container]
 Image=localhost/beprepared-worker:latest
@@ -15,8 +17,16 @@ PodmanArgs=--read-only
 PodmanArgs=--tmpfs=/tmp:rw,nosuid,nodev,noexec,size=64m
 PodmanArgs=--security-opt=no-new-privileges
 PodmanArgs=--cap-drop=all
-# Automatically restart the container when the /tmp/worker.ready heartbeat
-# file probe transitions to "unhealthy" (3 consecutive failures).
+
+# Functional healthcheck: /tmp/worker.ready must exist and be ≤30 min old
+# (2× the 15-min run interval). Stale = worker silently stopped scheduling.
+# HealthOnFailure=kill lets systemd own the restart so StartLimitBurst applies.
+HealthCmd=find /tmp/worker.ready -mmin -30 | grep -q .
+HealthInterval=30s
+HealthTimeout=5s
+HealthStartPeriod=120s
+HealthRetries=3
+HealthOnFailure=kill
 
 [Service]
 Restart=on-failure

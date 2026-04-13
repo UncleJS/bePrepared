@@ -36,17 +36,6 @@ ENV HOSTNAME=0.0.0.0
 
 EXPOSE 9999
 
-# Healthcheck: fetch /login (a stable 200 page, no redirect) to confirm Next.js
-# is up and serving. BusyBox wget follows redirects by default and the root /
-# redirects to /login via IPv6 which fails in the pod's network namespace.
-# --start-period gives Next.js time to cold-start before probing begins.
-HEALTHCHECK \
-  --interval=30s \
-  --timeout=10s \
-  --start-period=60s \
-  --retries=3 \
-  CMD wget -qO /dev/null http://127.0.0.1:9999/login || exit 1
-
 # Use a shell wrapper to ensure HOSTNAME=0.0.0.0 is set at process start,
 # overriding any value Podman injects for the container hostname.
 CMD ["/bin/sh", "-c", "HOSTNAME=0.0.0.0 node frontend/server.js"]

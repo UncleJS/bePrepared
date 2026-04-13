@@ -4,6 +4,8 @@
 [Unit]
 Description=bePrepared REST API (Bun + Elysia)
 After=beprepared-db.container
+StartLimitIntervalSec=300
+StartLimitBurst=5
 
 [Container]
 Image=localhost/beprepared-api:latest
@@ -16,12 +18,18 @@ PodmanArgs=--tmpfs=/tmp:rw,nosuid,nodev,noexec,size=64m
 PodmanArgs=--security-opt=no-new-privileges
 PodmanArgs=--cap-drop=all
 
-# Automatically restart the container when its HEALTHCHECK transitions to
-# "unhealthy" (i.e. 3 consecutive /health probe failures).
+# Functional healthcheck: hits /health which validates DB connectivity.
+# HealthOnFailure=kill lets systemd own the restart so StartLimitBurst applies.
+HealthCmd=wget -qO- http://127.0.0.1:3001/health || exit 1
+HealthInterval=30s
+HealthTimeout=10s
+HealthStartPeriod=60s
+HealthRetries=3
+HealthOnFailure=kill
 
 [Service]
 Restart=on-failure
-RestartSec=5s
+RestartSec=10s
 
 [Install]
 WantedBy=beprepared-pod.service

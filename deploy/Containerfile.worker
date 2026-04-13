@@ -30,16 +30,4 @@ COPY --from=builder /app/node_modules /app/node_modules
 
 ENV NODE_ENV=production
 
-# Healthcheck: the worker writes /tmp/worker.ready after every successful
-# scheduler tick.  If the file is absent the worker has never completed a
-# run since startup — likely stuck, crashed, or unable to reach the database.
-# --start-period is generous (2× the default interval) so the first tick
-# has time to finish before probing starts.
-HEALTHCHECK \
-  --interval=30s \
-  --timeout=5s \
-  --start-period=120s \
-  --retries=3 \
-  CMD test -f /tmp/worker.ready || exit 1
-
 CMD ["bun", "run", "dist/index.js"]

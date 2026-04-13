@@ -5,8 +5,8 @@ import { logger } from "@beprepared/shared/logger";
 import { bearerFromHeader, verifyApiToken } from "./lib/authToken";
 import { setRequestClaims } from "./lib/authContext";
 import { db } from "./db/client";
-import { users } from "./db/schema";
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { users, modules } from "./db/schema";
+import { and, eq, isNull } from "drizzle-orm";
 
 import { authRoute } from "./routes/auth";
 import { usersRoute } from "./routes/users";
@@ -140,7 +140,15 @@ const app = new Elysia()
   .get("/", () => ({ status: "ok", name: "bePrepared API", version: "0.1.0" }))
   .get("/health", async ({ set }) => {
     try {
-      await db.execute(sql`SELECT 1`);
+      // Query an actual application table — not just SELECT 1 — so the probe
+      // verifies: (1) DB connection is alive, (2) migrations have been applied
+      // (table exists), and (3) seed data is present (app is ready for users).
+      const rows = await db.select({ id: modules.id }).from(modules).limit(1);
+      if (rows.length === 0) {
+        logger.error("Health probe: modules table is empty — seed data missing");
+        set.status = 503;
+        return { status: "error", detail: "db_not_seeded", ts: new Date().toISOString() };
+      }
       return { status: "ok", ts: new Date().toISOString() };
     } catch (err) {
       logger.error("Health probe DB check failed", { err: String(err) });

@@ -4,7 +4,7 @@
  * Scheduled job processor — delegates all job logic to api/src/lib/alertJobs.ts
  * which uses the API's shared DB client and schema.
  *
- * Runs every hour by default (configurable via WORKER_INTERVAL_MS).
+ * Runs every 15 minutes by default (configurable via WORKER_INTERVAL_MS).
  *
  * Healthcheck contract:
  *   After each successful tick the worker touches /tmp/worker.ready.
@@ -16,7 +16,7 @@
 import { logger } from "@beprepared/shared/logger";
 import { runAllJobs } from "../../api/src/lib/alertJobs";
 
-const INTERVAL_MS = Number(process.env.WORKER_INTERVAL_MS ?? 3600000); // 1 hour
+const INTERVAL_MS = Number(process.env.WORKER_INTERVAL_MS ?? 900000); // 15 minutes
 const HEARTBEAT_FILE = "/tmp/worker.ready";
 
 /**

@@ -39,16 +39,4 @@ ENV PORT=3001
 
 EXPOSE 3001
 
-# Healthcheck: hit the /health endpoint which also validates DB connectivity.
-# --start-period gives the API time to start and run migrations before probing begins.
-# If 3 consecutive probes fail the container is marked "unhealthy" and Podman
-# can restart it automatically (configured via --health-on-failure=restart in the
-# Quadlet unit).
-HEALTHCHECK \
-  --interval=30s \
-  --timeout=10s \
-  --start-period=60s \
-  --retries=3 \
-  CMD wget -qO- http://127.0.0.1:3001/health || exit 1
-
 CMD ["bun", "run", "dist/index.js"]
