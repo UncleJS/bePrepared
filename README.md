@@ -10,9 +10,10 @@
 
 1. [Overview](#overview)
 2. [Project Structure](#project-structure)
-3. [Documentation](#documentation)
-4. [Development](#development)
-5. [License](#license)
+3. [Ports](#ports)
+4. [Documentation](#documentation)
+5. [Development](#development)
+6. [License](#license)
 
 ---
 
@@ -42,6 +43,33 @@ deploy/     Container and quadlet units
 docs/       Full documentation set
 scripts/    Operator automation scripts
 ```
+
+---
+
+## Ports
+
+[↑ Go to TOC](#table-of-contents)
+
+All ports live in the range **9980–9999** so dev and prod can run simultaneously without conflict.
+
+### Dev
+
+| Service            | Port                       |
+| ------------------ | -------------------------- |
+| Frontend (Next.js) | 9997                       |
+| API (Elysia)       | 9996                       |
+| API Swagger docs   | http://localhost:9996/docs |
+| MariaDB (internal) | 3306                       |
+
+### Prod
+
+| Service            | Port                       |
+| ------------------ | -------------------------- |
+| Frontend (Next.js) | 9999                       |
+| API (Elysia)       | 9995                       |
+| API Swagger docs   | http://localhost:9995/docs |
+| phpMyAdmin         | 9998                       |
+| MariaDB (internal) | 3306                       |
 
 ---
 

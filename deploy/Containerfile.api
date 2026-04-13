@@ -35,8 +35,8 @@ COPY --from=builder /app/api/src ./src
 COPY --from=builder /app/node_modules /app/node_modules
 
 ENV NODE_ENV=production
-ENV PORT=3001
+ENV PORT=9995
 
-EXPOSE 3001
+EXPOSE 9995
 
 CMD ["bun", "run", "dist/index.js"]

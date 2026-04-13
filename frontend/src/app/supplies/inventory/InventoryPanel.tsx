@@ -6,6 +6,12 @@ import { Plus } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { useActiveHouseholdId } from "@/lib/useActiveHouseholdId";
 import { EmptyState } from "@/components/ui/EmptyState";
+import {
+  SortableHeader,
+  nextSort,
+  sortHelpers,
+  type SortState,
+} from "@/components/ui/SortableHeader";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { FormSheet } from "@/components/ui/FormSheet";
@@ -25,6 +31,8 @@ type ActiveAlert = {
   isResolved: boolean;
 };
 
+type InvSortKey = "name" | "location" | "qty" | "targetQty" | "expiry";
+
 export function InventoryPanel() {
   const { householdId, status } = useActiveHouseholdId();
   const { items, categories, loading, error, setError, loadData } = useInventoryData();
@@ -36,6 +44,11 @@ export function InventoryPanel() {
   const [editLotOpen, setEditLotOpen] = useState(false);
   const [archiveItemId, setArchiveItemId] = useState<string | null>(null);
   const [archiveLotId, setArchiveLotId] = useState<string | null>(null);
+  const [sort, setSort] = useState<SortState<InvSortKey>>({ key: null, dir: "asc" });
+
+  function handleSort(key: InvSortKey) {
+    setSort((prev) => nextSort(prev, key));
+  }
 
   const itemActions = useInventoryItemActions({
     householdId,
@@ -60,6 +73,39 @@ export function InventoryPanel() {
     () => items.find((item) => item.id === selectedItemId) ?? null,
     [items, selectedItemId]
   );
+
+  const sortedItems = useMemo(() => {
+    if (!sort.key) return items;
+    const { key, dir } = sort;
+    return [...items].sort((a, b) => {
+      switch (key) {
+        case "name":
+          return sortHelpers.cmpStr(a.name, b.name, dir);
+        case "location":
+          return sortHelpers.cmpStr(a.location ?? "", b.location ?? "", dir);
+        case "qty": {
+          const qtyA = a.lots.reduce((s, l) => s + Number(l.qty), 0);
+          const qtyB = b.lots.reduce((s, l) => s + Number(l.qty), 0);
+          return sortHelpers.cmpNum(qtyA, qtyB, dir);
+        }
+        case "targetQty":
+          return sortHelpers.cmpNum(Number(a.targetQty ?? 0), Number(b.targetQty ?? 0), dir);
+        case "expiry": {
+          const expiryA =
+            [...a.lots.map((l) => l.expiresAt), ...a.lots.map((l) => l.nextReplaceAt)]
+              .filter(Boolean)
+              .sort()[0] ?? "";
+          const expiryB =
+            [...b.lots.map((l) => l.expiresAt), ...b.lots.map((l) => l.nextReplaceAt)]
+              .filter(Boolean)
+              .sort()[0] ?? "";
+          return sortHelpers.cmpStr(expiryA, expiryB, dir);
+        }
+        default:
+          return 0;
+      }
+    });
+  }, [items, sort]);
 
   useEffect(() => {
     if (!householdId) return;
@@ -160,18 +206,46 @@ export function InventoryPanel() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr>
-                <th className="text-left px-4 py-2 font-medium text-muted-foreground">Item</th>
-                <th className="text-left px-4 py-2 font-medium text-muted-foreground">Location</th>
-                <th className="text-right px-4 py-2 font-medium text-muted-foreground">Qty</th>
-                <th className="text-right px-4 py-2 font-medium text-muted-foreground">Target</th>
-                <th className="text-left px-4 py-2 font-medium text-muted-foreground">
-                  Expiry / Replace
-                </th>
+                <SortableHeader
+                  label="Item"
+                  colKey="name"
+                  sort={sort}
+                  onSort={handleSort}
+                  className="text-left px-4 py-2"
+                />
+                <SortableHeader
+                  label="Location"
+                  colKey="location"
+                  sort={sort}
+                  onSort={handleSort}
+                  className="text-left px-4 py-2"
+                />
+                <SortableHeader
+                  label="Qty"
+                  colKey="qty"
+                  sort={sort}
+                  onSort={handleSort}
+                  className="text-right px-4 py-2"
+                />
+                <SortableHeader
+                  label="Target"
+                  colKey="targetQty"
+                  sort={sort}
+                  onSort={handleSort}
+                  className="text-right px-4 py-2"
+                />
+                <SortableHeader
+                  label="Expiry / Replace"
+                  colKey="expiry"
+                  sort={sort}
+                  onSort={handleSort}
+                  className="text-left px-4 py-2"
+                />
                 <th className="text-right px-4 py-2 font-medium text-muted-foreground">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {items.map((item) => (
+              {sortedItems.map((item) => (
                 <InventoryItemRow
                   key={item.id}
                   item={item}

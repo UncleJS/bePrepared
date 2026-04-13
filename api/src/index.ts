@@ -21,14 +21,14 @@ import { adminAlertsRoute, alertsRoute } from "./routes/alerts";
 import { settingsRoute } from "./routes/settings";
 import { planningRoute } from "./routes/planning";
 
-const PORT = Number(process.env.PORT ?? 3001);
+const PORT = Number(process.env.PORT ?? 9996);
 const NODE_ENV = (process.env.NODE_ENV ?? "development").toLowerCase();
 const IS_PRODUCTION = NODE_ENV === "production";
 const AUTH_ENABLED = (process.env.AUTH_ENABLED ?? "true") === "true";
 const API_AUTH_SECRET = process.env.API_AUTH_SECRET ?? process.env.AUTH_SECRET;
 const ALLOW_LOCALHOST_CORS_IN_PRODUCTION =
   (process.env.ALLOW_LOCALHOST_CORS_IN_PRODUCTION ?? "false") === "true";
-const CORS_ORIGINS = (process.env.CORS_ORIGINS ?? "http://localhost:9999")
+const CORS_ORIGINS = (process.env.CORS_ORIGINS ?? "http://localhost:9997")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);

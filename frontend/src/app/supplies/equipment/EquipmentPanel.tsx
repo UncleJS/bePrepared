@@ -9,10 +9,26 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { FormSheet } from "@/components/ui/FormSheet";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import {
+  SortableHeader,
+  nextSort,
+  sortHelpers,
+  type SortState,
+} from "@/components/ui/SortableHeader";
 import { EquipmentFormFields } from "@/app/equipment/EquipmentFormFields";
 import { EquipmentRow } from "@/app/equipment/EquipmentRow";
+import type { Equipment } from "@/app/equipment/types";
 import { useEquipmentData } from "@/app/equipment/useEquipmentData";
 import { useEquipmentItemActions } from "@/app/equipment/useEquipmentItemActions";
+
+type EqSortKey = "name" | "category" | "modelSerial" | "location" | "status" | "acquiredAt";
+
+const STATUS_RANK: Record<string, number> = {
+  operational: 0,
+  needs_service: 1,
+  unserviceable: 2,
+  retired: 3,
+};
 
 export function EquipmentPanel() {
   const { householdId, status } = useActiveHouseholdId();
@@ -21,6 +37,11 @@ export function EquipmentPanel() {
   const [editOpen, setEditOpen] = useState(false);
   const [archiveItemId, setArchiveItemId] = useState<string | null>(null);
   const [restoreItemId, setRestoreItemId] = useState<string | null>(null);
+  const [sort, setSort] = useState<SortState<EqSortKey>>({ key: null, dir: "asc" });
+
+  function handleSort(key: EqSortKey) {
+    setSort((prev) => nextSort(prev, key));
+  }
 
   const {
     equipment,
@@ -44,6 +65,49 @@ export function EquipmentPanel() {
   const categoryMap = useMemo(
     () => Object.fromEntries(categories.map((c) => [c.id, c.name])),
     [categories]
+  );
+
+  const sortEquipment = useMemo(() => {
+    return (list: Equipment[]): Equipment[] => {
+      if (!sort.key) return list;
+      const { key, dir } = sort;
+      return [...list].sort((a, b) => {
+        switch (key) {
+          case "name":
+            return sortHelpers.cmpStr(a.name, b.name, dir);
+          case "category":
+            return sortHelpers.cmpStr(
+              categoryMap[a.categoryId ?? ""] ?? "",
+              categoryMap[b.categoryId ?? ""] ?? "",
+              dir
+            );
+          case "modelSerial":
+            return sortHelpers.cmpStr(
+              [a.model, a.serialNo].filter(Boolean).join(" "),
+              [b.model, b.serialNo].filter(Boolean).join(" "),
+              dir
+            );
+          case "location":
+            return sortHelpers.cmpStr(a.location ?? "", b.location ?? "", dir);
+          case "status": {
+            const ra = STATUS_RANK[a.status] ?? 99;
+            const rb = STATUS_RANK[b.status] ?? 99;
+            return sortHelpers.cmpNum(ra, rb, dir);
+          }
+          case "acquiredAt":
+            return sortHelpers.cmpStr(a.acquiredAt ?? "", b.acquiredAt ?? "", dir);
+          default:
+            return 0;
+        }
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sort, categoryMap]);
+
+  const sortedEquipment = useMemo(() => sortEquipment(equipment), [sortEquipment, equipment]);
+  const sortedArchivedEquipment = useMemo(
+    () => sortEquipment(archivedEquipment),
+    [sortEquipment, archivedEquipment]
   );
 
   useEffect(() => {
@@ -129,17 +193,53 @@ export function EquipmentPanel() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr>
-                <th className="text-left px-4 py-2">Name</th>
-                <th className="text-left px-4 py-2">Category</th>
-                <th className="text-left px-4 py-2">Model / Serial</th>
-                <th className="text-left px-4 py-2">Location</th>
-                <th className="text-left px-4 py-2">Status</th>
-                <th className="text-left px-4 py-2">Acquired</th>
-                <th className="text-right px-4 py-2">Actions</th>
+                <SortableHeader
+                  label="Name"
+                  colKey="name"
+                  sort={sort}
+                  onSort={handleSort}
+                  className="text-left px-4 py-2"
+                />
+                <SortableHeader
+                  label="Category"
+                  colKey="category"
+                  sort={sort}
+                  onSort={handleSort}
+                  className="text-left px-4 py-2"
+                />
+                <SortableHeader
+                  label="Model / Serial"
+                  colKey="modelSerial"
+                  sort={sort}
+                  onSort={handleSort}
+                  className="text-left px-4 py-2"
+                />
+                <SortableHeader
+                  label="Location"
+                  colKey="location"
+                  sort={sort}
+                  onSort={handleSort}
+                  className="text-left px-4 py-2"
+                />
+                <SortableHeader
+                  label="Status"
+                  colKey="status"
+                  sort={sort}
+                  onSort={handleSort}
+                  className="text-left px-4 py-2"
+                />
+                <SortableHeader
+                  label="Acquired"
+                  colKey="acquiredAt"
+                  sort={sort}
+                  onSort={handleSort}
+                  className="text-left px-4 py-2"
+                />
+                <th className="text-right px-4 py-2 font-medium text-muted-foreground">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {equipment.map((item) => (
+              {sortedEquipment.map((item) => (
                 <EquipmentRow
                   key={item.id}
                   item={item}
@@ -173,17 +273,55 @@ export function EquipmentPanel() {
             <table className="w-full text-sm">
               <thead className="bg-muted/50">
                 <tr>
-                  <th className="text-left px-4 py-2">Name</th>
-                  <th className="text-left px-4 py-2">Category</th>
-                  <th className="text-left px-4 py-2">Model / Serial</th>
-                  <th className="text-left px-4 py-2">Location</th>
-                  <th className="text-left px-4 py-2">Status</th>
-                  <th className="text-left px-4 py-2">Acquired</th>
-                  <th className="text-right px-4 py-2">Actions</th>
+                  <SortableHeader
+                    label="Name"
+                    colKey="name"
+                    sort={sort}
+                    onSort={handleSort}
+                    className="text-left px-4 py-2"
+                  />
+                  <SortableHeader
+                    label="Category"
+                    colKey="category"
+                    sort={sort}
+                    onSort={handleSort}
+                    className="text-left px-4 py-2"
+                  />
+                  <SortableHeader
+                    label="Model / Serial"
+                    colKey="modelSerial"
+                    sort={sort}
+                    onSort={handleSort}
+                    className="text-left px-4 py-2"
+                  />
+                  <SortableHeader
+                    label="Location"
+                    colKey="location"
+                    sort={sort}
+                    onSort={handleSort}
+                    className="text-left px-4 py-2"
+                  />
+                  <SortableHeader
+                    label="Status"
+                    colKey="status"
+                    sort={sort}
+                    onSort={handleSort}
+                    className="text-left px-4 py-2"
+                  />
+                  <SortableHeader
+                    label="Acquired"
+                    colKey="acquiredAt"
+                    sort={sort}
+                    onSort={handleSort}
+                    className="text-left px-4 py-2"
+                  />
+                  <th className="text-right px-4 py-2 font-medium text-muted-foreground">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {archivedEquipment.map((item) => (
+                {sortedArchivedEquipment.map((item) => (
                   <EquipmentRow
                     key={item.id}
                     item={item}

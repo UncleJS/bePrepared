@@ -11,7 +11,7 @@ COPY frontend/tailwind.config.ts ./tailwind.config.ts
 COPY frontend/tsconfig.json ./tsconfig.json
 COPY frontend/src ./src
 
-ARG NEXT_PUBLIC_API_URL=http://localhost:3001
+ARG NEXT_PUBLIC_API_URL=http://localhost:9995
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production

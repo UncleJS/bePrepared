@@ -25,7 +25,7 @@ const mainNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/modules", label: "Modules", icon: BookOpen },
   { href: "/tasks", label: "Ticksheets", icon: CheckSquare },
-  { href: "/supplies", label: "Supplies", icon: Package },
+  { href: "/supplies", label: "Supplies & Equipment", icon: Package },
   { href: "/maintenance", label: "Maintenance", icon: Wrench },
   { href: "/planning", label: "Planning", icon: Calculator },
   { href: "/alerts", label: "Alerts", icon: Bell },

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# dev.sh — rebuild and restart the bePrepared dev container.
+# dev.sh — rebuild and restart the bePrepared dev stack.
 # Run from the repo root: ./dev.sh
 set -euo pipefail
 
@@ -20,11 +20,23 @@ if [[ -f "${STALE_ENV}" ]]; then
   exit 1
 fi
 
+echo "→ Syncing quadlet files..."
+cp .quadlet/*.container .quadlet/*.pod .quadlet/*.volume \
+   ~/.config/containers/systemd/ 2>/dev/null || true
+systemctl --user daemon-reload
+
 echo "→ Building dev container image..."
 podman build -f Containerfile.dev -t "${PROJECT_NAME}-dev:latest" .
 
-echo "→ Restarting dev container..."
-systemctl --user restart "${PROJECT_NAME}-dev"
+echo "→ Restarting dev stack (pod → db → workspace)..."
+systemctl --user stop "${PROJECT_NAME}-dev" "${PROJECT_NAME}-dev-db" "${PROJECT_NAME}-dev-pod-pod" 2>/dev/null || true
+podman pod rm -f "${PROJECT_NAME}-dev" 2>/dev/null || true
+systemctl --user reset-failed "${PROJECT_NAME}-dev-pod-pod.service" 2>/dev/null || true
+systemctl --user start "${PROJECT_NAME}-dev-pod-pod"
+sleep 2
+systemctl --user start "${PROJECT_NAME}-dev-db"
+sleep 5
+systemctl --user start "${PROJECT_NAME}-dev"
 
 echo "✓ Dev container rebuilt and restarted."
 echo ""

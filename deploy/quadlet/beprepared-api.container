@@ -20,7 +20,7 @@ PodmanArgs=--cap-drop=all
 
 # Functional healthcheck: hits /health which validates DB connectivity.
 # HealthOnFailure=kill lets systemd own the restart so StartLimitBurst applies.
-HealthCmd=wget -qO- http://127.0.0.1:3001/health || exit 1
+HealthCmd=wget -qO- http://127.0.0.1:9995/health || exit 1
 HealthInterval=30s
 HealthTimeout=10s
 HealthStartPeriod=60s

@@ -42,12 +42,26 @@ podman exec -it beprepared-dev bun run typecheck
 
 ## Ports
 
+All bePrepared ports live in the range **9980–9999** so dev and prod can run simultaneously.
+
+### Dev
+
 | Service                 | Port                       |
 | ----------------------- | -------------------------- |
-| Frontend (Next.js)      | 9999                       |
-| API (Elysia)            | 3001                       |
-| API Swagger docs        | http://localhost:3001/docs |
+| Frontend (Next.js)      | 9997                       |
+| API (Elysia)            | 9996                       |
+| API Swagger docs        | http://localhost:9996/docs |
 | MariaDB (dev, internal) | 3306                       |
+
+### Prod
+
+| Service                  | Port                       |
+| ------------------------ | -------------------------- |
+| Frontend (Next.js)       | 9999                       |
+| API (Elysia)             | 9995                       |
+| API Swagger docs         | http://localhost:9995/docs |
+| phpMyAdmin               | 9998                       |
+| MariaDB (prod, internal) | 3306                       |
 
 ## Container names
 
