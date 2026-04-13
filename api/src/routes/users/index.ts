@@ -122,7 +122,7 @@ export const usersRoute = new Elysia({ prefix: "/users", tags: ["users"] })
       body: t.Object({
         username: t.String({ minLength: 1, maxLength: 100 }),
         password: t.String({ minLength: 8, maxLength: 255 }),
-        householdId: t.String({ minLength: 36, maxLength: 36 }),
+        householdId: t.String({ minLength: 1, maxLength: 36 }),
         email: t.Optional(t.String({ maxLength: 255 })),
         isAdmin: t.Optional(t.Boolean()),
       }),
@@ -174,7 +174,7 @@ export const usersRoute = new Elysia({ prefix: "/users", tags: ["users"] })
           email: t.String({ maxLength: 255 }),
           username: t.String({ minLength: 1, maxLength: 100 }),
           password: t.String({ minLength: 8, maxLength: 255 }),
-          householdId: t.String({ minLength: 36, maxLength: 36 }),
+          householdId: t.String({ minLength: 1, maxLength: 36 }),
           isAdmin: t.Boolean(),
         })
       ),

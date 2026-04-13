@@ -68,11 +68,18 @@ function AdminUserManager({
 
   function startEdit(user: User) {
     setEditingId(user.id);
+    // Guard against stale/orphaned householdId — if the user's current
+    // householdId isn't in the available households list, fall back to
+    // the first household so the form always submits a valid ID.
+    const validHouseholdId =
+      households.find((h) => h.id === user.householdId)?.id ??
+      households[0]?.id ??
+      user.householdId;
     setEditState({
       username: user.username,
       email: user.email ?? "",
       password: "",
-      householdId: user.householdId,
+      householdId: validHouseholdId,
       isAdmin: user.isAdmin,
     });
   }
