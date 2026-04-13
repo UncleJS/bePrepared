@@ -15,15 +15,14 @@ export function useActiveHouseholdId() {
   const user = session?.user as SessionUser;
   const resolvedHouseholdId = useMemo(() => resolveClientHouseholdId(user), [user]);
 
-  // Initialise immediately from the cookie so pages can fetch before the
-  // session has finished hydrating.  Falls back to the session-derived value
-  // once the session loads (via the useEffect below).
-  const [householdId, setHouseholdId] = useState<string | null>(
-    () => readActiveHouseholdCookie() ?? resolvedHouseholdId
-  );
+  // Start null so server and client render the same initial HTML (hydration
+  // safe). After mount, pick up the cookie immediately so pages can fetch
+  // before the session finishes hydrating; then track the session value.
+  // readActiveHouseholdCookie() uses document.cookie — browser-only.
+  const [householdId, setHouseholdId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (resolvedHouseholdId) setHouseholdId(resolvedHouseholdId);
+    setHouseholdId(readActiveHouseholdCookie() ?? resolvedHouseholdId);
   }, [resolvedHouseholdId]);
 
   useEffect(() => {

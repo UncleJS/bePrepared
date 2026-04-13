@@ -1,12 +1,17 @@
 # Containerfile.dev — bePrepared development container
-# Runtime: Bun (api, worker, shared) + Next.js dev server via Bun compat
-# Workflow: exec-based — source is baked in at build time.
+# Runtime: Node.js 22 (Next.js dev server) + Bun (api, worker, shared)
+# Bun is installed on top of the official Node.js image to avoid Bun
+# segfaults when Next.js processes its first request.
+# Workflow: source is baked in at build time; servers auto-start on container start.
 #   Rebuild: ./dev.sh
-#   Exec:    podman exec -it beprepared-dev bun run dev:api
+#   Exec:    podman exec -it beprepared-dev bun run db:migrate
 
-FROM docker.io/oven/bun:1.2-alpine
+FROM docker.io/library/node:22-alpine
 
 WORKDIR /app
+
+# Install Bun
+RUN npm install -g bun
 
 # Copy workspace manifests first for layer caching
 COPY package.json bun.lock* ./
@@ -22,5 +27,8 @@ RUN bun install --frozen-lockfile
 # Copy full source after deps so dep layer is cached on source-only changes
 COPY . .
 
-# Keep container alive; commands are run via podman exec
-CMD ["sleep", "infinity"]
+# Make startup script executable
+RUN chmod +x /app/scripts/start-dev.sh
+
+# Auto-start all dev servers; use podman exec for one-off commands (migrate, test, etc.)
+CMD ["/app/scripts/start-dev.sh"]

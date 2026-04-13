@@ -1,0 +1,21 @@
+# Build artifacts — never copy into the container image
+frontend/.next
+frontend/out
+api/dist
+worker/dist
+**/dist
+
+# Test / coverage
+coverage
+**/.nyc_output
+e2e/test-results
+e2e/playwright-report
+
+# Dev tooling / local state
+.env
+**/.DS_Store
+**/node_modules/.cache
+
+# Git
+.git
+.gitignore

@@ -26,6 +26,7 @@ export default auth((req) => {
 });
 
 export const config = {
+  runtime: "nodejs", // next-auth uses jose (new Function) — banned in Edge
   matcher: [
     /*
      * Match everything except:
