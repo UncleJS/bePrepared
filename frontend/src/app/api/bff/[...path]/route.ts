@@ -25,6 +25,7 @@ const ALLOWED_PREFIXES = [
   "users",
   "households",
   "modules",
+  "module-categories",
   "tasks",
   "inventory",
   "equipment",
