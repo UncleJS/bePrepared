@@ -65,19 +65,27 @@ echo "==> Starting beprepared units..."
 systemctl --user start beprepared-pod beprepared-db beprepared-api beprepared-worker beprepared-frontend
 
 # ---- 6. Wait for MariaDB ----
-echo "==> Waiting for MariaDB to initialise (up to 60s)..."
-DB_ROOT_PASSWORD="$(grep '^DB_ROOT_PASSWORD=' "$ENV_FILE" | cut -d= -f2-)"
-for i in $(seq 1 60); do
-  if podman exec beprepared-db mariadb-admin ping -u root -p"$DB_ROOT_PASSWORD" --silent 2>/dev/null; then
-    echo "==> MariaDB ready."
+# We wait for the application user (bpuser) to be able to connect to the
+# application database (beprepared).  A simple root ping is not enough —
+# MariaDB accepts connections before it has finished running the
+# initialization scripts that create the app DB and app user, which causes
+# migrations to fail on a fresh first-start.
+echo "==> Waiting for MariaDB to initialise (up to 120s)..."
+DB_USER="$(grep '^DB_USER=' "$ENV_FILE" | cut -d= -f2-)"
+DB_PASSWORD="$(grep '^DB_PASSWORD=' "$ENV_FILE" | cut -d= -f2-)"
+DB_NAME="$(grep '^DB_NAME=' "$ENV_FILE" | cut -d= -f2-)"
+for i in $(seq 1 120); do
+  if podman exec beprepared-db mariadb -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" \
+       -e "SELECT 1;" 2>/dev/null | grep -q 1; then
+    echo "==> MariaDB ready (app user + database verified)."
     break
   fi
-  if [[ "$i" -eq 60 ]]; then
+  if [[ "$i" -eq 120 ]]; then
     echo "ERROR: MariaDB did not become ready in time."
     echo "  Check logs: journalctl --user -u beprepared-db -n 50"
     exit 1
   fi
-  echo "    ...waiting ($i/60)"
+  echo "    ...waiting ($i/120)"
   sleep 1
 done
 
