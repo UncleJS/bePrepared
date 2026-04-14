@@ -10,13 +10,13 @@ test("updates household settings and persists the family size", async ({ page })
   try {
     await page.goto("/settings/household");
 
-    const familySizeInput = page.getByLabel("Family Size (People)");
+    const familySizeInput = page.getByLabel("Household Size (People)");
     await familySizeInput.fill(String(nextTargetPeople));
     await page.getByRole("button", { name: "Save Household" }).click();
 
     await expect(page.getByText("Household settings updated.")).toBeVisible();
     await page.reload();
-    await expect(page.getByLabel("Family Size (People)")).toHaveValue(String(nextTargetPeople));
+    await expect(page.getByLabel("Household Size (People)")).toHaveValue(String(nextTargetPeople));
   } finally {
     await api.updateHousehold({ targetPeople: originalTargetPeople });
     await api.dispose();

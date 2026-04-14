@@ -18,7 +18,9 @@ test("creates, archives, and restores an equipment item", async ({ page }) => {
     await createDialog
       .locator('label:has-text("Operational Status") + select')
       .selectOption("needs_service");
-    await createDialog.locator('label:has-text("Acquired Date") + input').fill("2026-03-20");
+    await createDialog
+      .locator('label:has-text("Acquired Date") + div input[type="text"]')
+      .fill("2026-03-20");
     await createDialog.getByRole("button", { name: "Add item" }).click();
 
     await expect(page.getByText("Equipment item added.")).toBeVisible();
