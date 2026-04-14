@@ -1,11 +1,14 @@
-import { getSessionHouseholdId } from "@/lib/api";
+import { useActiveHouseholdId } from "@/lib/useActiveHouseholdId";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import DashboardAlerts from "./DashboardAlerts";
 import DashboardPlanning from "./DashboardPlanning";
 import DashboardReadinessCard from "./DashboardReadinessCard";
 import DashboardTasks from "./DashboardTasks";
 
-export default async function DashboardPage() {
-  const householdId = await getSessionHouseholdId();
+export default function DashboardPage() {
+  const { householdId, isLoading } = useActiveHouseholdId();
+
+  if (isLoading) return <LoadingSpinner label="Loading session…" />;
   if (!householdId)
     return <p className="text-sm text-muted-foreground">No household in session.</p>;
 
@@ -21,10 +24,8 @@ export default async function DashboardPage() {
         <DashboardTasks householdId={householdId} />
       </div>
 
-      {/* Planning horizons — client component so auth works reliably via BFF */}
       <DashboardPlanning householdId={householdId} />
 
-      {/* Alerts section — client component so auth works reliably via BFF */}
       <DashboardAlerts householdId={householdId} />
     </div>
   );

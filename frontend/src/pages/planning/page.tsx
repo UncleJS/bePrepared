@@ -1,4 +1,6 @@
-import { apiFetch, getSessionHouseholdId } from "@/lib/api";
+import { useEffect, useState } from "react";
+import { apiFetch } from "@/lib/api";
+import { useActiveHouseholdId } from "@/lib/useActiveHouseholdId";
 import {
   HORIZON_LABELS,
   litersToGallons,
@@ -7,10 +9,12 @@ import {
   type PlanningResult,
 } from "@/lib/planning";
 import { Droplets, Flame, Users } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
-export const dynamic = "force-dynamic";
-
-async function getPlanning(householdId: string, scenario: string): Promise<PlanningResult | null> {
+async function fetchPlanning(
+  householdId: string,
+  scenario: string
+): Promise<PlanningResult | null> {
   try {
     const raw = await apiFetch<PlanningResult | PlanningApiResult>(
       `/planning/${householdId}/${scenario}`
@@ -21,15 +25,29 @@ async function getPlanning(householdId: string, scenario: string): Promise<Plann
   }
 }
 
-export default async function PlanningPage() {
-  const householdId = await getSessionHouseholdId();
+export default function PlanningPage() {
+  const { householdId, isLoading } = useActiveHouseholdId();
+  const [sip, setSip] = useState<PlanningResult | null>(null);
+  const [evac, setEvac] = useState<PlanningResult | null>(null);
+  const [dataLoading, setDataLoading] = useState(false);
+
+  useEffect(() => {
+    if (!householdId) return;
+    setDataLoading(true);
+    Promise.all([
+      fetchPlanning(householdId, "shelter_in_place"),
+      fetchPlanning(householdId, "evacuation"),
+    ])
+      .then(([s, e]) => {
+        setSip(s);
+        setEvac(e);
+      })
+      .finally(() => setDataLoading(false));
+  }, [householdId]);
+
+  if (isLoading || dataLoading) return <LoadingSpinner label="Loading planning…" />;
   if (!householdId)
     return <p className="text-sm text-muted-foreground">No household in session.</p>;
-
-  const [sip, evac] = await Promise.all([
-    getPlanning(householdId, "shelter_in_place"),
-    getPlanning(householdId, "evacuation"),
-  ]);
 
   return (
     <div className="space-y-8">

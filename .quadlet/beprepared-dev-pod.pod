@@ -7,5 +7,5 @@ PodName=beprepared-dev
 
 # API port (dev host:9996 → container:9995; prod API is internal-only at 9995)
 PublishPort=9996:9995
-# Frontend dev server (frontend script hardcodes :9999 internally, mapped to host:9997)
+# Frontend dev server (Vite binds :9999 internally, mapped to host:9997)
 PublishPort=9997:9999

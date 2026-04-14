@@ -3,20 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --port 9999",
-    "dev:e2e": "next dev --port ${FRONTEND_PORT:-9998} --hostname 127.0.0.1",
-    "build": "next build",
+    "dev": "vite --port 9999 --host",
+    "dev:e2e": "vite --port ${FRONTEND_PORT:-9998} --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --port 9997",
+    "serve": "bun run serve.ts",
     "typecheck": "bunx tsc --noEmit -p tsconfig.json",
-    "start": "next start --port 9999",
-    "lint": "next lint",
+    "lint": "eslint src",
     "test": "bun test"
   },
   "dependencies": {
-    "next": "^15.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "next-auth": "^5.0.0-beta.25",
-    "bcryptjs": "^2.4.3",
+    "react-router-dom": "^6.28.0",
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.5.4",
     "class-variance-authority": "^0.7.1",
@@ -32,15 +31,15 @@
     "@radix-ui/react-tooltip": "^1.1.6"
   },
   "devDependencies": {
-    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "eslint": "9.19.0",
-    "eslint-config-next": "15.5.12",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.14",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vite": "^6.0.0"
   }
 }

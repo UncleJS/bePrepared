@@ -1,9 +1,6 @@
-"use client";
-
-import { Suspense, useMemo } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { clsx } from "clsx";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { InventoryPanel } from "./inventory/InventoryPanel";
 import { EquipmentPanel } from "./equipment/EquipmentPanel";
 
@@ -22,10 +19,8 @@ const TABS: Array<{ id: Tab; label: string; description: string }> = [
   },
 ];
 
-function SuppliesPageContent() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
+export default function SuppliesPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const activeTab = useMemo<Tab>(() => {
     const tab = searchParams.get("tab");
@@ -33,9 +28,7 @@ function SuppliesPageContent() {
   }, [searchParams]);
 
   function setTab(tab: Tab) {
-    const next = new URLSearchParams(searchParams.toString());
-    next.set("tab", tab);
-    router.replace(`${pathname}?${next.toString()}`);
+    setSearchParams({ tab });
   }
 
   const current = TABS.find((tab) => tab.id === activeTab) ?? TABS[0];
@@ -79,13 +72,5 @@ function SuppliesPageContent() {
         {activeTab === "inventory" ? <InventoryPanel /> : <EquipmentPanel />}
       </section>
     </div>
-  );
-}
-
-export default function SuppliesPage() {
-  return (
-    <Suspense fallback={<LoadingSpinner label="Loading supplies…" />}>
-      <SuppliesPageContent />
-    </Suspense>
   );
 }

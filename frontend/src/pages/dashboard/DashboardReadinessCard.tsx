@@ -1,9 +1,7 @@
-"use client";
-
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { useEffect } from "react";
-import { LEVEL_LABELS, LEVEL_ORDER } from "@/app/tasks/constants";
-import { useTasksData } from "@/app/tasks/useTasksData";
+import { LEVEL_LABELS, LEVEL_ORDER } from "@/pages/tasks/constants";
+import { useTasksData } from "@/pages/tasks/useTasksData";
 
 export default function DashboardReadinessCard({ householdId }: { householdId: string }) {
   const { tasks, progress, loading, loadData } = useTasksData(householdId);
@@ -24,7 +22,7 @@ export default function DashboardReadinessCard({ householdId }: { householdId: s
             Task completion across 72h, 14d, 30d, and 90d horizons.
           </p>
         </div>
-        <Link href="/tasks" className="text-xs text-primary hover:underline">
+        <Link to="/tasks" className="text-xs text-primary hover:underline">
           Open tasks →
         </Link>
       </div>

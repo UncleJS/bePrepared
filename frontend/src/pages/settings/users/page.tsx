@@ -1,18 +1,18 @@
-import { auth } from "@/auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { UserManager } from "@/components/settings/UserManager";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { AdminAccessNotice } from "@/components/settings/AdminAccessNotice";
 
-export default async function UsersPage() {
-  const session = await auth();
-  const isAdmin = ((session?.user as { isAdmin?: boolean } | undefined)?.isAdmin ?? false) === true;
+export default function UsersPage() {
+  const { state } = useAuth();
+  const isAdmin = state.status === "authenticated" && state.user.isAdmin;
 
   return (
     <div className="space-y-6">
       <div>
         <Link
-          href="/settings"
+          to="/settings"
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-3"
         >
           <ChevronLeft size={14} /> Settings

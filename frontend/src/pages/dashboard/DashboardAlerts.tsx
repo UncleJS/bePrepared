@@ -1,10 +1,8 @@
-"use client";
-
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { apiFetch, fmtDate } from "@/lib/api";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
-import { ALERT_ENTITY_LINK, ALERT_SEVERITY_LABEL } from "@/app/alerts/presentation";
+import { ALERT_ENTITY_LINK, ALERT_SEVERITY_LABEL } from "@/pages/alerts/presentation";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 
 type Alert = {
@@ -55,7 +53,7 @@ export default function DashboardAlerts({ householdId }: { householdId: string }
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Alerts</h2>
-        <Link href="/alerts" className="text-xs text-primary hover:underline">
+        <Link to="/alerts" className="text-xs text-primary hover:underline">
           View all →
         </Link>
       </div>
@@ -131,7 +129,7 @@ export default function DashboardAlerts({ householdId }: { householdId: string }
                     </div>
                     {ALERT_ENTITY_LINK[a.entityType] && (
                       <Link
-                        href={ALERT_ENTITY_LINK[a.entityType]}
+                        to={ALERT_ENTITY_LINK[a.entityType]}
                         className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded border border-border hover:bg-accent transition-colors shrink-0 self-center"
                       >
                         View →

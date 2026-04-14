@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { Inbox } from "lucide-react";
 
 export function EmptyState({
@@ -23,7 +23,7 @@ export function EmptyState({
       {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
       {action?.href ? (
         <Link
-          href={action.href}
+          to={action.href}
           className="mt-4 inline-flex rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
         >
           {action.label}

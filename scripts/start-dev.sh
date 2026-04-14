@@ -1,7 +1,5 @@
 #!/usr/bin/env sh
 # start-dev.sh — auto-start all bePrepared dev servers inside the container.
-# - API + Worker: Bun (fast)
-# - Frontend: Node.js (Bun segfaults with Next.js dev server)
 # Signals are trapped so all children are cleanly killed on container stop.
 set -e
 
@@ -17,17 +15,20 @@ cleanup() {
 }
 trap cleanup TERM INT
 
+# ── migrate + seed (always, safe to re-run) ──────────────────────────────────
+echo "[start-dev] Running DB migrations..."
+bun run db:migrate
+
+echo "[start-dev] Seeding database..."
+bun run db:seed
+
 # ── launch servers ───────────────────────────────────────────────────────────
 echo "[start-dev] Starting API (port 9996)..."
 bun run dev:api &
 API_PID=$!
 
-echo "[start-dev] Starting frontend via node (port 9997)..."
-# Force NODE_ENV=development: the container .env sets NODE_ENV=production for
-# the API/worker, but Next.js dev server requires development to load the CSS
-# pipeline and PostCSS (otherwise @tailwind directives cause a parse failure).
-# Also force node runtime — Bun segfaults with Next.js dev server.
-(cd /app/frontend && NODE_ENV=development node /app/frontend/node_modules/.bin/next dev --port 9999) &
+echo "[start-dev] Starting frontend via Vite (port 9997)..."
+bun run dev:frontend &
 FRONTEND_PID=$!
 
 echo "[start-dev] Starting worker..."
@@ -41,3 +42,4 @@ echo "[start-dev]   Frontend  → http://localhost:9997"
 
 # Wait for all children; exit if any crash
 wait ${API_PID} ${FRONTEND_PID} ${WORKER_PID}
+

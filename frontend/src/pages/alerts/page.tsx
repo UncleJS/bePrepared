@@ -1,6 +1,3 @@
-"use client";
-
-import { useSession } from "next-auth/react";
 import { useActiveHouseholdId } from "@/lib/useActiveHouseholdId";
 import { CheckCircle2, RefreshCw } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -11,14 +8,13 @@ import { useAlertActions } from "./useAlertActions";
 import { useAlertsData } from "./useAlertsData";
 
 export default function AlertsPage() {
-  const { householdId, status } = useActiveHouseholdId();
-  const { data: session } = useSession();
-  const isAdmin = (session?.user as { isAdmin?: boolean } | undefined)?.isAdmin ?? false;
+  const { householdId, isLoading, user } = useActiveHouseholdId();
+  const isAdmin = user?.isAdmin ?? false;
 
   const { alerts, loading, error, load } = useAlertsData(householdId);
   const actions = useAlertActions({ householdId, reload: load });
 
-  if (status === "loading") return <LoadingSpinner label="Loading session…" />;
+  if (isLoading) return <LoadingSpinner label="Loading session…" />;
   if (!householdId)
     return (
       <EmptyState

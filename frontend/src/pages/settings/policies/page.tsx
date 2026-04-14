@@ -1,10 +1,11 @@
-import { apiFetch, getSessionHouseholdId } from "@/lib/api";
+import { useEffect, useState } from "react";
+import { useActiveHouseholdId } from "@/lib/useActiveHouseholdId";
+import { apiFetch } from "@/lib/api";
 import { PolicySettingsEditor } from "@/components/settings/PolicySettingsEditor";
 import { ScenarioPolicySettingsEditor } from "@/components/settings/ScenarioPolicySettingsEditor";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
-
-export const dynamic = "force-dynamic";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 type PolicyDefault = {
   key: string;
@@ -17,36 +18,50 @@ type PolicyDefault = {
 type HouseholdPolicy = PolicyDefault & { id: string };
 type ScenarioPolicy = PolicyDefault & { id: string };
 
-async function getData(householdId: string) {
-  const [defaults, overrides, sip, evac] = await Promise.allSettled([
-    apiFetch<PolicyDefault[]>("/settings/defaults"),
-    apiFetch<HouseholdPolicy[]>(`/settings/${householdId}/policies`),
-    apiFetch<ScenarioPolicy[]>(`/settings/${householdId}/scenario/shelter_in_place`),
-    apiFetch<ScenarioPolicy[]>(`/settings/${householdId}/scenario/evacuation`),
-  ]);
+type ScenarioPolicies = {
+  shelter_in_place: ScenarioPolicy[];
+  evacuation: ScenarioPolicy[];
+};
 
-  return {
-    defaults: defaults.status === "fulfilled" ? defaults.value : [],
-    overrides: overrides.status === "fulfilled" ? overrides.value : [],
-    scenarioPolicies: {
-      shelter_in_place: sip.status === "fulfilled" ? sip.value : [],
-      evacuation: evac.status === "fulfilled" ? evac.value : [],
-    },
-  };
-}
+export default function PoliciesPage() {
+  const { householdId, isLoading } = useActiveHouseholdId();
+  const [defaults, setDefaults] = useState<PolicyDefault[]>([]);
+  const [overrides, setOverrides] = useState<HouseholdPolicy[]>([]);
+  const [scenarioPolicies, setScenarioPolicies] = useState<ScenarioPolicies>({
+    shelter_in_place: [],
+    evacuation: [],
+  });
+  const [loading, setLoading] = useState(false);
 
-export default async function PoliciesPage() {
-  const householdId = await getSessionHouseholdId();
+  useEffect(() => {
+    if (!householdId) return;
+    setLoading(true);
+    Promise.allSettled([
+      apiFetch<PolicyDefault[]>("/settings/defaults"),
+      apiFetch<HouseholdPolicy[]>(`/settings/${householdId}/policies`),
+      apiFetch<ScenarioPolicy[]>(`/settings/${householdId}/scenario/shelter_in_place`),
+      apiFetch<ScenarioPolicy[]>(`/settings/${householdId}/scenario/evacuation`),
+    ])
+      .then(([d, o, s, e]) => {
+        setDefaults(d.status === "fulfilled" ? d.value : []);
+        setOverrides(o.status === "fulfilled" ? o.value : []);
+        setScenarioPolicies({
+          shelter_in_place: s.status === "fulfilled" ? s.value : [],
+          evacuation: e.status === "fulfilled" ? e.value : [],
+        });
+      })
+      .finally(() => setLoading(false));
+  }, [householdId]);
+
+  if (isLoading || loading) return <LoadingSpinner label="Loading policies…" />;
   if (!householdId)
     return <p className="text-sm text-muted-foreground">No household in session.</p>;
-
-  const { defaults, overrides, scenarioPolicies } = await getData(householdId);
 
   return (
     <div className="space-y-8">
       <div>
         <Link
-          href="/settings"
+          to="/settings"
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-3"
         >
           <ChevronLeft size={14} /> Settings

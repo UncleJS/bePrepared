@@ -1,7 +1,4 @@
-"use client";
-
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   apiFetch,
   readActiveHouseholdCookie,
@@ -18,7 +15,6 @@ export function HouseholdSwitcher({
   sessionHouseholdId?: string;
   isAdmin?: boolean;
 }) {
-  const router = useRouter();
   const [households, setHouseholds] = useState<Household[]>([]);
   const [selected, setSelected] = useState(
     () =>
@@ -38,9 +34,6 @@ export function HouseholdSwitcher({
         setHouseholds(rows);
         setSelected((prev) => {
           const current = prev || rows[0]?.id || "";
-          // Always seed the cookie on first load so every page and the
-          // server-side resolver see a consistent value without the user
-          // having to manually pick from the dropdown.
           if (!readActiveHouseholdCookie() && current) {
             setActiveHouseholdId(current);
           }
@@ -69,7 +62,7 @@ export function HouseholdSwitcher({
           const id = e.target.value;
           setSelected(id);
           setActiveHouseholdId(id);
-          router.refresh();
+          // The custom event system (onActiveHouseholdChange) handles reactivity
         }}
         className="rounded-md border border-border bg-muted px-2 py-1 text-xs text-foreground"
       >

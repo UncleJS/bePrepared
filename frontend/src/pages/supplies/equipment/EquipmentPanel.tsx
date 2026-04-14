@@ -1,6 +1,4 @@
-"use client";
-
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { Archive, Plus } from "lucide-react";
 import { useActiveHouseholdId } from "@/lib/useActiveHouseholdId";
@@ -15,11 +13,11 @@ import {
   sortHelpers,
   type SortState,
 } from "@/components/ui/SortableHeader";
-import { EquipmentFormFields } from "@/app/equipment/EquipmentFormFields";
-import { EquipmentRow } from "@/app/equipment/EquipmentRow";
-import type { Equipment } from "@/app/equipment/types";
-import { useEquipmentData } from "@/app/equipment/useEquipmentData";
-import { useEquipmentItemActions } from "@/app/equipment/useEquipmentItemActions";
+import { EquipmentFormFields } from "@/pages/equipment/EquipmentFormFields";
+import { EquipmentRow } from "@/pages/equipment/EquipmentRow";
+import type { Equipment } from "@/pages/equipment/types";
+import { useEquipmentData } from "@/pages/equipment/useEquipmentData";
+import { useEquipmentItemActions } from "@/pages/equipment/useEquipmentItemActions";
 
 type EqSortKey = "name" | "category" | "modelSerial" | "location" | "status" | "acquiredAt";
 
@@ -31,7 +29,7 @@ const STATUS_RANK: Record<string, number> = {
 };
 
 export function EquipmentPanel() {
-  const { householdId, status } = useActiveHouseholdId();
+  const { householdId, isLoading } = useActiveHouseholdId();
   const [showArchived, setShowArchived] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -128,7 +126,7 @@ export function EquipmentPanel() {
     if (actions.message === "Equipment item added.") setCreateOpen(false);
   }, [actions.message]);
 
-  if (status === "loading") return <LoadingSpinner label="Loading session…" />;
+  if (isLoading) return <LoadingSpinner label="Loading session…" />;
   if (!householdId)
     return (
       <EmptyState
@@ -147,7 +145,7 @@ export function EquipmentPanel() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
-            href="/settings/equipment-categories"
+            to="/settings/equipment-categories"
             className="inline-flex rounded-md border border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             Categories

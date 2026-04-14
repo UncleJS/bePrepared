@@ -1,11 +1,10 @@
-"use client";
-
 import { useState } from "react";
+import { Outlet } from "react-router-dom";
 import { SideNav } from "./SideNav";
 import { TopBar } from "./TopBar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   return (
@@ -25,7 +24,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </SheetContent>
         </Sheet>
 
-        <main className="flex-1 overflow-auto p-4 sm:p-6">{children}</main>
+        <main className="flex-1 overflow-auto p-4 sm:p-6">
+          <Outlet />
+        </main>
       </div>
 
       <footer className="border-t border-border px-6 py-2 text-center text-xs text-muted-foreground">

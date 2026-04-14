@@ -1,9 +1,9 @@
+import { useEffect, useState } from "react";
+import { useParams, Navigate } from "react-router-dom";
 import { apiFetch } from "@/lib/api";
 import { BookOpen, ChevronRight, FileText } from "lucide-react";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-
-export const dynamic = "force-dynamic";
+import { Link } from "react-router-dom";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 // ---------------------------------------------------------------------------
 // Types — mirror the API response shape from GET /modules/:slug
@@ -40,17 +40,6 @@ type ModuleDetail = {
 type BadgeConfig = { label: string; message: string; color: string; url?: string };
 
 // ---------------------------------------------------------------------------
-// Data fetching
-// ---------------------------------------------------------------------------
-async function getModule(slug: string): Promise<ModuleDetail | null> {
-  try {
-    return await apiFetch<ModuleDetail>(`/modules/${slug}`);
-  } catch {
-    return null;
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 function parseBadges(badgeJson?: string | null): BadgeConfig[] {
@@ -69,17 +58,28 @@ function badgeUrl(b: BadgeConfig): string {
 // ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
-export default async function ModuleDetailPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const mod = await getModule(slug);
+export default function ModuleDetailPage() {
+  const { slug } = useParams<{ slug: string }>();
+  const [mod, setMod] = useState<ModuleDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
-  if (!mod) notFound();
+  useEffect(() => {
+    if (!slug) return;
+    apiFetch<ModuleDetail>(`/modules/${slug}`)
+      .then(setMod)
+      .catch(() => setNotFound(true))
+      .finally(() => setLoading(false));
+  }, [slug]);
+
+  if (loading) return <LoadingSpinner label="Loading module…" />;
+  if (notFound || !mod) return <Navigate to="/modules" replace />;
 
   return (
     <div className="space-y-8 max-w-3xl">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-1 text-sm text-muted-foreground">
-        <Link href="/modules" className="hover:text-foreground transition-colors">
+        <Link to="/modules" className="hover:text-foreground transition-colors">
           Modules
         </Link>
         <ChevronRight size={14} />
@@ -136,7 +136,6 @@ export default async function ModuleDetailPage({ params }: { params: Promise<{ s
                             {badges.map((b, i) =>
                               b.url ? (
                                 <a key={i} href={b.url} target="_blank" rel="noopener noreferrer">
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
                                   <img
                                     src={badgeUrl(b)}
                                     alt={`${b.label}: ${b.message}`}
@@ -144,7 +143,6 @@ export default async function ModuleDetailPage({ params }: { params: Promise<{ s
                                   />
                                 </a>
                               ) : (
-                                // eslint-disable-next-line @next/next/no-img-element
                                 <img
                                   key={i}
                                   src={badgeUrl(b)}
@@ -174,7 +172,7 @@ export default async function ModuleDetailPage({ params }: { params: Promise<{ s
       {/* Back link */}
       <div className="pt-2">
         <Link
-          href="/modules"
+          to="/modules"
           className="text-sm text-primary hover:underline flex items-center gap-1"
         >
           ← Back to all modules

@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { Navigate } from "react-router-dom";
 
 export default function FamiliesPage() {
-  redirect("/settings/household");
+  return <Navigate to="/settings/household" replace />;
 }

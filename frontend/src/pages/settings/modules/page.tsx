@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { apiFetch } from "@/lib/api";
 import {
   ChevronDown,
@@ -1004,7 +1004,7 @@ export default function ModulesAdminPage() {
     <div className="space-y-6">
       <div>
         <Link
-          href="/settings"
+          to="/settings"
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-3"
         >
           <ChevronLeft size={14} /> Settings

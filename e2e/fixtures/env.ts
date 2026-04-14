@@ -2,9 +2,8 @@ import path from "node:path";
 
 export const FRONTEND_PORT = process.env.FRONTEND_PORT ?? "9998";
 export const API_PORT = process.env.API_PORT ?? "3002";
-export const E2E_BASE_URL = process.env.NEXTAUTH_URL ?? `http://127.0.0.1:${FRONTEND_PORT}`;
-export const API_BASE_URL =
-  process.env.NEXTAUTH_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? `http://127.0.0.1:${API_PORT}`;
+export const E2E_BASE_URL = process.env.FRONTEND_URL ?? `http://127.0.0.1:${FRONTEND_PORT}`;
+export const API_BASE_URL = process.env.VITE_API_URL ?? `http://127.0.0.1:${API_PORT}`;
 export const ADMIN_USERNAME = process.env.E2E_ADMIN_USERNAME ?? "admin";
 export const AUTH_STATE_PATH = path.resolve(process.cwd(), ".auth/admin.json");
 

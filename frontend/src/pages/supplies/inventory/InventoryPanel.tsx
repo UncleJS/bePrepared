@@ -1,6 +1,4 @@
-"use client";
-
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { apiFetch } from "@/lib/api";
@@ -16,14 +14,14 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { FormSheet } from "@/components/ui/FormSheet";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { InventoryItemFormFields } from "@/app/inventory/InventoryItemFormFields";
-import { InventoryItemRow } from "@/app/inventory/InventoryItemRow";
-import { InventoryLotFormFields } from "@/app/inventory/InventoryLotFormFields";
-import { InventoryLotRow } from "@/app/inventory/InventoryLotRow";
-import type { InventoryItem } from "@/app/inventory/types";
-import { useInventoryData } from "@/app/inventory/useInventoryData";
-import { useInventoryItemActions } from "@/app/inventory/useInventoryItemActions";
-import { useInventoryLotActions } from "@/app/inventory/useInventoryLotActions";
+import { InventoryItemFormFields } from "@/pages/inventory/InventoryItemFormFields";
+import { InventoryItemRow } from "@/pages/inventory/InventoryItemRow";
+import { InventoryLotFormFields } from "@/pages/inventory/InventoryLotFormFields";
+import { InventoryLotRow } from "@/pages/inventory/InventoryLotRow";
+import type { InventoryItem } from "@/pages/inventory/types";
+import { useInventoryData } from "@/pages/inventory/useInventoryData";
+import { useInventoryItemActions } from "@/pages/inventory/useInventoryItemActions";
+import { useInventoryLotActions } from "@/pages/inventory/useInventoryLotActions";
 
 type ActiveAlert = {
   entityType: string;
@@ -34,7 +32,7 @@ type ActiveAlert = {
 type InvSortKey = "name" | "location" | "qty" | "targetQty" | "expiry";
 
 export function InventoryPanel() {
-  const { householdId, status } = useActiveHouseholdId();
+  const { householdId, isLoading } = useActiveHouseholdId();
   const { items, categories, loading, error, setError, loadData } = useInventoryData();
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [alertItemIds, setAlertItemIds] = useState<Set<string>>(new Set());
@@ -153,7 +151,7 @@ export function InventoryPanel() {
     if (lotActions.message === "Lot added.") setCreateLotOpen(false);
   }, [lotActions.message]);
 
-  if (status === "loading") return <LoadingSpinner label="Loading session…" />;
+  if (isLoading) return <LoadingSpinner label="Loading session…" />;
   if (!householdId)
     return (
       <EmptyState
@@ -172,7 +170,7 @@ export function InventoryPanel() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
-            href="/settings/inventory-categories"
+            to="/settings/inventory-categories"
             className="inline-flex rounded-md border border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             Categories

@@ -1,41 +1,48 @@
-# Containerfile.frontend — bePrepared Next.js frontend (Bun build / Node runtime)
+# Containerfile.frontend — bePrepared frontend (Vite build / Bun serve)
 FROM docker.io/oven/bun:1.2-alpine AS builder
 
-WORKDIR /app/frontend
+WORKDIR /app
 
-COPY frontend/package.json ./
-RUN bun install --frozen-lockfile
-COPY frontend/next.config.ts ./next.config.ts
-COPY frontend/postcss.config.mjs ./postcss.config.mjs
-COPY frontend/tailwind.config.ts ./tailwind.config.ts
-COPY frontend/tsconfig.json ./tsconfig.json
-COPY frontend/src ./src
+# Copy workspace root and all workspace manifests (needed for bun install)
+COPY package.json bun.lock* ./
+COPY api/package.json ./api/
+COPY frontend/package.json ./frontend/
+COPY shared/package.json ./shared/
+COPY worker/package.json ./worker/
+COPY e2e/package.json ./e2e/
 
-ARG NEXT_PUBLIC_API_URL=http://localhost:9995
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-ENV NEXT_TELEMETRY_DISABLED=1
+# Copy frontend source
+COPY frontend/vite.config.ts      ./frontend/
+COPY frontend/tsconfig.json       ./frontend/
+COPY frontend/postcss.config.mjs  ./frontend/
+COPY frontend/tailwind.config.ts  ./frontend/
+COPY frontend/index.html          ./frontend/
+COPY frontend/serve.ts            ./frontend/
+COPY frontend/src                 ./frontend/src
+
+# Install all workspace deps (uses root lockfile)
+RUN bun install
+
+# Inject build-time API URL (browser-visible — must be set at image build time)
+ARG VITE_API_URL=http://localhost:9995
+ENV VITE_API_URL=$VITE_API_URL
 ENV NODE_ENV=production
 
+# Build the Vite SPA
+WORKDIR /app/frontend
 RUN bun run build
 
 # ---- Runtime stage ----
-FROM docker.io/library/node:20-alpine
+FROM docker.io/oven/bun:1.2-alpine
 
 WORKDIR /app/frontend
 
-COPY --from=builder /app/frontend/.next/standalone ./
-COPY --from=builder /app/frontend/.next/static ./frontend/.next/static
+COPY --from=builder /app/frontend/dist     ./dist
+COPY --from=builder /app/frontend/serve.ts ./serve.ts
 
 ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=9999
-# Next.js standalone server respects HOSTNAME to control the bind address.
-# We force 0.0.0.0 here AND in the CMD shell wrapper so it takes effect even
-# if Podman overrides HOSTNAME with the pod/container name at runtime.
-ENV HOSTNAME=0.0.0.0
 
 EXPOSE 9999
 
-# Use a shell wrapper to ensure HOSTNAME=0.0.0.0 is set at process start,
-# overriding any value Podman injects for the container hostname.
-CMD ["/bin/sh", "-c", "HOSTNAME=0.0.0.0 node frontend/server.js"]
+CMD ["bun", "run", "serve.ts"]

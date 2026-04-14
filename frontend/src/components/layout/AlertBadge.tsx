@@ -1,6 +1,4 @@
-"use client";
-
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
 import { Bell } from "lucide-react";
 import { apiFetch } from "@/lib/api";
@@ -34,7 +32,7 @@ export function AlertBadge() {
 
   return (
     <Link
-      href="/alerts"
+      to="/alerts"
       className="inline-flex items-center gap-2 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
     >
       <Bell size={14} />

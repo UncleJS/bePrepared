@@ -1,8 +1,5 @@
-"use client";
-
-import Link from "next/link";
-import { useSession } from "next-auth/react";
-import { usePathname } from "next/navigation";
+import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useMemo, useState } from "react";
 import {
   LayoutDashboard,
@@ -58,18 +55,16 @@ export function SideNav({
   className?: string;
   onNavigate?: () => void;
 }) {
-  const pathname = usePathname();
-  const { data: session } = useSession();
+  const { pathname } = useLocation();
+  const { state } = useAuth();
   const inSettings = pathname.startsWith("/settings");
 
-  // Start expanded if already in settings
   const [settingsOpen, setSettingsOpen] = useState(inSettings);
   const isAdmin = useMemo(
-    () => ((session?.user as { isAdmin?: boolean } | undefined)?.isAdmin ?? false) === true,
-    [session]
+    () => (state.status === "authenticated" ? state.user.isAdmin === true : false),
+    [state]
   );
 
-  // Auto-expand when navigating into settings; collapse when leaving
   useEffect(() => {
     if (inSettings) setSettingsOpen(true);
   }, [inSettings]);
@@ -80,13 +75,12 @@ export function SideNav({
 
   return (
     <nav className={clsx("flex shrink-0 flex-col border-r border-border bg-card py-4", className)}>
-      {/* Main nav items */}
       {mainNavItems.map(({ href, label, icon: Icon }) => {
         const active = pathname.startsWith(href);
         return (
           <Link
             key={href}
-            href={href}
+            to={href}
             onClick={onNavigate}
             className={clsx(
               "flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors",
@@ -104,9 +98,7 @@ export function SideNav({
       {/* Settings toggle */}
       <button
         type="button"
-        onClick={() => {
-          setSettingsOpen((prev) => !prev);
-        }}
+        onClick={() => setSettingsOpen((prev) => !prev)}
         className={clsx(
           "flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors w-full text-left",
           inSettings
@@ -119,7 +111,6 @@ export function SideNav({
         {settingsOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
       </button>
 
-      {/* Settings sub-links — admin only */}
       {settingsOpen && (
         <div className="flex flex-col">
           {visibleSettingsSubLinks.map(({ href, label, icon: Icon, ...item }) => {
@@ -129,7 +120,7 @@ export function SideNav({
             return (
               <Link
                 key={href}
-                href={href}
+                to={href}
                 onClick={onNavigate}
                 className={clsx(
                   "flex items-center gap-2 pl-9 pr-4 py-2 text-xs font-medium transition-colors",

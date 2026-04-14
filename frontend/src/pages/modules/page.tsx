@@ -1,25 +1,29 @@
+import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { BookOpen, ChevronRight } from "lucide-react";
-import Link from "next/link";
-
-export const dynamic = "force-dynamic";
+import { Link } from "react-router-dom";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 type Module = { id: string; slug: string; title: string; description?: string };
 
-async function getModules(): Promise<{ modules: Module[]; error: string | null }> {
-  try {
-    const modules = await apiFetch<Module[]>("/modules");
-    return { modules, error: null };
-  } catch (error) {
-    return {
-      modules: [],
-      error: error instanceof Error ? error.message : "Failed to load modules",
-    };
-  }
-}
+export default function ModulesPage() {
+  const [modules, setModules] = useState<Module[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-export default async function ModulesPage() {
-  const { modules, error } = await getModules();
+  useEffect(() => {
+    apiFetch<Module[]>("/modules")
+      .then((data) => {
+        setModules(data);
+        setError(null);
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : "Failed to load modules");
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <LoadingSpinner label="Loading modules…" />;
 
   return (
     <div className="space-y-6">
@@ -35,7 +39,7 @@ export default async function ModulesPage() {
         {modules.map((m) => (
           <Link
             key={m.id}
-            href={`/modules/${m.slug}`}
+            to={`/modules/${m.slug}`}
             className="rounded-lg border border-border bg-card hover:border-primary/50 hover:bg-accent transition-colors p-4 flex items-start gap-3"
           >
             <BookOpen size={18} className="text-primary mt-0.5 shrink-0" />

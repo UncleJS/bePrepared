@@ -1,10 +1,8 @@
-"use client";
-
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { useEffect, useMemo } from "react";
-import { LEVEL_LABELS, LEVEL_ORDER } from "@/app/tasks/constants";
+import { LEVEL_LABELS, LEVEL_ORDER } from "@/pages/tasks/constants";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { useTasksData } from "@/app/tasks/useTasksData";
+import { useTasksData } from "@/pages/tasks/useTasksData";
 
 export default function DashboardTasks({ householdId }: { householdId: string }) {
   const { tasks, progress, moduleById, loadData, loading } = useTasksData(householdId);
@@ -34,7 +32,7 @@ export default function DashboardTasks({ householdId }: { householdId: string })
             The next incomplete actions keeping the household moving forward.
           </p>
         </div>
-        <Link href="/tasks" className="text-xs text-primary hover:underline">
+        <Link to="/tasks" className="text-xs text-primary hover:underline">
           View all →
         </Link>
       </div>

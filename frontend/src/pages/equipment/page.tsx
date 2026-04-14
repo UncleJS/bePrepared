@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { Navigate } from "react-router-dom";
 
 export default function EquipmentRedirectPage() {
-  redirect("/supplies?tab=equipment");
+  return <Navigate to="/supplies?tab=equipment" replace />;
 }

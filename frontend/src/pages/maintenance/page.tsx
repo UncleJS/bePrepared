@@ -13,7 +13,7 @@ import { useMaintenanceActions } from "./useMaintenanceActions";
 import { useMaintenanceData } from "./useMaintenanceData";
 
 export default function MaintenancePage() {
-  const { householdId, status } = useActiveHouseholdId();
+  const { householdId, isLoading } = useActiveHouseholdId();
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const {
@@ -54,7 +54,7 @@ export default function MaintenancePage() {
     if (message === "Maintenance schedule created.") setCreateOpen(false);
   }, [message]);
 
-  if (status === "loading") return <LoadingSpinner label="Loading session…" />;
+  if (isLoading) return <LoadingSpinner label="Loading session…" />;
   if (!householdId)
     return (
       <EmptyState

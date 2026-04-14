@@ -28,9 +28,7 @@ const sharedEnv = {
   AUTH_SECRET: requiredEnv("AUTH_SECRET"),
   API_AUTH_SECRET: process.env.API_AUTH_SECRET ?? requiredEnv("AUTH_SECRET"),
   SEED_ADMIN_PASSWORD: requiredEnv("SEED_ADMIN_PASSWORD"),
-  NEXTAUTH_URL: process.env.NEXTAUTH_URL ?? E2E_BASE_URL,
-  NEXTAUTH_API_URL: process.env.NEXTAUTH_API_URL ?? API_BASE_URL,
-  NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? API_BASE_URL,
+  VITE_API_URL: process.env.VITE_API_URL ?? API_BASE_URL,
   CORS_ORIGINS: process.env.CORS_ORIGINS ?? E2E_BASE_URL,
   NODE_ENV: process.env.NODE_ENV ?? "test",
 };

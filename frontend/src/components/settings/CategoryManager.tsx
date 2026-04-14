@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { apiFetch } from "@/lib/api";
 import { useActiveHouseholdId } from "@/lib/useActiveHouseholdId";
 import { ChevronLeft, Pencil, Plus, Trash2 } from "lucide-react";
@@ -24,7 +24,7 @@ export function CategoryManager({
   slugPlaceholder: string;
   backHref?: string;
 }) {
-  const { householdId, status } = useActiveHouseholdId();
+  const { householdId, isLoading } = useActiveHouseholdId();
   const [categories, setCategories] = useState<Category[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [name, setName] = useState("");
@@ -62,7 +62,7 @@ export function CategoryManager({
     [categories, archiveId]
   );
 
-  if (status === "loading") {
+  if (isLoading) {
     return <p className="text-sm text-muted-foreground">Loading session...</p>;
   }
   if (!householdId) {
@@ -74,7 +74,7 @@ export function CategoryManager({
       <div>
         {backHref && (
           <Link
-            href={backHref}
+            to={backHref}
             className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-3"
           >
             <ChevronLeft size={14} /> Settings

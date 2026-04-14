@@ -1,30 +1,38 @@
-import { signIn } from "@/auth";
+import { useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ShieldCheck, LogIn } from "lucide-react";
-import { AuthError } from "next-auth";
-import { redirect } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
-export default async function LoginPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ callbackUrl?: string; error?: string }>;
-}) {
-  const { callbackUrl, error } = await searchParams;
-  const destination = callbackUrl ?? "/dashboard";
+export default function LoginPage() {
+  const { login, state } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
 
-  async function doLogin(formData: FormData) {
-    "use server";
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  // Already authenticated → go to destination
+  if (state.status === "authenticated") {
+    navigate(callbackUrl, { replace: true });
+    return null;
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = new FormData(e.currentTarget);
+    const username = form.get("username") as string;
+    const password = form.get("password") as string;
+
+    setLoading(true);
+    setError(null);
     try {
-      await signIn("credentials", {
-        username: formData.get("username") as string,
-        password: formData.get("password") as string,
-        redirectTo: destination,
-      });
+      await login(username, password);
+      navigate(callbackUrl, { replace: true });
     } catch (err) {
-      if (err instanceof AuthError) {
-        redirect(`/login?error=CredentialsSignin&callbackUrl=${encodeURIComponent(destination)}`);
-      }
-      // signIn throws a NEXT_REDIRECT on success — re-throw it
-      throw err;
+      setError("Invalid username or password.");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -42,7 +50,7 @@ export default async function LoginPage({
 
         {/* Card */}
         <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-          <form action={doLogin} className="space-y-4">
+          <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
             <div className="space-y-1">
               <label
                 htmlFor="username"
@@ -79,16 +87,15 @@ export default async function LoginPage({
               />
             </div>
 
-            {error === "CredentialsSignin" && (
-              <p className="text-sm text-destructive">Invalid username or password.</p>
-            )}
+            {error && <p className="text-sm text-destructive">{error}</p>}
 
             <button
               type="submit"
+              disabled={loading}
               className="w-full flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
             >
               <LogIn size={16} />
-              Sign in
+              {loading ? "Signing in…" : "Sign in"}
             </button>
           </form>
         </div>

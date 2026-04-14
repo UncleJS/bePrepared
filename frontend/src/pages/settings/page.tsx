@@ -1,43 +1,43 @@
-import { auth } from "@/auth";
-import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
 import { Home, Users, BookOpen, Package, ShieldCheck, SlidersHorizontal } from "lucide-react";
 
 const settingsSections = [
   {
-    href: "/settings/household",
+    to: "/settings/household",
     icon: Home,
     label: "Household",
     description: "Edit your household name, size, and notes.",
   },
   {
-    href: "/settings/users",
+    to: "/settings/users",
     icon: Users,
     label: "Users",
     description: "Manage user accounts and personal profiles.",
     adminOnly: true,
   },
   {
-    href: "/settings/policies",
+    to: "/settings/policies",
     icon: SlidersHorizontal,
     label: "Policies",
     description: "Household overrides and scenario planning values.",
   },
   {
-    href: "/settings/modules",
+    to: "/settings/modules",
     icon: BookOpen,
     label: "Module Content",
     description: "Categories, modules, sections, and guidance docs.",
     adminOnly: true,
   },
   {
-    href: "/settings/inventory-categories",
+    to: "/settings/inventory-categories",
     icon: Package,
     label: "Inventory Categories",
     description: "System and custom inventory categories.",
     adminOnly: true,
   },
   {
-    href: "/settings/equipment-categories",
+    to: "/settings/equipment-categories",
     icon: ShieldCheck,
     label: "Equipment Categories",
     description: "System and custom equipment categories.",
@@ -45,9 +45,9 @@ const settingsSections = [
   },
 ];
 
-export default async function SettingsPage() {
-  const session = await auth();
-  const isAdmin = ((session?.user as { isAdmin?: boolean } | undefined)?.isAdmin ?? false) === true;
+export default function SettingsPage() {
+  const { state } = useAuth();
+  const isAdmin = state.status === "authenticated" && state.user.isAdmin;
   const visibleSections = settingsSections.filter((section) => !section.adminOnly || isAdmin);
 
   return (
@@ -60,10 +60,10 @@ export default async function SettingsPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {visibleSections.map(({ href, icon: Icon, label, description }) => (
+        {visibleSections.map(({ to, icon: Icon, label, description }) => (
           <Link
-            key={href}
-            href={href}
+            key={to}
+            to={to}
             className="rounded-lg border border-border bg-card hover:border-primary/50 hover:bg-accent transition-colors p-4 flex items-start gap-3"
           >
             <Icon size={18} className="text-primary mt-0.5 shrink-0" />

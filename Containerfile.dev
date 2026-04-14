@@ -1,7 +1,5 @@
 # Containerfile.dev — bePrepared development container
-# Runtime: Node.js 22 (Next.js dev server) + Bun (api, worker, shared)
-# Bun is installed on top of the official Node.js image to avoid Bun
-# segfaults when Next.js processes its first request.
+# Runtime: Node.js 22 (kept as base for ecosystem compat) + Bun (api, worker, frontend, shared)
 # Workflow: source is baked in at build time; servers auto-start on container start.
 #   Rebuild: ./dev.sh
 #   Exec:    podman exec -it beprepared-dev bun run db:migrate

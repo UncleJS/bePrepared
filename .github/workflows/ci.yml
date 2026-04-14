@@ -70,9 +70,7 @@ jobs:
       AUTH_SECRET: e2e-auth-secret
       API_AUTH_SECRET: e2e-auth-secret
       SEED_ADMIN_PASSWORD: e2e-admin-password
-      NEXTAUTH_URL: http://127.0.0.1:9998
-      NEXTAUTH_API_URL: http://127.0.0.1:3002
-      NEXT_PUBLIC_API_URL: http://127.0.0.1:3002
+      VITE_API_URL: http://127.0.0.1:3002
       CORS_ORIGINS: http://127.0.0.1:9998
       NODE_ENV: test
       AUTH_ENABLED: true

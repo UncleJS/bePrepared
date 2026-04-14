@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { AlertTriangle } from "lucide-react";
 import { fmtDate } from "@/lib/api";
 import { Timestamp } from "@/components/ui/Timestamp";
@@ -39,7 +39,7 @@ export function AlertRow({
       <div className="flex shrink-0 gap-2">
         {ALERT_ENTITY_LINK[alert.entityType] ? (
           <Link
-            href={ALERT_ENTITY_LINK[alert.entityType]}
+            to={ALERT_ENTITY_LINK[alert.entityType]}
             className="rounded border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             View →

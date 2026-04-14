@@ -12,7 +12,7 @@ import type { TaskForm } from "./types";
 import { useTasksData } from "./useTasksData";
 
 export default function TasksPage() {
-  const { householdId, status, user } = useActiveHouseholdId();
+  const { householdId, isLoading, user } = useActiveHouseholdId();
   const {
     tasks,
     modules,
@@ -96,7 +96,7 @@ export default function TasksPage() {
     }
   }
 
-  if (status === "loading") {
+  if (isLoading) {
     return <p className="text-sm text-muted-foreground">Loading session...</p>;
   }
   if (!householdId) {
