@@ -43,13 +43,13 @@ run_in_api_container() {
 
 run_migrate() {
   echo "==> Running migrations..."
-  run_in_api_container /app/api/src/db/migrate.ts
+  run_in_api_container db:migrate
   echo "==> Migrations complete."
 }
 
 run_seed() {
   echo "==> Running seed..."
-  run_in_api_container /app/api/src/db/seeds/index.ts
+  run_in_api_container db:seed
   echo "==> Seed complete."
 }
 

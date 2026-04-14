@@ -74,10 +74,9 @@ stop_units() {
 }
 
 disable_units() {
-  echo "==> Disabling and clearing failed state..."
+  echo "==> Disabling systemd user units..."
   for unit in "${PROJECT_UNITS[@]}"; do
     systemctl --user disable "$unit" >/dev/null 2>&1 || true
-    systemctl --user reset-failed "$unit" >/dev/null 2>&1 || true
   done
 }
 
@@ -86,6 +85,13 @@ remove_runtime() {
   podman pod rm -f beprepared >/dev/null 2>&1 || true
   for container in "${PROJECT_CONTAINERS[@]}"; do
     podman rm -f "$container" >/dev/null 2>&1 || true
+  done
+}
+
+reset_failed_units() {
+  echo "==> Clearing systemd failed state..."
+  for unit in "${PROJECT_UNITS[@]}"; do
+    systemctl --user reset-failed "$unit" >/dev/null 2>&1 || true
   done
 }
 
@@ -107,6 +113,7 @@ remove_unit_files() {
 stop_units
 disable_units
 remove_runtime
+reset_failed_units
 remove_unit_files
 
 # ---- Reload systemd ----
@@ -114,13 +121,13 @@ echo "==> Reloading systemd user daemon..."
 systemctl --user daemon-reload
 
 # ---- Optionally remove volume ----
-if [[ "$REMOVE_VOLUMES" == "true" ]] || confirm "==> Delete Podman volume 'beprepared-db'? (DESTROYS ALL DATABASE DATA)"; then
+if [[ "$REMOVE_VOLUMES" == "true" ]]; then
   echo "==> Removing named volumes..."
   for volume in "${PROJECT_VOLUMES[@]}"; do
     podman volume rm -f "$volume" >/dev/null 2>&1 && echo "    removed: $volume" || echo "    (not found: $volume)"
   done
 else
-  echo "==> Volume 'beprepared-db' kept."
+  echo "==> Volume 'beprepared-db' kept.  Pass --remove-volumes to delete (DATA LOSS)."
 fi
 
 # ---- Optionally remove images ----

@@ -8,7 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 DEPLOY_DIR="$PROJECT_ROOT/deploy"
 QUADLET_DIR="$HOME/.config/containers/systemd"
-ENV_FILE="$DEPLOY_DIR/.env"
+ENV_FILE="$PROJECT_ROOT/.env"
 SKIP_SEED=false
 
 # ---- Parse args ----
@@ -36,8 +36,8 @@ echo ""
 # ---- 1. Verify .env exists ----
 if [[ ! -f "$ENV_FILE" ]]; then
   echo "ERROR: $ENV_FILE not found."
-  echo "  cp deploy/.env.example deploy/.env"
-  echo "  Then edit deploy/.env and set all required values."
+  echo "  cp .env.example .env"
+  echo "  Then edit .env and set all required values."
   exit 1
 fi
 

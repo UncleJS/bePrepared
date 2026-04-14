@@ -23,13 +23,13 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 DEPLOY_DIR="$PROJECT_ROOT/deploy"
-ENV_FILE="$DEPLOY_DIR/.env"
+ENV_FILE="$PROJECT_ROOT/.env"
 LOG_DIR="$PROJECT_ROOT/logs"
 LOG_FILE="$LOG_DIR/healthcheck.log"
 
 # ── Defaults ────────────────────────────────────────────────────────────────
 FRONTEND_PORT="9999"
-API_PORT="3001"
+API_PORT="9995"
 QUIET=false
 
 # ── Args ─────────────────────────────────────────────────────────────────────
@@ -63,7 +63,7 @@ if [[ -f "$ENV_FILE" ]]; then
   set +a
 fi
 FRONTEND_PORT="${FRONTEND_PORT:-9999}"
-API_PORT="${PORT:-3001}"
+API_PORT="${PORT:-9995}"
 
 # ── Ensure log directory exists ───────────────────────────────────────────────
 mkdir -p "$LOG_DIR"
