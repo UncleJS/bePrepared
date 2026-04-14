@@ -21,8 +21,13 @@ if [[ -f "${STALE_ENV}" ]]; then
 fi
 
 echo "→ Syncing quadlet files..."
-cp .quadlet/*.container .quadlet/*.pod .quadlet/*.volume \
-   ~/.config/containers/systemd/ 2>/dev/null || true
+# Substitute %%REPO_DIR%% placeholder with the absolute repo path so the
+# EnvironmentFile= directive resolves correctly regardless of clone location.
+REPO_DIR="$(pwd)"
+for f in .quadlet/*.container .quadlet/*.pod .quadlet/*.volume; do
+  dest="${HOME}/.config/containers/systemd/$(basename "${f}")"
+  sed "s|%%REPO_DIR%%|${REPO_DIR}|g" "${f}" > "${dest}"
+done
 systemctl --user daemon-reload
 
 echo "→ Building dev container image..."

@@ -23,11 +23,11 @@ echo "[start-dev] Seeding database..."
 bun run db:seed
 
 # ── launch servers ───────────────────────────────────────────────────────────
-echo "[start-dev] Starting API (port 9996)..."
+echo "[start-dev] Starting API (container:9995 → host:9996)..."
 bun run dev:api &
 API_PID=$!
 
-echo "[start-dev] Starting frontend via Vite (port 9997)..."
+echo "[start-dev] Starting frontend via Vite (container:9999 → host:9997)..."
 bun run dev:frontend &
 FRONTEND_PID=$!
 

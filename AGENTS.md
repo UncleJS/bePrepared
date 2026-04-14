@@ -3,7 +3,7 @@
 ## Project overview
 
 Disaster preparedness system — household readiness from 72h to 90-day self-sufficiency.
-Monorepo: `api` (Bun + Elysia) · `frontend` (Next.js 15) · `worker` (Bun) · `shared` · `e2e` (Playwright).
+Monorepo: `api` (Bun + Elysia) · `frontend` (Vite + React 19) · `worker` (Bun) · `shared` · `e2e` (Playwright).
 
 ## Dev container
 
@@ -48,7 +48,7 @@ All bePrepared ports live in the range **9980–9999** so dev and prod can run s
 
 | Service                 | Port                       |
 | ----------------------- | -------------------------- |
-| Frontend (Next.js)      | 9997                       |
+| Frontend (Vite + React) | 9997                       |
 | API (Elysia)            | 9996                       |
 | API Swagger docs        | http://localhost:9996/docs |
 | MariaDB (dev, internal) | 3306                       |
@@ -57,7 +57,7 @@ All bePrepared ports live in the range **9980–9999** so dev and prod can run s
 
 | Service                  | Port                       |
 | ------------------------ | -------------------------- |
-| Frontend (Next.js)       | 9999                       |
+| Frontend (Vite + React)  | 9999                       |
 | API (Elysia)             | 9995                       |
 | API Swagger docs         | http://localhost:9995/docs |
 | phpMyAdmin               | 9998                       |

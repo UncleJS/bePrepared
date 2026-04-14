@@ -21,7 +21,7 @@ import { adminAlertsRoute, alertsRoute } from "./routes/alerts";
 import { settingsRoute } from "./routes/settings";
 import { planningRoute } from "./routes/planning";
 
-const PORT = Number(process.env.PORT ?? 9996);
+const PORT = Number(process.env.PORT ?? 9995);
 const NODE_ENV = (process.env.NODE_ENV ?? "development").toLowerCase();
 const IS_PRODUCTION = NODE_ENV === "production";
 const AUTH_ENABLED = (process.env.AUTH_ENABLED ?? "true") === "true";

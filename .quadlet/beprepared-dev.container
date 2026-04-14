@@ -19,8 +19,7 @@ Image=localhost/beprepared-dev:latest
 Pod=beprepared-dev-pod.pod
 ContainerName=beprepared-dev
 
-Volume=beprepared-dev.volume:/workspace:Z
-EnvironmentFile=%h/0_opencode/bePrepared/.env
+EnvironmentFile=%%REPO_DIR%%/.env
 
 [Service]
 Restart=on-failure

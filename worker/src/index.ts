@@ -14,7 +14,7 @@
  */
 
 import { logger } from "@beprepared/shared/logger";
-import { runAllJobs } from "../../api/src/lib/alertJobs";
+import { runAllJobs } from "@beprepared/api/lib/alertJobs";
 
 const INTERVAL_MS = Number(process.env.WORKER_INTERVAL_MS ?? 900000); // 15 minutes
 const HEARTBEAT_FILE = "/tmp/worker.ready";

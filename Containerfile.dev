@@ -1,15 +1,12 @@
 # Containerfile.dev — bePrepared development container
-# Runtime: Node.js 22 (kept as base for ecosystem compat) + Bun (api, worker, frontend, shared)
+# Runtime: Bun 1 (official image) — lightweight, no Node bootstrap overhead.
 # Workflow: source is baked in at build time; servers auto-start on container start.
 #   Rebuild: ./dev.sh
 #   Exec:    podman exec -it beprepared-dev bun run db:migrate
 
-FROM docker.io/library/node:22-alpine
+FROM docker.io/oven/bun:1
 
 WORKDIR /app
-
-# Install Bun
-RUN npm install -g bun
 
 # Copy workspace manifests first for layer caching
 COPY package.json bun.lock* ./
