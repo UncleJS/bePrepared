@@ -99,7 +99,6 @@ export function EquipmentPanel() {
         }
       });
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sort, categoryMap]);
 
   const sortedEquipment = useMemo(() => sortEquipment(equipment), [sortEquipment, equipment]);
