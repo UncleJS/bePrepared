@@ -91,7 +91,7 @@ All scripts accept `-h` / `--help`.
 
 ### Steps performed
 
-1. Verify `deploy/.env` exists
+1. Verify `.env` (repo root) exists
 2. Build images: `beprepared-api:latest`, `beprepared-worker:latest`, `beprepared-frontend:latest`
 3. Copy Quadlet `.pod`, `.container`, and `.volume` files to `~/.config/containers/systemd/`
 4. `systemctl --user daemon-reload`
@@ -127,27 +127,28 @@ All scripts accept `-h` / `--help`.
 
 ### Options
 
-| Option             | Description                                                               |
-| ------------------ | ------------------------------------------------------------------------- |
-| `--yes`            | Skip all interactive confirmation prompts (non-interactive / CI use)      |
-| `--remove-volumes` | Delete the `beprepared-db` Podman volume — **destroys all database data** |
-| `--remove-images`  | Remove local `beprepared-*:latest` container images                       |
-| `-h, --help`       | Show help and exit                                                        |
+| Option             | Description                                                                                                     |
+| ------------------ | --------------------------------------------------------------------------------------------------------------- |
+| `--yes`            | Skip interactive prompts (non-interactive / CI). Does **not** delete volumes — use `--remove-volumes` for that. |
+| `--remove-volumes` | Delete the `beprepared-db` Podman volume — **destroys all database data**                                       |
+| `--remove-images`  | Remove local `beprepared-*:latest` container images                                                             |
+| `-h, --help`       | Show help and exit                                                                                              |
 
 ### Examples
 
 ```bash
-# Interactive teardown — prompts before deleting volume/images
-./scripts/uninstall.sh
+# Teardown — no prompts; volumes kept, images removed
+./scripts/uninstall.sh --yes
 
-# Full clean wipe with no prompts (CI or fresh reinstall)
+# Full clean wipe — no prompts, destroy DB volume and images (e.g. decommission)
 ./scripts/uninstall.sh --yes --remove-volumes --remove-images
 
-# Stop and remove units but keep data and images intact
-./scripts/uninstall.sh --yes
+# Interactive teardown — volumes always kept; prompts before removing images
+./scripts/uninstall.sh
 ```
 
-> **Warning:** `--remove-volumes` permanently deletes all MariaDB data. Take a backup first if you need to preserve it.
+> **Warning:** `--remove-volumes` permanently deletes all MariaDB data. Take a backup first.
+> Volumes are **never** deleted unless `--remove-volumes` is explicitly passed — `--yes` alone does not touch data.
 
 ---
 

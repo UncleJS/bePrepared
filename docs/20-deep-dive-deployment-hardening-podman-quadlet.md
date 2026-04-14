@@ -68,10 +68,10 @@ flowchart LR
   H[Host user session]
   P[Rootless Podman Pod]
   FE["Frontend :9999"]
-  API["API :3001 internal"]
+  API["API :9995 internal"]
   DB["MariaDB :3306 internal"]
   W[Worker internal]
-  E[deploy/.env secrets]
+  E[.env secrets]
 
   H --> P
   P --> FE
@@ -95,7 +95,7 @@ Primary external exposure is the frontend host port (`9999`). API and DB remain 
 1. **Container runtime restrictions are minimal**
    - Quadlet units do not yet define tighter controls such as read-only root FS, capability drops, or explicit writable paths.
 2. **Environment file is shared across all services**
-   - `deploy/.env` is convenient but broad; each service receives more variables than strictly required.
+   - `.env` (repo root) is convenient but broad; each service receives more variables than strictly required.
 3. **Startup readiness is partially script-based**
    - `install.sh` waits for DB readiness, but steady-state health monitoring is still mostly log-driven.
 4. **No formal restore drill cadence**
@@ -121,7 +121,7 @@ Primary external exposure is the frontend host port (`9999`). API and DB remain 
   - DB-only variables for DB container
   - API/worker-only runtime variables
   - frontend-only public/runtime variables
-- Keep `deploy/.env` as source material if desired, but generate scoped env files for runtime mounts.
+- Keep `.env` as source material if desired, but generate scoped env files for runtime mounts.
 
 ### Phase C — Health and recovery confidence
 
@@ -144,7 +144,7 @@ Primary external exposure is the frontend host port (`9999`). API and DB remain 
 [↑ TOC](#table-of-contents)
 
 1. [x] Implement minimal-risk Quadlet hardening flags for frontend and worker (`--read-only`, tmpfs `/tmp`, `no-new-privileges`, `--cap-drop=all`).
-2. [ ] Introduce scoped env files to reduce secret sprawl (deferred by operator choice; shared `deploy/.env` retained for now).
+2. [ ] Introduce scoped env files to reduce secret sprawl (deferred by operator choice; shared `.env` retained for now).
 3. [x] Add an operations check script for post-deploy health verification (`scripts/status.sh`).
 4. [x] Document recurring backup-restore drill cadence and pass/fail criteria in operations runbook.
 5. [x] Document degraded-mode recovery sequencing in operations troubleshooting runbook.

@@ -3,7 +3,7 @@
 ![License](https://img.shields.io/badge/license-CC_BY--NC--SA_4.0-lightgrey?style=flat-square)
 ![Doc Type](https://img.shields.io/badge/doc-operations-orange?style=flat-square)
 ![Status](https://img.shields.io/badge/status-stable-brightgreen?style=flat-square)
-![Updated](https://img.shields.io/badge/updated-2026--03--05-informational?style=flat-square)
+![Updated](https://img.shields.io/badge/updated-2026--04--14-informational?style=flat-square)
 
 ---
 
