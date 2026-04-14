@@ -31,7 +31,7 @@ PROJECT_UNIT_FILES=(
 
 PROJECT_CONTAINERS=(beprepared-db beprepared-api beprepared-worker beprepared-frontend)
 PROJECT_IMAGES=(beprepared-api:latest beprepared-worker:latest beprepared-frontend:latest)
-PROJECT_VOLUMES=(beprepared-db)
+PROJECT_VOLUMES=(systemd-beprepared-db)
 
 # ---- Parse args ----
 for arg in "$@"; do
@@ -44,7 +44,7 @@ for arg in "$@"; do
       echo ""
       echo "Options:"
       echo "  --yes             Skip all confirmation prompts (non-interactive)"
-      echo "  --remove-volumes  Also delete the beprepared-db Podman volume (DATA LOSS)"
+      echo "  --remove-volumes  Also delete the systemd-beprepared-db Podman volume (DATA LOSS)"
       echo "  --remove-images   Also remove local beprepared container images"
       echo "  -h, --help        Show this help message"
       exit 0
@@ -127,7 +127,7 @@ if [[ "$REMOVE_VOLUMES" == "true" ]]; then
     podman volume rm -f "$volume" >/dev/null 2>&1 && echo "    removed: $volume" || echo "    (not found: $volume)"
   done
 else
-  echo "==> Volume 'beprepared-db' kept.  Pass --remove-volumes to delete (DATA LOSS)."
+  echo "==> Volume 'systemd-beprepared-db' kept.  Pass --remove-volumes to delete (DATA LOSS)."
 fi
 
 # ---- Optionally remove images ----
