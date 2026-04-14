@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { setActiveHouseholdId } from "@/lib/api";
 
 const ACTIVE_HOUSEHOLD_COOKIE = "bp_active_household_id";
 
@@ -82,6 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     localStorage.setItem(TOKEN_KEY, data.token);
     localStorage.setItem(USER_KEY, JSON.stringify(user));
+    setActiveHouseholdId(user.householdId);
     setState({ status: "authenticated", user, token: data.token });
   }
 

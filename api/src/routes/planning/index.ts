@@ -9,7 +9,13 @@ export const planningRoute = new Elysia({ prefix: "/planning", tags: ["planning"
     if (!claims) return { error: "Forbidden" };
 
     const manualPeople = query.people;
-    return resolvePlanningTotals(params.householdId, params.scenario, manualPeople);
+    try {
+      return await resolvePlanningTotals(params.householdId, params.scenario, manualPeople);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Internal error";
+      set.status = msg.toLowerCase().includes("not found") ? 404 : 500;
+      return { error: msg };
+    }
   },
   {
     params: t.Object({
