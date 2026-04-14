@@ -131,6 +131,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Download blob reports
+        id: download-blobs
         uses: actions/download-artifact@v4
         with:
           pattern: blob-report-*
@@ -138,9 +139,11 @@ jobs:
           merge-multiple: true
 
       - name: Merge Playwright reports
+        if: steps.download-blobs.outputs.download-path != ''
         run: bun run test:e2e:merge
 
       - name: Upload merged Playwright report
+        if: steps.download-blobs.outputs.download-path != ''
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
