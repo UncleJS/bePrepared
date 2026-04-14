@@ -14,7 +14,7 @@ COPY e2e/package.json ./e2e/
 # Copy frontend source
 COPY frontend/vite.config.ts      ./frontend/
 COPY frontend/tsconfig.json       ./frontend/
-COPY frontend/postcss.config.mjs  ./frontend/
+COPY frontend/postcss.config.js   ./frontend/
 COPY frontend/tailwind.config.ts  ./frontend/
 COPY frontend/index.html          ./frontend/
 COPY frontend/serve.ts            ./frontend/
