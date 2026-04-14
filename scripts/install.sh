@@ -98,11 +98,24 @@ fi
 # ── Build images ──────────────────────────────────────────────────────────────
 # Build all three prod container images. The build context is always the repo
 # root so COPY directives in the Containerfiles resolve correctly.
+#
+# VITE_API_URL must be passed as a build-arg so Vite bakes the correct API
+# origin into the JS bundle at image build time.  We read it from .env (with a
+# safe default of http://localhost:9995) so the value always matches whatever
+# the operator has configured.
+
+VITE_API_URL="$(grep '^VITE_API_URL=' "$ENV_FILE" | cut -d= -f2- || true)"
+VITE_API_URL="${VITE_API_URL:-http://localhost:9995}"
+echo "==> VITE_API_URL=$VITE_API_URL (baked into frontend bundle)"
 
 echo "==> Building container images..."
 podman build -f "$DEPLOY_DIR/Containerfile.api"      -t beprepared-api:latest      "$PROJECT_ROOT"
 podman build -f "$DEPLOY_DIR/Containerfile.worker"   -t beprepared-worker:latest   "$PROJECT_ROOT"
-podman build -f "$DEPLOY_DIR/Containerfile.frontend" -t beprepared-frontend:latest "$PROJECT_ROOT"
+podman build \
+  --build-arg "VITE_API_URL=$VITE_API_URL" \
+  -f "$DEPLOY_DIR/Containerfile.frontend" \
+  -t beprepared-frontend:latest \
+  "$PROJECT_ROOT"
 echo "==> Images built."
 
 # ── Quadlet sync ──────────────────────────────────────────────────────────────
@@ -137,9 +150,9 @@ systemctl --user start beprepared-pod beprepared-db beprepared-api beprepared-wo
 # app DB and app user, so migrations would fail immediately on a fresh start.
 
 echo "==> Waiting for MariaDB to initialise (up to 120s)..."
-DB_USER="$(grep '^DB_USER=' "$ENV_FILE" | cut -d= -f2-)"
-DB_PASSWORD="$(grep '^DB_PASSWORD=' "$ENV_FILE" | cut -d= -f2-)"
-DB_NAME="$(grep '^DB_NAME=' "$ENV_FILE" | cut -d= -f2-)"
+DB_USER="$(grep '^DB_USER=' "$ENV_FILE" | cut -d= -f2- || true)"
+DB_PASSWORD="$(grep '^DB_PASSWORD=' "$ENV_FILE" | cut -d= -f2- || true)"
+DB_NAME="$(grep '^DB_NAME=' "$ENV_FILE" | cut -d= -f2- || true)"
 for i in $(seq 1 120); do
   if podman exec beprepared-db mariadb -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" \
        -e "SELECT 1;" 2>/dev/null | grep -q 1; then

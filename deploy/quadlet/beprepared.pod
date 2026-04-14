@@ -5,6 +5,8 @@
 PodName=beprepared
 # Publish frontend port to the host
 PublishPort=9999:9999
+# Publish API port to the host (browser-visible; VITE_API_URL is baked to this address)
+PublishPort=9995:9995
 
 [Service]
 ExecStartPre=/bin/sleep 60

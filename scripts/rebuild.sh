@@ -45,6 +45,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 DEPLOY_DIR="$PROJECT_ROOT/deploy"
+ENV_FILE="$PROJECT_ROOT/.env"
 
 VALID_SERVICES=(api worker frontend)
 
@@ -89,13 +90,28 @@ echo ""
 # For each target: build the image from its Containerfile, then immediately
 # restart the corresponding systemd unit so the new image is used. The loop
 # runs sequentially so build logs from different services don't interleave.
+#
+# The frontend build requires VITE_API_URL as a build-arg so Vite bakes the
+# correct API origin into the JS bundle.  Read it from .env when rebuilding
+# the frontend; fall back to the prod default if the key is not set.
 
 for svc in "${TARGETS[@]}"; do
   echo "==> Building image: beprepared-${svc}:latest..."
-  podman build \
-    -f "$DEPLOY_DIR/Containerfile.${svc}" \
-    -t "beprepared-${svc}:latest" \
-    "$PROJECT_ROOT"
+  if [[ "$svc" == "frontend" ]]; then
+    VITE_API_URL="$(grep '^VITE_API_URL=' "$ENV_FILE" 2>/dev/null | cut -d= -f2- || true)"
+    VITE_API_URL="${VITE_API_URL:-http://localhost:9995}"
+    echo "    VITE_API_URL=$VITE_API_URL (baked into bundle)"
+    podman build \
+      --build-arg "VITE_API_URL=$VITE_API_URL" \
+      -f "$DEPLOY_DIR/Containerfile.${svc}" \
+      -t "beprepared-${svc}:latest" \
+      "$PROJECT_ROOT"
+  else
+    podman build \
+      -f "$DEPLOY_DIR/Containerfile.${svc}" \
+      -t "beprepared-${svc}:latest" \
+      "$PROJECT_ROOT"
+  fi
   echo "==> Image built: beprepared-${svc}:latest"
 
   echo "==> Restarting service: beprepared-${svc}..."
