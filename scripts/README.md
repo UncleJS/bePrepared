@@ -127,12 +127,12 @@ All scripts accept `-h` / `--help`.
 
 ### Options
 
-| Option             | Description                                                                                                     |
-| ------------------ | --------------------------------------------------------------------------------------------------------------- |
-| `--yes`            | Skip interactive prompts (non-interactive / CI). Does **not** delete volumes — use `--remove-volumes` for that. |
-| `--remove-volumes` | Delete the `systemd-beprepared-db` Podman volume — **destroys all database data**                               |
-| `--remove-images`  | Remove local `beprepared-*:latest` container images                                                             |
-| `-h, --help`       | Show help and exit                                                                                              |
+| Option             | Description                                                                                                                                            |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--yes`            | Skip interactive prompts (non-interactive / CI). Does **not** delete volumes — use `--remove-volumes` for that.                                        |
+| `--remove-volumes` | Delete all bePrepared Podman volumes (`systemd-beprepared-db`, `systemd-beprepared-dev`, `systemd-beprepared-dev-db`) — **destroys all database data** |
+| `--remove-images`  | Remove local `beprepared-*:latest` container images                                                                                                    |
+| `-h, --help`       | Show help and exit                                                                                                                                     |
 
 ### Examples
 

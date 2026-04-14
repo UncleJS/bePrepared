@@ -12,26 +12,52 @@ REMOVE_VOLUMES=false
 REMOVE_IMAGES=false
 
 PROJECT_UNITS=(
+  # prod
   beprepared-pod
   beprepared-db
   beprepared-api
   beprepared-worker
   beprepared-frontend
   beprepared-db-volume
+  # dev
+  beprepared-dev-pod
+  beprepared-dev
+  beprepared-dev-db
+  beprepared-dev-db-volume
+  beprepared-dev-volume
 )
 
 PROJECT_UNIT_FILES=(
+  # prod
   beprepared.pod
   beprepared-db.container
   beprepared-api.container
   beprepared-worker.container
   beprepared-frontend.container
   beprepared-db.volume
+  # dev
+  beprepared-dev-pod.pod
+  beprepared-dev.container
+  beprepared-dev-db.container
+  beprepared-dev-db.volume
+  beprepared-dev.volume
 )
 
-PROJECT_CONTAINERS=(beprepared-db beprepared-api beprepared-worker beprepared-frontend)
-PROJECT_IMAGES=(beprepared-api:latest beprepared-worker:latest beprepared-frontend:latest)
-PROJECT_VOLUMES=(systemd-beprepared-db)
+PROJECT_CONTAINERS=(
+  beprepared-db beprepared-api beprepared-worker beprepared-frontend
+  beprepared-dev beprepared-dev-db
+)
+PROJECT_IMAGES=(
+  localhost/beprepared-api:latest
+  localhost/beprepared-worker:latest
+  localhost/beprepared-frontend:latest
+  localhost/beprepared-dev:latest
+)
+PROJECT_VOLUMES=(
+  systemd-beprepared-db
+  systemd-beprepared-dev
+  systemd-beprepared-dev-db
+)
 
 # ---- Parse args ----
 for arg in "$@"; do
@@ -44,7 +70,8 @@ for arg in "$@"; do
       echo ""
       echo "Options:"
       echo "  --yes             Skip all confirmation prompts (non-interactive)"
-      echo "  --remove-volumes  Also delete the systemd-beprepared-db Podman volume (DATA LOSS)"
+      echo "  --remove-volumes  Also delete all bePrepared Podman volumes (DATA LOSS)"
+      echo "                    (systemd-beprepared-db, systemd-beprepared-dev, systemd-beprepared-dev-db)"
       echo "  --remove-images   Also remove local beprepared container images"
       echo "  -h, --help        Show this help message"
       exit 0
@@ -83,6 +110,7 @@ disable_units() {
 remove_runtime() {
   echo "==> Removing Podman runtime artifacts..."
   podman pod rm -f beprepared >/dev/null 2>&1 || true
+  podman pod rm -f beprepared-dev >/dev/null 2>&1 || true
   for container in "${PROJECT_CONTAINERS[@]}"; do
     podman rm -f "$container" >/dev/null 2>&1 || true
   done
@@ -127,7 +155,7 @@ if [[ "$REMOVE_VOLUMES" == "true" ]]; then
     podman volume rm -f "$volume" >/dev/null 2>&1 && echo "    removed: $volume" || echo "    (not found: $volume)"
   done
 else
-  echo "==> Volume 'systemd-beprepared-db' kept.  Pass --remove-volumes to delete (DATA LOSS)."
+  echo "==> Volumes kept (systemd-beprepared-db, systemd-beprepared-dev, systemd-beprepared-dev-db).  Pass --remove-volumes to delete (DATA LOSS)."
 fi
 
 # ---- Optionally remove images ----
