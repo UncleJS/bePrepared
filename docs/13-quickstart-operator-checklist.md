@@ -58,7 +58,7 @@ cd ../frontend
 bun run dev
 ```
 
-Open http://localhost:9999 — UI and API docs proxy at http://localhost:9999/api/bff/docs (after login).
+Open http://localhost:9997 — UI and API docs at http://localhost:9996/docs (dev).
 
 ---
 
@@ -71,7 +71,7 @@ Open http://localhost:9999 — UI and API docs proxy at http://localhost:9999/ap
 - [ ] Podman ≥ 4.8 installed (`podman --version`)
 - [ ] `loginctl enable-linger $USER` run (boot persistence)
 - [ ] `~/.config/containers/systemd/` directory exists
-- [ ] `deploy/.env` created from `.env.example` and filled in
+- [ ] `.env` created from `.env.example` and filled in
 - [ ] Strong passwords set for `DB_ROOT_PASSWORD` and `DB_PASSWORD`
 - [ ] `~/bePrepared/data/mariadb/` directory created for volume mount
 
@@ -93,9 +93,9 @@ Open http://localhost:9999 — UI and API docs proxy at http://localhost:9999/ap
 ### Verify
 
 - [ ] `systemctl --user status beprepared-api` shows `active (running)`
-- [ ] `curl http://localhost:9999` returns HTML (frontend)
-- [ ] Swagger UI accessible at http://localhost:9999/api/bff/docs
-- [ ] API health check from inside API container succeeds (`podman exec beprepared-api curl -s http://localhost:3001/health`)
+- [ ] `curl http://localhost:9999` returns HTML (frontend SPA)
+- [ ] Swagger UI accessible at http://localhost:9995/docs
+- [ ] API health check from inside API container succeeds (`podman exec beprepared-api curl -s http://localhost:9995/health`)
 - [ ] Worker logs show at least one successful alert-check run
 
 ### Enable auto-start
@@ -108,7 +108,7 @@ Open http://localhost:9999 — UI and API docs proxy at http://localhost:9999/ap
 
 [↑ TOC](#table-of-contents)
 
-After deploy, follow these steps in the UI (or via Swagger at `/api/bff/docs` through the frontend proxy):
+After deploy, follow these steps in the UI (or via Swagger at `http://localhost:9995/docs` directly):
 
 ### Step 1 — Create your household
 
@@ -154,7 +154,7 @@ After deploy, follow these steps in the UI (or via Swagger at `/api/bff/docs` th
 
 ### Step 7 — Review the alert queue
 
-- Alerts auto-generate hourly
+- Alerts auto-generate every 15 minutes by default
 - Check and resolve any seeded or generated alerts
 
 ---
@@ -170,8 +170,8 @@ systemctl --user is-active beprepared-api beprepared-worker beprepared-frontend
 # Any service errors in last 24h?
 journalctl --user -u 'beprepared*' --since "24 hours ago" -p err
 
-# API reachable through frontend proxy?
-curl -s http://localhost:9999/api/bff/health | jq .
+# API reachable?
+curl -s http://localhost:9995/health | jq .
 ```
 
 In the UI:
@@ -219,15 +219,14 @@ In the UI:
 
 [↑ TOC](#table-of-contents)
 
-| Problem                 | Quick fix                                                           |
-| ----------------------- | ------------------------------------------------------------------- | ---------- |
-| API not responding      | `systemctl --user restart beprepared-api`                           |
-| No alerts generating    | `systemctl --user restart beprepared-worker`                        |
-| Frontend shows blank    | `systemctl --user restart beprepared-frontend`                      |
-| DB connection refused   | `systemctl --user status beprepared-db` — check logs for init state |
-| Port 9999 taken         | Check `.env` for `FRONTEND_PORT` or use `ss -tlnp                   | grep 9999` |
-| Migrations fail         | Check `DATABASE_URL` in `.env`; ensure DB is up first               |
-| Old image still running | Rebuild image then `systemctl --user restart <service>`             |
+| Problem               | Quick fix                                                           |
+| --------------------- | ------------------------------------------------------------------- | ---------- | ----------------------- | ------------------------------------------------------- |
+| API not responding    | `systemctl --user restart beprepared-api`                           |
+| No alerts generating  | `systemctl --user restart beprepared-worker`                        |
+| Frontend shows blank  | `systemctl --user restart beprepared-frontend`                      |
+| DB connection refused | `systemctl --user status beprepared-db` — check logs for init state |
+| Port 9999 taken       | Check `.env` for `FRONTEND_PORT` or use `ss -tlnp                   | grep 9999` |
+| Migrations fail       | Check `DATABASE_URL` in `.env`; ensure DB is up first               |            | Old image still running | Rebuild image then `systemctl --user restart <service>` |
 
 Full troubleshooting guide: `docs/11-operations-podman.md` Section 10.
 
@@ -248,19 +247,23 @@ systemctl --user status 'beprepared*' --no-pager
 journalctl --user -u 'beprepared*' -f
 
 # Count active alerts via API
-curl -s "http://localhost:9999/api/bff/alerts/${HOUSEHOLD_ID}" | jq length
+curl -s "http://localhost:9995/alerts/${HOUSEHOLD_ID}" \
+  -H "Authorization: Bearer <your-jwt>" | jq length
 
 # Get current planning totals (shelter_in_place, 4 people)
-curl -s "http://localhost:9999/api/bff/planning/${HOUSEHOLD_ID}/shelter_in_place?people=4" | jq .
+curl -s "http://localhost:9995/planning/${HOUSEHOLD_ID}/shelter_in_place?people=4" \
+  -H "Authorization: Bearer <your-jwt>" | jq .
 
 # Get lots expiring in 90 days
-curl -s "http://localhost:9999/api/bff/inventory/${HOUSEHOLD_ID}/expiring?days=90" | jq length
+curl -s "http://localhost:9995/inventory/${HOUSEHOLD_ID}/expiring?days=90" \
+  -H "Authorization: Bearer <your-jwt>" | jq length
 
 # List due maintenance tasks
-curl -s "http://localhost:9999/api/bff/maintenance/${HOUSEHOLD_ID}/due?days=30" | jq .
+curl -s "http://localhost:9995/maintenance/${HOUSEHOLD_ID}/due?days=30" \
+  -H "Authorization: Bearer <your-jwt>" | jq .
 
 # Open Swagger in browser (Linux)
-xdg-open http://localhost:9999/api/bff/docs
+xdg-open http://localhost:9995/docs
 
 # Quick DB row count check
 podman exec beprepared-db mariadb \

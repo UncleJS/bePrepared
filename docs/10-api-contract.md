@@ -29,9 +29,9 @@
 
 [↑ TOC](#table-of-contents)
 
-- **Base URL**: browser access is typically via frontend BFF proxy `http://localhost:9999/api/bff`; API listens internally on `http://localhost:3001`
-- **Interactive docs**: `GET /docs` (or via frontend proxy `GET /api/bff/docs`) — Swagger UI (`Try it out` disabled in production)
-- **Machine-readable spec**: `GET /docs/json` (or via frontend proxy `GET /api/bff/docs/json`) — OpenAPI 3.0 JSON
+- **Base URL**: `http://localhost:9996` (dev) / `http://localhost:9995` (prod) — the frontend SPA calls the API directly; there is no BFF proxy
+- **Interactive docs**: `GET /docs` — Swagger UI (`Try it out` disabled in production)
+- **Machine-readable spec**: `GET /docs/json` — OpenAPI 3.0 JSON
 - **Content-Type**: `application/json` for all request bodies
 - **Timestamps**: ISO-8601 UTC strings (`2026-03-05T14:30:00.000Z`) — dates are `YYYY-MM-DD`
 - **Deletion**: all `DELETE` endpoints are soft-archive — row is kept with `archived_at` set

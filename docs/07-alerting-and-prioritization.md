@@ -190,15 +190,15 @@ Step 5: Re-check dashboard — confirm unresolved counts trend down
 
 ## 9. Alert Settings
 
-| Setting             | Location                                            | Default          |
-| ------------------- | --------------------------------------------------- | ---------------- |
-| Upcoming lead time  | Settings → Planning Targets → `alert_upcoming_days` | 14 days          |
-| Worker run interval | Environment variable `WORKER_INTERVAL_MS`           | 3600000 (1 hour) |
+| Setting             | Location                                            | Default             |
+| ------------------- | --------------------------------------------------- | ------------------- |
+| Upcoming lead time  | Settings → Planning Targets → `alert_upcoming_days` | 14 days             |
+| Worker run interval | Environment variable `WORKER_INTERVAL_MS`           | 900000 (15 minutes) |
 
 **Recommended production settings:**
 
 - `alert_upcoming_days`: 14-30 days based on household cadence
-- Worker interval: 3600000 (1 hour) is sufficient for daily alerting
+- Worker interval: 900000 (15 minutes) is the default; increase to `3600000` (1 hour) if alerting frequency is less critical
 
 [↑ Go to TOC](#table-of-contents)
 

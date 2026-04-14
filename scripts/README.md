@@ -28,12 +28,12 @@ For full operational context — Quadlet unit files, backup/restore procedures, 
 
 [↑ TOC](#table-of-contents)
 
-| Requirement             | Notes                                                  |
-| ----------------------- | ------------------------------------------------------ |
-| Podman ≥ 4.8 (rootless) | `podman --version`                                     |
-| systemd user session    | `loginctl enable-linger $USER` for boot persistence    |
-| `deploy/.env` file      | Copy from `deploy/.env.example` and fill in all values |
-| Quadlet directory       | Created automatically by `install.sh` if missing       |
+| Requirement             | Notes                                               |
+| ----------------------- | --------------------------------------------------- |
+| Podman ≥ 4.8 (rootless) | `podman --version`                                  |
+| systemd user session    | `loginctl enable-linger $USER` for boot persistence |
+| `.env` file             | Copy from `.env.example` and fill in all values     |
+| Quadlet directory       | Created automatically by `install.sh` if missing    |
 
 ```bash
 # Verify Podman
@@ -43,8 +43,8 @@ podman --version
 loginctl enable-linger $USER
 
 # Copy and edit the environment file before running install
-cp deploy/.env.example deploy/.env
-$EDITOR deploy/.env
+cp .env.example .env
+$EDITOR .env
 ```
 
 ---

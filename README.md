@@ -23,7 +23,7 @@
 
 bePrepared is a household preparedness platform with:
 
-- `frontend/`: Next.js application
+- `frontend/`: Vite + React Router SPA
 - `api/`: Elysia + Drizzle backend
 - `worker/`: scheduled alert processing worker
 - `deploy/`: Podman/Quadlet deployment assets
@@ -54,22 +54,22 @@ All ports live in the range **9980–9999** so dev and prod can run simultaneous
 
 ### Dev
 
-| Service            | Port                       |
-| ------------------ | -------------------------- |
-| Frontend (Next.js) | 9997                       |
-| API (Elysia)       | 9996                       |
-| API Swagger docs   | http://localhost:9996/docs |
-| MariaDB (internal) | 3306                       |
+| Service                 | Port                       |
+| ----------------------- | -------------------------- |
+| Frontend (Vite + React) | 9997                       |
+| API (Elysia)            | 9996                       |
+| API Swagger docs        | http://localhost:9996/docs |
+| MariaDB (internal)      | 3306                       |
 
 ### Prod
 
-| Service            | Port                       |
-| ------------------ | -------------------------- |
-| Frontend (Next.js) | 9999                       |
-| API (Elysia)       | 9995                       |
-| API Swagger docs   | http://localhost:9995/docs |
-| phpMyAdmin         | 9998                       |
-| MariaDB (internal) | 3306                       |
+| Service                 | Port                       |
+| ----------------------- | -------------------------- |
+| Frontend (Vite + React) | 9999                       |
+| API (Elysia)            | 9995                       |
+| API Swagger docs        | http://localhost:9995/docs |
+| phpMyAdmin              | 9998                       |
+| MariaDB (internal)      | 3306                       |
 
 ---
 

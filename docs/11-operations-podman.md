@@ -53,8 +53,8 @@ mkdir -p ~/.config/containers/systemd
 cd ~/bePrepared
 
 # 2. Copy and edit secrets
-cp deploy/.env.example deploy/.env
-# Edit deploy/.env — set DB password, ports, AUTH_SECRET, etc.
+cp .env.example .env
+# Edit .env — set DB password, ports, AUTH_SECRET, etc.
 
 # 3. Run the install script (handles steps 3–6 automatically)
 ./scripts/install.sh
@@ -113,7 +113,7 @@ After=beprepared-pod.service
 Image=docker.io/library/mariadb:11
 Pod=beprepared.pod
 ContainerName=beprepared-db
-EnvironmentFile=%h/0_opencode/bePrepared/deploy/.env
+EnvironmentFile=%h/0_opencode/bePrepared/.env
 Volume=%h/0_opencode/bePrepared/data/mariadb:/var/lib/mysql:Z
 Environment=MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
 Environment=MARIADB_DATABASE=${DB_NAME}
@@ -138,7 +138,7 @@ After=beprepared-db.container
 Image=localhost/beprepared-api:latest
 Pod=beprepared.pod
 ContainerName=beprepared-api
-EnvironmentFile=%h/0_opencode/bePrepared/deploy/.env
+EnvironmentFile=%h/0_opencode/bePrepared/.env
 
 [Service]
 Restart=on-failure
@@ -151,14 +151,14 @@ WantedBy=beprepared-pod.service
 
 ```ini
 [Unit]
-Description=bePrepared Worker (hourly scheduler)
+Description=bePrepared Worker (15 min scheduler)
 After=beprepared-api.container
 
 [Container]
 Image=localhost/beprepared-worker:latest
 Pod=beprepared.pod
 ContainerName=beprepared-worker
-EnvironmentFile=%h/0_opencode/bePrepared/deploy/.env
+EnvironmentFile=%h/0_opencode/bePrepared/.env
 PodmanArgs=--read-only
 PodmanArgs=--tmpfs=/tmp:rw,nosuid,nodev,noexec,size=64m
 PodmanArgs=--security-opt=no-new-privileges
@@ -182,7 +182,7 @@ After=beprepared-api.container
 Image=localhost/beprepared-frontend:latest
 Pod=beprepared.pod
 ContainerName=beprepared-frontend
-EnvironmentFile=%h/0_opencode/bePrepared/deploy/.env
+EnvironmentFile=%h/0_opencode/bePrepared/.env
 PodmanArgs=--read-only
 PodmanArgs=--tmpfs=/tmp:rw,nosuid,nodev,noexec,size=64m
 PodmanArgs=--security-opt=no-new-privileges
@@ -426,7 +426,7 @@ Record for each drill:
 
 [↑ TOC](#table-of-contents)
 
-Copy `deploy/.env.example` to `deploy/.env` and fill in values.
+Copy `.env.example` to `.env` and fill in values.
 
 | Variable                             | Required | Default                 | Notes                                                    |
 | ------------------------------------ | -------- | ----------------------- | -------------------------------------------------------- |
@@ -437,14 +437,13 @@ Copy `deploy/.env.example` to `deploy/.env` and fill in values.
 | `DB_PASSWORD`                        | yes      | —                       |                                                          |
 | `DB_ROOT_PASSWORD`                   | yes      | —                       | MariaDB container only                                   |
 | `DATABASE_URL`                       | yes      | —                       | `mysql://user:pass@host:3306/dbname`                     |
-| `PORT`                               | no       | `3001`                  | API listen port (internal)                               |
-| `NEXT_PUBLIC_API_URL`                | yes      | `http://localhost:3001` | Browser API base URL (`/api` rewrite in frontend proxy)  |
+| `PORT`                               | no       | `9995`                  | API listen port (internal)                               |
+| `VITE_API_URL`                       | yes      | `http://localhost:9995` | Browser API base URL (used by the Vite SPA at runtime)   |
 | `CORS_ORIGINS`                       | yes      | `http://localhost:9999` | Comma-separated allowed browser origins                  |
 | `ALLOW_LOCALHOST_CORS_IN_PRODUCTION` | no       | `false`                 | Production guard override for localhost origins          |
 | `AUTH_SECRET`                        | yes      | —                       | Random secret for JWT signing; `openssl rand -base64 32` |
 | `AUTH_ENABLED`                       | no       | `true`                  | Set `false` only for local dev (never in production)     |
-| `NEXTAUTH_URL`                       | yes      | `http://localhost:9999` | Public base URL of the frontend (used by NextAuth)       |
-| `WORKER_INTERVAL_MS`                 | no       | `3600000`               | Alert worker run interval in ms (default = 1 hour)       |
+| `WORKER_INTERVAL_MS`                 | no       | `900000`                | Alert worker run interval in ms (default = 15 minutes)   |
 | `NODE_ENV`                           | no       | `production`            |                                                          |
 
 ---
@@ -498,7 +497,7 @@ systemctl --user restart beprepared-api
 ```bash
 # Find conflicting process
 ss -tlnp | grep 9999
-# Edit deploy/.env to change the published port, then reload
+# Edit .env to change the published port, then reload
 systemctl --user daemon-reload && systemctl --user restart beprepared-pod
 ```
 
@@ -517,7 +516,7 @@ systemctl --user status beprepared-pod
 ```bash
 # Check worker logs
 journalctl --user -u beprepared-worker -n 50
-# Worker runs at startup then every 1h — restart to trigger immediately
+# Worker runs at startup then every 15 minutes by default — restart to trigger immediately
 systemctl --user restart beprepared-worker
 ```
 

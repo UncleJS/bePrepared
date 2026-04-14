@@ -27,11 +27,11 @@
 
 **bePrepared** is a three-process web platform deployed as a single rootless Podman pod:
 
-| Process    | Stack                           | Role                                                        |
-| ---------- | ------------------------------- | ----------------------------------------------------------- |
-| `frontend` | Next.js 15, Tailwind, shadcn/ui | User interface — ticksheets, dashboard, inventory, settings |
-| `api`      | Bun + Elysia, Drizzle ORM       | REST API, OpenAPI/Swagger at `/docs`                        |
-| `worker`   | Bun (cron)                      | Hourly alert generation — expiry, replacement, maintenance  |
+| Process    | Stack                                   | Role                                                             |
+| ---------- | --------------------------------------- | ---------------------------------------------------------------- |
+| `frontend` | Vite + React, React Router v6, Tailwind | User interface — ticksheets, dashboard, inventory, settings      |
+| `api`      | Bun + Elysia, Drizzle ORM               | REST API, OpenAPI/Swagger at `/docs`                             |
+| `worker`   | Bun (setInterval)                       | Alert generation every 15 min — expiry, replacement, maintenance |
 
 All three share a single MariaDB database. No direct DB access from the frontend — everything goes through the API.
 
@@ -44,13 +44,15 @@ All three share a single MariaDB database. No direct DB access from the frontend
 ```
 bePrepared/
 ├── package.json            # root — bun workspaces: ["frontend","api","worker"]
-├── frontend/               # Next.js app
+├── frontend/               # Vite + React Router SPA
 │   ├── package.json
-│   ├── next.config.ts
+│   ├── vite.config.ts
 │   ├── tailwind.config.ts
 │   └── src/
-│       ├── app/            # App Router pages and layouts
-│       ├── components/     # shadcn/ui + custom components
+│       ├── pages/          # Route page components
+│       ├── components/     # Shared UI components
+│       ├── contexts/       # React contexts (AuthContext, etc.)
+│       ├── router.tsx      # React Router v6 route definitions
 │       └── lib/            # API client, utils
 ├── api/                    # Elysia REST API
 │   ├── package.json
@@ -65,7 +67,7 @@ bePrepared/
 │       ├── lib/
 │       │   └── policyEngine.ts  # three-tier policy + four-tier people resolution
 │       └── routes/         # Elysia route groups (one dir per resource)
-├── worker/                 # Hourly background scheduler
+├── worker/                 # Background scheduler (15 min interval by default)
 │   ├── package.json
 │   └── src/index.ts
 ├── deploy/                 # Podman / Quadlet deployment artefacts
@@ -96,16 +98,16 @@ bePrepared/
 ┌─────────────────────────────────────────────────────────┐
 │                     Podman Pod: beprepared               │
 │                                                         │
-│  ┌──────────────┐   HTTP (9999)   ┌──────────────────┐  │
+│  ┌──────────────┐   HTTP (9995)   ┌──────────────────┐  │
 │  │  frontend    │────────────────▶│     api           │  │
-│  │  Next.js     │ /api/bff/* proxy│  Bun + Elysia    │  │
-│  │  :9999       │                 │  :3001            │  │
-│  └──────────────┘                 │  /docs (Swagger)  │  │
+│  │ Vite + React │  direct API     │  Bun + Elysia    │  │
+│  │  :9999       │  calls via      │  :9995            │  │
+│  └──────────────┘  VITE_API_URL   │  /docs (Swagger)  │  │
 │                                   └────────┬─────────┘  │
 │                                            │             │
 │  ┌──────────────┐                          │ Drizzle     │
 │  │  worker      │──────────────────────────┤             │
-│  │  Bun cron    │    direct DB writes      │             │
+│  │  Bun/15 min  │    direct DB writes      │             │
 │  │  (no port)   │                          │             │
 │  └──────────────┘                 ┌────────▼─────────┐  │
 │                                   │   MariaDB :3306   │  │
@@ -114,7 +116,7 @@ bePrepared/
         Exposed: :9999 (frontend)
 ```
 
-The `api` and `worker` both connect directly to MariaDB via `mysql2` pool. The `frontend` only speaks to the `api` over HTTP.
+The `api` and `worker` both connect directly to MariaDB via `mysql2` pool. The `frontend` SPA calls the `api` directly over HTTP using `VITE_API_URL` (no BFF proxy — the frontend is a pure client-side SPA).
 
 ---
 
@@ -125,13 +127,10 @@ The `api` and `worker` both connect directly to MariaDB via `mysql2` pool. The `
 ### Typical UI → API → DB flow
 
 ```
-Browser
+Browser (Vite SPA)
   │
-  │  GET /api/bff/planning/:householdId/shelter_in_place
-  ▼
-Next.js Route Handler (rewrite proxy)
-  │
-  │  GET http://api:3001/planning/:householdId/shelter_in_place
+  │  GET http://api:9995/planning/:householdId/shelter_in_place
+  │  Authorization: Bearer <jwt>    (stored in localStorage by AuthContext)
   ▼
 Elysia planningRoute
   │
@@ -141,13 +140,13 @@ policyEngine.ts
   │  SELECT scenario_policies → household_policies → policy_defaults
   │  SELECT household.target_people + profiles
   ▼
-JSON response  →  Next.js  →  Browser render
+JSON response  →  Browser render (React)
 ```
 
 ### Worker alert generation flow
 
 ```
-Worker (every ~1 hour)
+Worker (every ~15 minutes by default)
   │
   ├── checkExpiryAlerts()
   │     SELECT inventory_lots WHERE expires_at < now() + alert_upcoming_days
@@ -209,7 +208,7 @@ Supported policy keys:
 
 [↑ TOC](#table-of-contents)
 
-`worker/src/index.ts` runs on startup and then on a 1-hour interval (using `setInterval`). It:
+`worker/src/index.ts` runs on startup and then on a configurable interval (default: 15 minutes via `WORKER_INTERVAL_MS=900000`, using `setInterval`). It:
 
 - Queries all active households
 - For each household, checks inventory expiry, lot replacement due, and maintenance due
@@ -257,7 +256,7 @@ systemctl --user status beprepared-api
 journalctl --user -u beprepared-api -f
 ```
 
-Only **port 9999** (frontend) is published to the host. The API (3001) and DB (3306) are internal to the pod network.
+Only **port 9999** (frontend) is published to the host. The API (9995) and DB (3306) are internal to the pod network.
 
 See `docs/11-operations-podman.md` for full operational runbook.
 
@@ -267,18 +266,18 @@ See `docs/11-operations-podman.md` for full operational runbook.
 
 [↑ TOC](#table-of-contents)
 
-| Decision          | Choice                       | Rationale                                                                      |
-| ----------------- | ---------------------------- | ------------------------------------------------------------------------------ |
-| Runtime           | Bun                          | Fast startup, native TypeScript, built-in test runner                          |
-| API framework     | Elysia                       | Native Bun, type-safe, built-in Swagger plugin                                 |
-| ORM               | Drizzle                      | Type-safe, no magic, SQL-close, drizzle-kit migrations                         |
-| DB                | MariaDB                      | Open-source, battle-tested, Drizzle support, simple for self-hosting           |
-| Deletion policy   | Archive-only                 | Audit trail, accidental-delete safety, restore flows                           |
-| Auth              | NextAuth + API bearer tokens | Credentials login at `/auth/login`; household/admin scope checks on API routes |
-| Container runtime | Podman rootless              | No root daemon, systemd-native, RHEL 10 compatible                             |
-| Frontend          | Next.js App Router           | File-based routing, RSC, strong ecosystem                                      |
-| ID type           | UUID v4 string               | No integer sequence leakage, safe for future federation                        |
-| Timestamps        | UTC in DB, ISO-8601 on wire  | Portable, unambiguous, display-locale handled in UI                            |
+| Decision          | Choice                                                | Rationale                                                                                            |
+| ----------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Runtime           | Bun                                                   | Fast startup, native TypeScript, built-in test runner                                                |
+| API framework     | Elysia                                                | Native Bun, type-safe, built-in Swagger plugin                                                       |
+| ORM               | Drizzle                                               | Type-safe, no magic, SQL-close, drizzle-kit migrations                                               |
+| DB                | MariaDB                                               | Open-source, battle-tested, Drizzle support, simple for self-hosting                                 |
+| Deletion policy   | Archive-only                                          | Audit trail, accidental-delete safety, restore flows                                                 |
+| Auth              | Custom AuthContext + localStorage JWT + Bearer tokens | Credentials login at `/auth/login`; JWT stored client-side; Bearer token on all private API requests |
+| Container runtime | Podman rootless                                       | No root daemon, systemd-native, RHEL 10 compatible                                                   |
+| Frontend          | Vite + React Router v6 (SPA)                          | Fast builds, file-based client routing, no SSR overhead for this use case                            |
+| ID type           | UUID v4 string                                        | No integer sequence leakage, safe for future federation                                              |
+| Timestamps        | UTC in DB, ISO-8601 on wire                           | Portable, unambiguous, display-locale handled in UI                                                  |
 
 ---
 

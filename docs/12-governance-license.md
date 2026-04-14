@@ -112,7 +112,8 @@ This project uses the following open-source components under their respective li
 
 | Component    | License    | Notes                                |
 | ------------ | ---------- | ------------------------------------ |
-| Next.js      | MIT        | Frontend framework                   |
+| Vite         | MIT        | Frontend build tool                  |
+| React Router | MIT        | Client-side routing (v6)             |
 | React        | MIT        | UI library                           |
 | Tailwind CSS | MIT        | Utility-first CSS                    |
 | shadcn/ui    | MIT        | UI component collection              |

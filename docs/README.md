@@ -2,7 +2,7 @@
 
 ![License](https://img.shields.io/badge/license-CC_BY--NC--SA_4.0-lightgrey?style=flat-square)
 ![Status](https://img.shields.io/badge/status-active-brightgreen?style=flat-square)
-![Stack](https://img.shields.io/badge/stack-Next.js%20%7C%20Elysia%20%7C%20MariaDB-blue?style=flat-square)
+![Stack](https://img.shields.io/badge/stack-Vite%20%7C%20React%20%7C%20Elysia%20%7C%20MariaDB-blue?style=flat-square)
 ![Deploy](https://img.shields.io/badge/deploy-Podman_Pod-orange?style=flat-square)
 ![Docs](https://img.shields.io/badge/docs-21_pages-informational?style=flat-square)
 
@@ -80,8 +80,8 @@ cd bePrepared
 bun install
 
 # 3. Copy environment template and fill in secrets
-cp deploy/.env.example deploy/.env
-$EDITOR deploy/.env
+cp .env.example .env
+$EDITOR .env
 
 # 4. Install, build, and start everything (migrations + seed included)
 ./scripts/install.sh
@@ -90,7 +90,7 @@ $EDITOR deploy/.env
 http://localhost:9999
 
 # 6. Open API docs
-http://localhost:3001/docs
+http://localhost:9995/docs
 ```
 
 See [scripts/README.md](../scripts/README.md) for the full scripts reference (rebuild, update, logs, and more).
@@ -126,8 +126,8 @@ For browser testing and CI shard debugging, see [E2E Testing](./e2e-testing.md).
 │                                                                       │
 │  ┌─────────────┐   ┌─────────────┐   ┌─────────────┐               │
 │  │  frontend   │──▶│     api     │──▶│   mariadb   │               │
-│  │  Next.js    │   │ Elysia/Bun  │   │ (persistent)│               │
-│  │  :9999      │   │  :3001      │   │  :3306      │               │
+│  │ Vite + React│   │ Elysia/Bun  │   │ (persistent)│               │
+│  │  :9999      │   │  :9995      │   │  :3306      │               │
 │  └─────────────┘   └──────┬──────┘   └──────▲──────┘               │
 │                            │                 │                       │
 │                     ┌──────▼──────┐          │                       │

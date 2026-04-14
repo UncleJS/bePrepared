@@ -1,8 +1,8 @@
-# bePrepared — Frontend container (Next.js)
+# bePrepared — Frontend container (Vite + React)
 # Quadlet file: ~/.config/containers/systemd/beprepared-frontend.container
 
 [Unit]
-Description=bePrepared frontend (Next.js)
+Description=bePrepared frontend (Vite + React)
 After=beprepared-api.container
 StartLimitIntervalSec=300
 StartLimitBurst=5
@@ -14,16 +14,16 @@ ContainerName=beprepared-frontend
 
 EnvironmentFile=%h/0_opencode/bePrepared/.env
 Environment=PORT=9999
-# Bind Next.js standalone server to all interfaces so the health probe
+# Bind the Vite preview server to all interfaces so the health probe
 # can reach it via 127.0.0.1 inside the shared Podman pod network namespace.
-Environment=HOSTNAME=0.0.0.0
+Environment=HOST=0.0.0.0
 PodmanArgs=--read-only
 PodmanArgs=--tmpfs=/tmp:rw,nosuid,nodev,noexec,size=64m
 PodmanArgs=--security-opt=no-new-privileges
 PodmanArgs=--cap-drop=all
 
-# Functional healthcheck: fetch /login (stable 200, no redirect) to confirm
-# Next.js is up. HealthOnFailure=kill lets systemd own the restart so
+# Functional healthcheck: fetch / (SPA index.html) to confirm
+# Vite preview server is up. HealthOnFailure=kill lets systemd own the restart so
 # StartLimitBurst applies.
 HealthCmd=wget -qO /dev/null http://127.0.0.1:9999/login || exit 1
 HealthInterval=30s

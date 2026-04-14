@@ -40,13 +40,13 @@
 
 ### P0
 
-- [x] **Secrets hygiene audit**: verified `deploy/.env` is ignored and not tracked in current git history (`git log --all -- deploy/.env` returned no commits).
+- [x] **Secrets hygiene audit**: verified `.env` is ignored and not tracked in current git history (`git log --all -- .env` returned no commits).
 - [x] **Remove default admin credential risk**: seeds now reject `SEED_ADMIN_PASSWORD=changeme`, require explicit seed password in production, and generate one-time random password in non-production when unset.
 - [x] **Add login rate limiting**: throttle `POST /auth/login` to mitigate brute-force and credential stuffing.
 
 ### P1
 
-- [x] **Keep API token server-side**: implemented frontend BFF proxy (`/api/bff/*`) and removed `apiToken` from client session payloads.
+- [x] **Remove BFF proxy / simplify auth model**: frontend is a pure Vite SPA; API token is stored in `localStorage` via `AuthContext` and sent as `Authorization: Bearer` on all private API requests; no server-side session or BFF route handler.
 - [x] **Lock auth kill switch**: production startup now fails if `AUTH_ENABLED=false`.
 - [x] **Harden household cookie**: set `Secure` where applicable and review write model for admin context switching.
 
@@ -100,7 +100,7 @@
 ### P0
 
 - [x] **Fix runtime ports and service map** across docs (frontend/API/phpMyAdmin).
-- [x] **Document actual auth model**: NextAuth credentials flow, API token semantics, admin/household authorization model.
+- [x] **Document actual auth model**: custom `AuthContext` + `localStorage` JWT bearer tokens; direct API calls from Vite SPA; no NextAuth, no BFF proxy.
 - [x] **Align API contract doc with implemented routes** (`/modules/:slug`, alerts endpoints, category endpoints).
 
 ### P1
