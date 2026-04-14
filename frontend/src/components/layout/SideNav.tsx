@@ -32,7 +32,7 @@ const mainNavItems = [
 ];
 
 const settingsSubLinks = [
-  { href: "/settings", label: "Overview", icon: Settings },
+  { href: "/settings", label: "Overview", icon: Settings, exact: true },
   { href: "/settings/household", label: "Household", icon: Home },
   { href: "/settings/users", label: "Users", icon: Users, adminOnly: true },
   { href: "/settings/policies", label: "Policies", icon: SlidersHorizontal },
@@ -122,8 +122,10 @@ export function SideNav({
       {/* Settings sub-links — admin only */}
       {settingsOpen && (
         <div className="flex flex-col">
-          {visibleSettingsSubLinks.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href || pathname.startsWith(href + "/");
+          {visibleSettingsSubLinks.map(({ href, label, icon: Icon, ...item }) => {
+            const active =
+              pathname === href ||
+              (!("exact" in item && item.exact) && pathname.startsWith(href + "/"));
             return (
               <Link
                 key={href}
