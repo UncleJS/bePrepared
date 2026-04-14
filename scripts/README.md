@@ -21,6 +21,8 @@ For full operational context — Quadlet unit files, backup/restore procedures, 
 10. [logs.sh](#10-logssh)
 11. [db.sh](#11-dbsh)
 12. [update.sh](#12-updatesh)
+13. [start-dev.sh](#13-start-devsh)
+14. [dev.sh](#14-devsh)
 
 ---
 
@@ -422,5 +424,169 @@ Default behaviour (no extra journalctl args) is `-f` (follow / live tail).
 # Update but do not run migrations (e.g. no schema changes in this release)
 ./scripts/update.sh --skip-migrate
 ```
+
+---
+
+## 13. start-dev.sh
+
+[↑ TOC](#table-of-contents)
+
+---
+
+### Purpose
+
+`start-dev.sh` is the **container entrypoint** (`CMD`) declared in `Containerfile.dev`. It is invoked automatically by Podman when the `beprepared-dev` container starts — **it is not run manually by operators**.
+
+To trigger it, rebuild and restart the dev container:
+
+```bash
+./scripts/dev.sh
+```
+
+### What it does
+
+On every container start, in this order:
+
+1. **Migrate** — runs `bun run db:migrate` (applies pending schema changes; safe to re-run)
+2. **Seed** — runs `bun run db:seed` (loads reference data; safe to re-run)
+3. **Launch servers** — starts all three dev servers in parallel:
+   - `bun run dev:api` — API server
+   - `bun run dev:frontend` — Vite dev server
+   - `bun run dev:worker` — background worker
+4. **Signal handling** — traps `SIGTERM` / `SIGINT`; kills all child processes cleanly on container stop
+5. **Crash detection** — `wait`s on all PIDs; exits non-zero if any server crashes (surfaces failure to systemd)
+
+### Ports
+
+| Server   | Container port | Host port | URL                        |
+| -------- | -------------- | --------- | -------------------------- |
+| API      | 9995           | 9996      | http://localhost:9996      |
+| Swagger  | 9995           | 9996      | http://localhost:9996/docs |
+| Frontend | 9999           | 9997      | http://localhost:9997      |
+
+### Viewing output
+
+```bash
+# Live log tail (migrate/seed output + all three servers)
+podman logs -f beprepared-dev
+
+# Via journald
+journalctl --user -u beprepared-dev -f
+```
+
+### Related
+
+| File                | Role                                                          |
+| ------------------- | ------------------------------------------------------------- |
+| `Containerfile.dev` | Declares `start-dev.sh` as the container `CMD`                |
+| `scripts/dev.sh`    | Builds the dev image and restarts the `beprepared-dev` unit   |
+| `scripts/db.sh`     | Run migrations or seed manually against the running container |
+
+---
+
+## 14. dev.sh
+
+[↑ TOC](#table-of-contents)
+
+---
+
+### Purpose
+
+`dev.sh` is the **day-to-day dev workflow script**. It rebuilds the dev
+container image and restarts the full dev stack in one command. Run it after
+any source change that requires a container rebuild.
+
+```bash
+./scripts/dev.sh
+```
+
+> **Note:** This script only ever touches the **dev** stack.
+> It never builds or restarts any prod container.
+
+---
+
+### Prerequisites
+
+| Requirement            | Details                                                        |
+| ---------------------- | -------------------------------------------------------------- |
+| Rootless Podman        | Installed and configured for the current user                  |
+| systemd user session   | `loginctl enable-linger <user>` if the session doesn't persist |
+| `.env` at repo root    | `cp .env.example .env` then fill in real values                |
+| `.quadlet/` unit files | Present in the repo root (committed)                           |
+
+---
+
+### What it does
+
+In order:
+
+1. **Guards** — Fails fast with a clear error if:
+   - `.env` is missing at the repo root
+   - A stale host-level env file exists at `~/.config/containers/systemd/beprepared.env` (leftover from an older setup; would shadow the repo-local `.env`)
+
+2. **Quadlet sync** — Copies every file from `.quadlet/` to
+   `~/.config/containers/systemd/`, substituting the `%%REPO_DIR%%` placeholder
+   with the absolute path of the repo. This makes the `EnvironmentFile=`
+   directive in each unit resolve correctly regardless of where the repo is
+   cloned. Runs `systemctl --user daemon-reload` afterwards.
+
+3. **Build** — Runs `podman build -f Containerfile.dev -t beprepared-dev:latest .`
+   to produce a fresh dev image.
+
+4. **Restart** — Tears down the running dev stack cleanly and starts it in the
+   correct dependency order:
+
+   ```
+   pod → db (MariaDB) → workspace (beprepared-dev)
+   ```
+
+   Short sleeps between steps give MariaDB time to accept connections before the
+   workspace container starts.
+
+5. **Health wait** — Polls host ports **9996** (API) and **9997** (Frontend)
+   every 2 s. Exits once both respond, or prints a log hint and exits after 90 s.
+
+---
+
+### Ports
+
+| Server   | Host port | URL                        |
+| -------- | --------- | -------------------------- |
+| API      | 9996      | http://localhost:9996      |
+| Swagger  | 9996      | http://localhost:9996/docs |
+| Frontend | 9997      | http://localhost:9997      |
+
+---
+
+### Useful follow-up commands
+
+```bash
+# Tail live logs from the dev workspace container
+podman logs -f beprepared-dev
+
+# Run DB migrations manually (e.g. after adding a schema file)
+podman exec -it beprepared-dev bun run db:migrate
+
+# Re-seed the database
+podman exec -it beprepared-dev bun run db:seed
+
+# Run the test suite
+podman exec -it beprepared-dev bun test
+
+# Type-check all workspaces
+podman exec -it beprepared-dev bun run typecheck
+```
+
+---
+
+### Related
+
+| File                   | Role                                                             |
+| ---------------------- | ---------------------------------------------------------------- |
+| `Containerfile.dev`    | Defines the dev image that this script builds                    |
+| `scripts/start-dev.sh` | Container entrypoint: runs migrate, seed, and starts all servers |
+| `.quadlet/`            | Quadlet unit sources synced to systemd by step 2                 |
+| `.env`                 | Runtime secrets and config loaded by the container at start      |
+| `scripts/install.sh`   | First-time setup — builds prod images and installs Quadlet units |
 
 ---

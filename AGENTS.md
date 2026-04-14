@@ -12,10 +12,10 @@ Project: `beprepared` | Image: `localhost/beprepared-dev:latest`
 ### Rebuild and restart (after any source change)
 
 ```bash
-./dev.sh
+./scripts/dev.sh
 ```
 
-`dev.sh` builds the image and restarts the Quadlet unit. **Only ever rebuild dev — never prod.**
+`scripts/dev.sh` builds the image and restarts the Quadlet unit. **Only ever rebuild dev — never prod.**
 
 ### First-time setup
 

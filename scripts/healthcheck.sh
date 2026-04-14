@@ -1,38 +1,80 @@
 #!/usr/bin/env bash
-# healthcheck.sh — Deep health probe for all bePrepared containers
+# =============================================================================
+# healthcheck.sh — Deep three-level health probe for all bePrepared containers
+# =============================================================================
 #
-# Checks (in order):
-#   1. systemd unit active state   — is the process even running?
-#   2. Podman health state         — did the in-container HEALTHCHECK pass?
-#   3. HTTP endpoint reachability  — is the service actually responding?
+# PURPOSE
+#   Performs a comprehensive health check across every bePrepared prod service
+#   at three independent levels:
+#     1. systemd unit active state  — is the process even managed and running?
+#     2. Podman HEALTHCHECK state   — did the in-container probe script pass?
+#     3. HTTP endpoint reachability — is the service accepting real requests?
 #
-# Results are printed to stdout AND appended to logs/healthcheck.log.
+#   Each failing check prints a human-readable explanation of the likely cause
+#   and the exact command needed to fix it. Results are printed to stdout AND
+#   appended atomically to logs/healthcheck.log for persistent audit history.
 #
-# Exit codes:
-#   0  — all checks passed
-#   1  — one or more checks failed
+#   For a faster surface-level check see status.sh (no Podman probe output,
+#   ~2 s vs ~5 s). Use this script for post-deploy verification and incident
+#   triage.
 #
-# Usage:
-#   ./scripts/healthcheck.sh          # full check, log results
-#   ./scripts/healthcheck.sh --quiet  # suppress stdout, still logs
-#   ./scripts/healthcheck.sh --help
+# PREREQUISITES
+#   - beprepared-pod and all member containers must be started
+#   - logs/ directory writable at repo root (created automatically if missing)
+#   - beprepared-api and beprepared-frontend must have wget available
+#     (present in all official bePrepared images)
+#
+# PHASES
+#   1. Args           — parse --quiet / -q flag; handle -h/--help
+#   2. Env load       — source .env to read port overrides; set defaults
+#   3. Log setup      — ensure logs/ exists; initialise say/fail helpers and
+#                       buffer for atomic log flush
+#   4. Unit checks    — check_unit() for each systemd service
+#   5. Podman health  — check_podman_health() per container: healthy /
+#                       unhealthy / starting / missing; print probe log on fail
+#   6. Endpoint checks — check_api_db() via /health body + check_http_container()
+#                        for api/health and frontend / probed inside containers
+#   7. Summary        — pass/fail verdict with actionable fix hints
+#   8. Log flush      — append buffered LOG_LINES[] to healthcheck.log
+#
+# FLAGS / ENV VARS
+#   --quiet, -q    Suppress stdout output; log file is always written
+#   -h, --help     Print this help and exit
+#
+#   FRONTEND_PORT  Override frontend port (default: 9999); read from .env
+#   PORT           Override API port (default: 9995); read from .env
+#
+# USAGE
+#   ./scripts/healthcheck.sh           # full check, log results
+#   ./scripts/healthcheck.sh --quiet   # silent check (log only), useful in cron
+#
+# EXAMPLES
+#   ./scripts/healthcheck.sh                  # interactive health check
+#   ./scripts/healthcheck.sh --quiet; echo $? # scripted exit-code check
+#   tail -f logs/healthcheck.log              # follow the log across runs
+#
+# EXIT CODES
+#   0   All checks passed
+#   1   One or more checks failed
 #
 # Run from the project root.
+# =============================================================================
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-DEPLOY_DIR="$PROJECT_ROOT/deploy"
 ENV_FILE="$PROJECT_ROOT/.env"
 LOG_DIR="$PROJECT_ROOT/logs"
 LOG_FILE="$LOG_DIR/healthcheck.log"
 
-# ── Defaults ────────────────────────────────────────────────────────────────
+# ── Args ──────────────────────────────────────────────────────────────────────
+# --quiet suppresses stdout without affecting the log file. This allows cron
+# jobs to run the script silently while still recording results.
+
 FRONTEND_PORT="9999"
 API_PORT="9995"
 QUIET=false
 
-# ── Args ─────────────────────────────────────────────────────────────────────
 for arg in "$@"; do
   case "$arg" in
     -h|--help)
@@ -55,7 +97,10 @@ for arg in "$@"; do
   esac
 done
 
-# ── Load .env for port overrides ─────────────────────────────────────────────
+# ── Env load ──────────────────────────────────────────────────────────────────
+# Source .env to pick up any custom port values. set -a exports all variables
+# so they override the defaults set above; set +a stops the auto-export.
+
 if [[ -f "$ENV_FILE" ]]; then
   set -a
   # shellcheck disable=SC1090
@@ -65,18 +110,18 @@ fi
 FRONTEND_PORT="${FRONTEND_PORT:-9999}"
 API_PORT="${PORT:-9995}"
 
-# ── Ensure log directory exists ───────────────────────────────────────────────
+# ── Log setup ─────────────────────────────────────────────────────────────────
+# All output is buffered in LOG_LINES[] and written atomically at the end so
+# each run appears as a contiguous block in the log file. The say/fail helpers
+# handle both stdout printing (respecting --quiet) and buffering.
+
 mkdir -p "$LOG_DIR"
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
 failures=0
 RUN_TS="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-
-# Buffer all log lines for this run; written atomically at the end.
 declare -a LOG_LINES=()
 
 say() {
-  # Print to stdout (unless --quiet) and buffer for log file.
   local msg="$1"
   $QUIET || echo "$msg"
   LOG_LINES+=("$msg")
@@ -87,7 +132,11 @@ fail() {
   say "$1"
 }
 
-# ── Check 1: systemd unit state ───────────────────────────────────────────────
+# ── Unit checks ───────────────────────────────────────────────────────────────
+# Level 1: verify the systemd unit is in the "active" state. A non-active
+# state (failed, inactive, activating) means the container process is not
+# running at the OS level.
+
 check_unit() {
   local unit="$1"
   local state
@@ -103,13 +152,17 @@ check_unit() {
   fi
 }
 
-# ── Check 2: Podman container health state ────────────────────────────────────
+# ── Podman health ─────────────────────────────────────────────────────────────
+# Level 2: query the result of the in-container HEALTHCHECK directive. Podman
+# returns "healthy", "unhealthy", "starting", or "" (no HEALTHCHECK defined).
+# On "unhealthy", the last few probe log entries are pulled and printed so the
+# engineer can see exactly what the probe script output.
+
 check_podman_health() {
   local container="$1"
   local description="$2"
   local health
 
-  # `podman inspect` returns "healthy", "unhealthy", "starting", or "" (no healthcheck).
   health="$(podman inspect --format '{{.State.Health.Status}}' "$container" 2>/dev/null || true)"
 
   case "$health" in
@@ -122,7 +175,6 @@ check_podman_health() {
       ;;
     unhealthy)
       fail "  [FAIL] podman health    : $container  (unhealthy)"
-      # Pull the last few healthcheck log lines from Podman for context.
       local probe_log
       probe_log="$(podman inspect --format \
         '{{range .State.Health.Log}}{{.End}} exit={{.ExitCode}} {{.Output}}{{end}}' \
@@ -138,7 +190,6 @@ check_podman_health() {
       fail "           Logs: ./scripts/logs.sh ${container#beprepared-}"
       ;;
     "")
-      # Container doesn't exist or has no healthcheck defined.
       if podman container exists "$container" 2>/dev/null; then
         say "  [skip] podman health    : $container  (no HEALTHCHECK defined in image)"
       else
@@ -153,8 +204,11 @@ check_podman_health() {
   esac
 }
 
-# ── Check 3: HTTP endpoint reachability ───────────────────────────────────────
-# check_http_container: probe a URL from inside a container
+# ── Endpoint checks ───────────────────────────────────────────────────────────
+# Level 3a: HTTP probe via wget from inside a container. Avoids host-runtime
+# dependencies and works even when the port is not published to the host.
+# The expect_pattern is a regex matched against the HTTP status code string.
+
 check_http_container() {
   local label="$1"
   local container="$2"
@@ -163,8 +217,6 @@ check_http_container() {
   local description="$5"
   local code
 
-  # Use wget's spider mode to get the HTTP status without downloading the body.
-  # wget -S writes headers to stderr; we parse the status line from there.
   code="$(podman exec "$container" \
     wget --server-response -q -O /dev/null "$url" 2>&1 \
     | grep -oP 'HTTP/[0-9.]+ \K[0-9]+' | head -1 || true)"
@@ -182,11 +234,11 @@ check_http_container() {
   fi
 }
 
-# ── Check 4: DB connectivity via API health endpoint ─────────────────────────
+# Level 3b: parse the /health JSON body for the DB connectivity field.
+# Returns {"status":"ok"} on 200 when SELECT 1 succeeds; {"status":"error"}
+# on 503 when MariaDB is unreachable or returns an error.
+
 check_api_db() {
-  # The API /health endpoint does a SELECT 1 and returns 200 on success,
-  # 503 on DB failure.  We check from inside the container to avoid needing
-  # the API port published on the host.
   local output
   output="$(podman exec beprepared-api \
     wget -qO- "http://127.0.0.1:${API_PORT}/health" 2>/dev/null || true)"
@@ -243,16 +295,20 @@ check_podman_health "beprepared-frontend" \
 say ""
 say "--- endpoint reachability ---"
 check_api_db
-# API port 3001 is not published to the host — probe from inside the container.
+# API port is not published to the host — probe from inside the container.
 check_http_container "api/health" "beprepared-api" \
   "http://127.0.0.1:${API_PORT}/health" "^2" \
   "The API /health endpoint did not return a 2xx status code."
 
-# Frontend is probed from inside its own container to avoid host-runtime dependencies.
+# Frontend is probed from inside its own container to avoid host dependencies.
 check_http_container "frontend" "beprepared-frontend" \
   "http://127.0.0.1:${FRONTEND_PORT}/" "^[234]" \
   "The Next.js frontend did not return a 2xx/3xx/4xx status code."
-# ── Summary & log flush ───────────────────────────────────────────────────────
+
+# ── Summary ───────────────────────────────────────────────────────────────────
+# Print a verdict and actionable hints. Exit code matches failure count (0 = all
+# good, 1 = at least one failure).
+
 say ""
 if [[ "$failures" -eq 0 ]]; then
   say "==> All checks passed."
@@ -266,8 +322,10 @@ else
   say "      Rebuild    : ./scripts/rebuild.sh"
 fi
 
-# Write the buffered output to the log file (one block per run, blank-line
-# separated so individual runs are easy to grep/tail).
+# ── Log flush ─────────────────────────────────────────────────────────────────
+# Write all buffered lines atomically to the log file. A trailing blank line
+# separates individual runs so the file is easy to grep or tail.
+
 {
   for line in "${LOG_LINES[@]}"; do
     echo "$line"

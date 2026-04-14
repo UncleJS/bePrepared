@@ -1,6 +1,6 @@
 # bePrepared — dev pod
 # Quadlet file: copy to ~/.config/containers/systemd/beprepared-dev-pod.pod
-# (or use dev.sh which handles this automatically)
+# (or use scripts/dev.sh which handles this automatically)
 
 [Pod]
 PodName=beprepared-dev

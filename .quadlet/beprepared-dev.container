@@ -1,7 +1,7 @@
 # bePrepared — dev container (Bun workspace)
 # Quadlet file: copy to ~/.config/containers/systemd/beprepared-dev.container
 #
-# Rebuild and restart: ./dev.sh
+# Rebuild and restart: ./scripts/dev.sh
 # Exec into container: podman exec -it beprepared-dev <cmd>
 # Examples:
 #   podman exec -it beprepared-dev bun run dev:api
