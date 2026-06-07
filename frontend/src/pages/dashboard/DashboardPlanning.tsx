@@ -15,7 +15,7 @@ function PlanningSection({ label, planning }: { label: string; planning: Plannin
   return (
     <section>
       <h2 className="text-lg font-semibold mb-2">Planning Targets — {label}</h2>
-      <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-3">
+      <div className="flex flex-wrap items-center gap-4 text-sm text-foreground mb-3">
         <span className="flex items-center gap-1.5">
           <Users size={13} />
           {planning.effectivePeople} people
@@ -32,15 +32,15 @@ function PlanningSection({ label, planning }: { label: string; planning: Plannin
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {Object.entries(planning.horizons).map(([horizonKey, h]) => (
           <div key={horizonKey} className="rounded-lg border border-border bg-card p-4 space-y-2">
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">
+            <p className="text-xs text-foreground uppercase tracking-wide">
               {HORIZON_LABELS[horizonKey] ?? horizonKey.toUpperCase()}
             </p>
             <div className="flex items-center gap-2 text-sm">
               <Droplets size={14} className="text-blue-400 shrink-0" />
               <span>
                 <strong>{h.waterLiters.toLocaleString()}</strong>
-                <span className="text-muted-foreground"> L</span>
-                <span className="text-muted-foreground text-xs ml-1">
+                <span className="text-foreground"> L</span>
+                <span className="text-foreground text-xs ml-1">
                   / {litersToGallons(h.waterLiters).toFixed(1)} gal
                 </span>
               </span>
@@ -49,7 +49,7 @@ function PlanningSection({ label, planning }: { label: string; planning: Plannin
               <Flame size={14} className="text-orange-400 shrink-0" />
               <span>
                 <strong>{h.caloriesKcal.toLocaleString()}</strong>
-                <span className="text-muted-foreground"> kcal</span>
+                <span className="text-foreground"> kcal</span>
               </span>
             </div>
           </div>

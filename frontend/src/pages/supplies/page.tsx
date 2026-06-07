@@ -37,7 +37,7 @@ export default function SuppliesPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Supplies</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-foreground">
           Inventory and equipment organized in one working area.
         </p>
       </div>
@@ -53,11 +53,11 @@ export default function SuppliesPage() {
                 "rounded-md px-4 py-3 text-left transition-colors",
                 activeTab === tab.id
                   ? "bg-primary/15 text-foreground ring-1 ring-primary/30"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                  : "text-foreground hover:bg-accent hover:text-foreground"
               )}
             >
               <div className="text-sm font-semibold">{tab.label}</div>
-              <div className="mt-1 text-xs text-muted-foreground">{tab.description}</div>
+              <div className="mt-1 text-xs text-foreground">{tab.description}</div>
             </button>
           ))}
         </div>
@@ -66,7 +66,7 @@ export default function SuppliesPage() {
       <section>
         <div className="mb-4">
           <h2 className="text-base font-semibold">{current.label}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">{current.description}</p>
+          <p className="mt-1 text-sm text-foreground">{current.description}</p>
         </div>
 
         {activeTab === "inventory" ? <InventoryPanel /> : <EquipmentPanel />}

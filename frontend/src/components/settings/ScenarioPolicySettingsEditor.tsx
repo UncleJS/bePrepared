@@ -147,7 +147,7 @@ export function ScenarioPolicySettingsEditor({
           key={scenario.key}
           className="rounded-lg border border-border bg-card p-4 space-y-3"
         >
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-foreground">
             {scenario.label}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -180,7 +180,7 @@ export function ScenarioPolicySettingsEditor({
                         className="w-full rounded-md border border-border bg-card px-2 py-1 text-sm"
                       />
                     </label>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    <span className="text-xs text-foreground whitespace-nowrap">
                       {d.unit}
                     </span>
                     <button
@@ -195,12 +195,12 @@ export function ScenarioPolicySettingsEditor({
                       type="button"
                       disabled={busy || !overrideMap[`${scenario.key}:${d.key}`]}
                       onClick={() => resetScenarioValue(scenario.key, d)}
-                      className="rounded-md border border-border px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-40"
+                      className="rounded-md border border-border px-2.5 py-1 text-xs text-foreground hover:text-foreground disabled:opacity-40"
                     >
                       Reset
                     </button>
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-foreground">
                     {d.description ?? "Scenario override"}
                   </p>
                 </div>

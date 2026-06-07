@@ -63,10 +63,10 @@ export function CategoryManager({
   );
 
   if (isLoading) {
-    return <p className="text-sm text-muted-foreground">Loading session...</p>;
+    return <p className="text-sm text-foreground">Loading session...</p>;
   }
   if (!householdId) {
-    return <p className="text-sm text-muted-foreground">No household in session.</p>;
+    return <p className="text-sm text-foreground">No household in session.</p>;
   }
 
   return (
@@ -75,13 +75,13 @@ export function CategoryManager({
         {backHref && (
           <Link
             to={backHref}
-            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-3"
+            className="inline-flex items-center gap-1 text-sm text-foreground hover:text-foreground mb-3"
           >
             <ChevronLeft size={14} /> Settings
           </Link>
         )}
         <h1 className="text-2xl font-bold">{title}</h1>
-        <p className="text-sm text-muted-foreground">System + household custom categories.</p>
+        <p className="text-sm text-foreground">System + household custom categories.</p>
       </div>
 
       {message && <p className="text-sm text-emerald-400">{message}</p>}
@@ -159,8 +159,8 @@ export function CategoryManager({
             {categories.map((category) => (
               <tr key={category.id}>
                 <td className="px-4 py-2.5">{category.name}</td>
-                <td className="px-4 py-2.5 text-muted-foreground">{category.slug}</td>
-                <td className="px-4 py-2.5 text-muted-foreground">
+                <td className="px-4 py-2.5 text-foreground">{category.slug}</td>
+                <td className="px-4 py-2.5 text-foreground">
                   {category.isSystem ? "System" : "Household"}
                 </td>
                 <td className="px-4 py-2.5 text-right">

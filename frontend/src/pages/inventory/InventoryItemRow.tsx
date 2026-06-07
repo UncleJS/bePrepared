@@ -37,21 +37,21 @@ export function InventoryItemRow({
         <div className="flex items-center gap-2">
           {hasAlert && <AlertTriangle size={13} className="shrink-0 text-yellow-400" />}
           <span className="font-medium">{item.name}</span>
-          <span className="text-xs text-muted-foreground">({item.unit || "each"})</span>
+          <span className="text-xs text-foreground">({item.unit || "each"})</span>
         </div>
       </td>
-      <td className="px-4 py-2.5 text-muted-foreground">{item.location ?? "-"}</td>
+      <td className="px-4 py-2.5 text-foreground">{item.location ?? "-"}</td>
       <td className="px-4 py-2.5 text-right font-mono">{totalQty}</td>
-      <td className="px-4 py-2.5 text-right font-mono text-muted-foreground">
+      <td className="px-4 py-2.5 text-right font-mono text-foreground">
         {item.targetQty ?? "-"}
       </td>
       <td className="px-4 py-2.5 text-xs">
         {dueDays == null ? (
-          <span className="text-muted-foreground">-</span>
+          <span className="text-foreground">-</span>
         ) : dueDays < 0 ? (
           <span className="font-medium text-destructive">Overdue</span>
         ) : (
-          <span className={dueDays <= 30 ? "text-yellow-400" : "text-muted-foreground"}>
+          <span className={dueDays <= 30 ? "text-yellow-400" : "text-foreground"}>
             {earliestExpiry ? fmtDate(earliestExpiry) : fmtDate(earliestReplace)}
             {dueDays <= 30 ? ` (${dueDays}d)` : ""}
           </span>
@@ -62,14 +62,14 @@ export function InventoryItemRow({
           <button
             type="button"
             onClick={() => onEdit(item)}
-            className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+            className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-foreground hover:text-foreground"
           >
             <Pencil size={12} /> Edit
           </button>
           <button
             type="button"
             onClick={() => onOpenLots(item.id)}
-            className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+            className="rounded-md border border-border px-2 py-1 text-xs text-foreground hover:text-foreground"
           >
             Lots
           </button>

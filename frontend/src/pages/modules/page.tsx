@@ -29,7 +29,7 @@ export default function ModulesPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Preparedness Modules</h1>
-        <p className="text-muted-foreground text-sm mt-1">
+        <p className="text-foreground text-sm mt-1">
           {modules.length} module{modules.length !== 1 ? "s" : ""} covering every domain of
           household preparedness
         </p>
@@ -46,10 +46,10 @@ export default function ModulesPage() {
             <div className="flex-1">
               <p className="font-semibold">{m.title}</p>
               {m.description && (
-                <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{m.description}</p>
+                <p className="text-sm text-foreground mt-0.5 line-clamp-2">{m.description}</p>
               )}
             </div>
-            <ChevronRight size={16} className="text-muted-foreground mt-0.5 shrink-0" />
+            <ChevronRight size={16} className="text-foreground mt-0.5 shrink-0" />
           </Link>
         ))}
 
@@ -58,7 +58,7 @@ export default function ModulesPage() {
         )}
 
         {!error && modules.length === 0 && (
-          <p className="text-muted-foreground text-sm col-span-2">
+          <p className="text-foreground text-sm col-span-2">
             No modules found. Run <code className="bg-muted px-1 rounded">bun run db:seed</code> to
             populate seed data.
           </p>

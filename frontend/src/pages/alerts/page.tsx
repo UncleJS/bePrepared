@@ -32,7 +32,7 @@ export default function AlertsPage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Alerts</h1>
-          <p className="text-muted-foreground text-sm mt-1">
+          <p className="text-foreground text-sm mt-1">
             {active.length} active · {resolved.length} resolved
           </p>
         </div>
@@ -55,7 +55,7 @@ export default function AlertsPage() {
         <div className="rounded-lg border border-border bg-card p-8 text-center">
           <CheckCircle2 size={32} className="text-primary mx-auto mb-2" />
           <p className="font-medium">All clear!</p>
-          <p className="text-muted-foreground text-sm mt-1">No active alerts.</p>
+          <p className="text-foreground text-sm mt-1">No active alerts.</p>
         </div>
       )}
 
@@ -73,7 +73,7 @@ export default function AlertsPage() {
       {resolved.length > 0 ? (
         <section className="space-y-2">
           <div>
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground">
               Resolved
             </h2>
           </div>

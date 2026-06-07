@@ -40,19 +40,19 @@ export default function HouseholdPage() {
 
   if (isLoading || loading) return <LoadingSpinner label="Loading…" />;
   if (!householdId)
-    return <p className="text-sm text-muted-foreground">No household in session.</p>;
+    return <p className="text-sm text-foreground">No household in session.</p>;
 
   return (
     <div className="space-y-6">
       <div>
         <Link
           to="/settings"
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-3"
+          className="inline-flex items-center gap-1 text-sm text-foreground hover:text-foreground mb-3"
         >
           <ChevronLeft size={14} /> Settings
         </Link>
         <h1 className="text-2xl font-bold">Household</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-sm text-foreground mt-1">
           Edit your household name, size, and notes.
         </p>
       </div>
@@ -64,7 +64,7 @@ export default function HouseholdPage() {
           allHouseholds={allHouseholds}
         />
       ) : (
-        <p className="text-sm text-muted-foreground">Unable to load household settings.</p>
+        <p className="text-sm text-foreground">Unable to load household settings.</p>
       )}
     </div>
   );

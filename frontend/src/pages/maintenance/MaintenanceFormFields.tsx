@@ -156,7 +156,7 @@ export function MaintenanceFormFields<T extends MaintenanceFormValue>({
                 }`}
               />
             </button>
-            <span className="ml-2 text-sm text-muted-foreground">
+            <span className="ml-2 text-sm text-foreground">
               {form.isActive ? "Active" : "Inactive"}
             </span>
           </div>

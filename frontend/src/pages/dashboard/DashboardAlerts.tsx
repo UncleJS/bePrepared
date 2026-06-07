@@ -109,9 +109,9 @@ export default function DashboardAlerts({ householdId }: { householdId: string }
                     <div className="flex-1 min-w-0">
                       <p className="font-medium">{a.title}</p>
                       {a.detail && (
-                        <p className="text-xs text-muted-foreground mt-0.5">{a.detail}</p>
+                        <p className="text-xs text-foreground mt-0.5">{a.detail}</p>
                       )}
-                      <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
+                      <div className="flex gap-3 mt-1 text-xs text-foreground">
                         <span
                           className={
                             a.severity === "overdue"
@@ -130,7 +130,7 @@ export default function DashboardAlerts({ householdId }: { householdId: string }
                     {ALERT_ENTITY_LINK[a.entityType] && (
                       <Link
                         to={ALERT_ENTITY_LINK[a.entityType]}
-                        className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded border border-border hover:bg-accent transition-colors shrink-0 self-center"
+                        className="text-xs text-foreground hover:text-foreground px-2 py-1 rounded border border-border hover:bg-accent transition-colors shrink-0 self-center"
                       >
                         View →
                       </Link>
@@ -166,7 +166,7 @@ function StatCard({
       }`}
     >
       <div className="flex items-center justify-between">
-        <span className="text-xs text-muted-foreground uppercase tracking-wide">{label}</span>
+        <span className="text-xs text-foreground uppercase tracking-wide">{label}</span>
         {icon}
       </div>
       <span className="text-2xl font-bold">{value}</span>

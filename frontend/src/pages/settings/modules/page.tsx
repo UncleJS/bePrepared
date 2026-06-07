@@ -128,7 +128,7 @@ function ArchiveButton({
   return (
     <button
       type="button"
-      className="inline-flex items-center gap-1 rounded border border-border px-2 py-1 text-xs text-muted-foreground hover:border-destructive hover:text-destructive"
+      className="inline-flex items-center gap-1 rounded border border-border px-2 py-1 text-xs text-foreground hover:border-destructive hover:text-destructive"
       onClick={() => setConfirming(true)}
       title={label}
     >
@@ -282,11 +282,11 @@ function DocList({
             <div className="flex items-start gap-2 p-2">
               <GripVertical
                 size={14}
-                className="mt-0.5 shrink-0 cursor-grab text-muted-foreground"
+                className="mt-0.5 shrink-0 cursor-grab text-foreground"
               />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium">{doc.title}</p>
-                <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{doc.body}</p>
+                <p className="mt-0.5 line-clamp-2 text-xs text-foreground">{doc.body}</p>
               </div>
               <div className="flex shrink-0 gap-1">
                 <button
@@ -347,7 +347,7 @@ function DocList({
       ) : (
         <button
           type="button"
-          className="inline-flex items-center gap-1 rounded border border-dashed border-border px-3 py-1 text-xs text-muted-foreground hover:border-primary hover:text-primary"
+          className="inline-flex items-center gap-1 rounded border border-dashed border-border px-3 py-1 text-xs text-foreground hover:border-primary hover:text-primary"
           onClick={() => setAddOpen(true)}
         >
           <Plus size={11} /> Add Guidance Doc
@@ -496,7 +496,7 @@ function SectionList({
               onDrop={rawDrop}
               className="flex items-center gap-2 p-2"
             >
-              <GripVertical size={14} className="shrink-0 cursor-grab text-muted-foreground" />
+              <GripVertical size={14} className="shrink-0 cursor-grab text-foreground" />
               <button
                 type="button"
                 className="flex flex-1 items-center gap-1 text-left"
@@ -504,7 +504,7 @@ function SectionList({
               >
                 {expanded.has(sec.id) ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
                 <span className="text-sm font-medium">{sec.title}</span>
-                <span className="ml-1 text-xs text-muted-foreground">/{sec.slug}</span>
+                <span className="ml-1 text-xs text-foreground">/{sec.slug}</span>
               </button>
               <div className="flex shrink-0 gap-1">
                 <button
@@ -557,7 +557,7 @@ function SectionList({
       ) : (
         <button
           type="button"
-          className="inline-flex items-center gap-1 rounded border border-dashed border-border px-3 py-1 text-xs text-muted-foreground hover:border-primary hover:text-primary"
+          className="inline-flex items-center gap-1 rounded border border-dashed border-border px-3 py-1 text-xs text-foreground hover:border-primary hover:text-primary"
           onClick={() => setAddOpen(true)}
         >
           <Plus size={11} /> Add Section
@@ -607,7 +607,7 @@ function DocListByModule({
     void load();
   }, [load]);
 
-  if (loading) return <p className="ml-6 py-2 text-xs text-muted-foreground">Loading docs…</p>;
+  if (loading) return <p className="ml-6 py-2 text-xs text-foreground">Loading docs…</p>;
   if (!moduleSlug) return null;
 
   return (
@@ -767,7 +767,7 @@ function ModuleList({
               onDrop={rawDrop}
               className="flex items-center gap-2 p-2"
             >
-              <GripVertical size={14} className="shrink-0 cursor-grab text-muted-foreground" />
+              <GripVertical size={14} className="shrink-0 cursor-grab text-foreground" />
               <button
                 type="button"
                 className="flex flex-1 items-center gap-1 text-left"
@@ -780,7 +780,7 @@ function ModuleList({
                 {expanded.has(mod.id) ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
                 <span className="text-sm font-semibold">{mod.title}</span>
                 {mod.description && (
-                  <span className="ml-2 hidden text-xs text-muted-foreground md:block line-clamp-1">
+                  <span className="ml-2 hidden text-xs text-foreground md:block line-clamp-1">
                     — {mod.description}
                   </span>
                 )}
@@ -856,7 +856,7 @@ function ModuleList({
       ) : (
         <button
           type="button"
-          className="inline-flex items-center gap-1 rounded border border-dashed border-border px-3 py-1 text-xs text-muted-foreground hover:border-primary hover:text-primary"
+          className="inline-flex items-center gap-1 rounded border border-dashed border-border px-3 py-1 text-xs text-foreground hover:border-primary hover:text-primary"
           onClick={() => setAddOpen(true)}
         >
           <Plus size={11} /> Add Module
@@ -979,7 +979,7 @@ export default function ModulesAdminPage() {
 
   // ---- guards ----
   if (isAdmin === null) {
-    return <p className="text-sm text-muted-foreground">Checking access…</p>;
+    return <p className="text-sm text-foreground">Checking access…</p>;
   }
   if (isAdmin === false) {
     return (
@@ -1005,12 +1005,12 @@ export default function ModulesAdminPage() {
       <div>
         <Link
           to="/settings"
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-3"
+          className="inline-flex items-center gap-1 text-sm text-foreground hover:text-foreground mb-3"
         >
           <ChevronLeft size={14} /> Settings
         </Link>
         <h1 className="text-2xl font-bold">Module Content</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-sm text-foreground mt-1">
           Manage categories, modules, sections, and guidance docs. Drag rows to reorder.
         </p>
       </div>
@@ -1076,7 +1076,7 @@ export default function ModulesAdminPage() {
                 onDrop={catDropRaw}
                 className="flex items-center gap-2 p-3"
               >
-                <GripVertical size={15} className="shrink-0 cursor-grab text-muted-foreground" />
+                <GripVertical size={15} className="shrink-0 cursor-grab text-foreground" />
                 <button
                   type="button"
                   className="flex flex-1 items-center gap-2 text-left"
@@ -1088,8 +1088,8 @@ export default function ModulesAdminPage() {
                 >
                   {expanded.has(cat.id) ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
                   <span className="font-semibold">{cat.title}</span>
-                  <span className="text-xs text-muted-foreground">/{cat.slug}</span>
-                  <span className="ml-auto text-xs text-muted-foreground">
+                  <span className="text-xs text-foreground">/{cat.slug}</span>
+                  <span className="ml-auto text-xs text-foreground">
                     {(modsByCategory.get(cat.id) ?? []).length} module
                     {(modsByCategory.get(cat.id) ?? []).length !== 1 ? "s" : ""}
                   </span>
@@ -1161,7 +1161,7 @@ export default function ModulesAdminPage() {
         ) : (
           <button
             type="button"
-            className="inline-flex items-center gap-1 rounded-lg border border-dashed border-border px-4 py-2 text-sm text-muted-foreground hover:border-primary hover:text-primary"
+            className="inline-flex items-center gap-1 rounded-lg border border-dashed border-border px-4 py-2 text-sm text-foreground hover:border-primary hover:text-primary"
             onClick={() => setAddCatOpen(true)}
           >
             <Plus size={14} /> Add Category

@@ -97,20 +97,20 @@ export default function TasksPage() {
   }
 
   if (isLoading) {
-    return <p className="text-sm text-muted-foreground">Loading session...</p>;
+    return <p className="text-sm text-foreground">Loading session...</p>;
   }
   if (!householdId) {
-    return <p className="text-sm text-muted-foreground">No household in session.</p>;
+    return <p className="text-sm text-foreground">No household in session.</p>;
   }
   if (loading) {
-    return <p className="text-sm text-muted-foreground">Loading ticksheets...</p>;
+    return <p className="text-sm text-foreground">Loading ticksheets...</p>;
   }
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Ticksheets</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-foreground">
           Work through each readiness level systematically
         </p>
       </div>
@@ -177,7 +177,7 @@ export default function TasksPage() {
               <div className="flex items-center gap-3">
                 {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                 <span className="font-semibold">{LEVEL_LABELS[level]}</span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-foreground">
                   {doneCount}/{totalCount} tasks
                 </span>
               </div>
@@ -188,7 +188,7 @@ export default function TasksPage() {
                     style={{ width: `${percent}%` }}
                   />
                 </div>
-                <span className="w-8 text-right text-xs text-muted-foreground">{percent}%</span>
+                <span className="w-8 text-right text-xs text-foreground">{percent}%</span>
               </div>
             </button>
 
@@ -211,18 +211,18 @@ export default function TasksPage() {
                           {isDone ? (
                             <CheckSquare size={18} className="mt-0.5 shrink-0 text-primary" />
                           ) : (
-                            <Square size={18} className="mt-0.5 shrink-0 text-muted-foreground" />
+                            <Square size={18} className="mt-0.5 shrink-0 text-foreground" />
                           )}
                           <div>
                             <p
                               className={`text-sm font-medium ${
-                                isDone ? "text-muted-foreground line-through" : ""
+                                isDone ? "text-foreground line-through" : ""
                               }`}
                             >
                               {task.title}
                             </p>
                             {task.description && (
-                              <p className="mt-0.5 text-xs text-muted-foreground">
+                              <p className="mt-0.5 text-xs text-foreground">
                                 {task.description}
                               </p>
                             )}
@@ -255,7 +255,7 @@ export default function TasksPage() {
                   );
                 })}
                 {levelTasks.length === 0 && (
-                  <li className="px-4 py-3 text-sm text-muted-foreground">
+                  <li className="px-4 py-3 text-sm text-foreground">
                     No tasks for this level.
                   </li>
                 )}

@@ -11,7 +11,7 @@ export function Badge({
     <span
       className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium ${
         variant === "outline"
-          ? "border border-border text-muted-foreground"
+          ? "border border-border text-foreground"
           : "bg-secondary text-secondary-foreground"
       }`}
     >

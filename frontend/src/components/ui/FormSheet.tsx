@@ -21,7 +21,7 @@ export function FormSheet({
         <div className="mb-6 pr-10">
           <SheetTitle className="text-lg font-semibold">{title}</SheetTitle>
           {description ? (
-            <SheetDescription className="mt-1 text-sm text-muted-foreground">
+            <SheetDescription className="mt-1 text-sm text-foreground">
               {description}
             </SheetDescription>
           ) : null}

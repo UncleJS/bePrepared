@@ -28,7 +28,7 @@ export default function DashboardTasks({ householdId }: { householdId: string })
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold">Next tasks</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-foreground">
             The next incomplete actions keeping the household moving forward.
           </p>
         </div>
@@ -47,7 +47,7 @@ export default function DashboardTasks({ householdId }: { householdId: string })
           <div className="space-y-2">
             {nextTasks.map((task) => (
               <div key={task.id} className="rounded-lg border border-border px-4 py-3">
-                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-foreground">
                   <span className="rounded-full bg-primary/10 px-2 py-0.5 text-primary">
                     {LEVEL_LABELS[task.readinessLevel] ?? task.readinessLevel}
                   </span>
@@ -55,7 +55,7 @@ export default function DashboardTasks({ householdId }: { householdId: string })
                 </div>
                 <p className="mt-2 text-sm font-medium">{task.title}</p>
                 {task.description ? (
-                  <p className="mt-1 text-sm text-muted-foreground">{task.description}</p>
+                  <p className="mt-1 text-sm text-foreground">{task.description}</p>
                 ) : null}
               </div>
             ))}

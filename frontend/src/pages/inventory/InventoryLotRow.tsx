@@ -14,16 +14,16 @@ export function InventoryLotRow({
   return (
     <tr className="transition-colors hover:bg-accent/30">
       <td className="px-4 py-2.5">{lot.qty}</td>
-      <td className="px-4 py-2.5 text-muted-foreground">{fmtDate(lot.acquiredAt)}</td>
-      <td className="px-4 py-2.5 text-muted-foreground">{fmtDate(lot.expiresAt)}</td>
-      <td className="px-4 py-2.5 text-muted-foreground">{lot.replaceDays ?? "-"}</td>
-      <td className="px-4 py-2.5 text-muted-foreground">{lot.batchRef ?? "-"}</td>
+      <td className="px-4 py-2.5 text-foreground">{fmtDate(lot.acquiredAt)}</td>
+      <td className="px-4 py-2.5 text-foreground">{fmtDate(lot.expiresAt)}</td>
+      <td className="px-4 py-2.5 text-foreground">{lot.replaceDays ?? "-"}</td>
+      <td className="px-4 py-2.5 text-foreground">{lot.batchRef ?? "-"}</td>
       <td className="px-4 py-2.5 text-right">
         <div className="inline-flex gap-2">
           <button
             type="button"
             onClick={() => onEdit(lot)}
-            className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+            className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-foreground hover:text-foreground"
           >
             <Pencil size={12} /> Edit
           </button>

@@ -25,7 +25,7 @@ export function SortableHeader<K extends string>({
       <button
         type="button"
         onClick={() => onSort(colKey)}
-        className="inline-flex items-center gap-1 font-medium text-muted-foreground hover:text-foreground transition-colors"
+        className="inline-flex items-center gap-1 font-medium text-foreground hover:text-foreground transition-colors"
       >
         {label}
         {active ? (

@@ -47,13 +47,13 @@ export default function PlanningPage() {
 
   if (isLoading || dataLoading) return <LoadingSpinner label="Loading planning…" />;
   if (!householdId)
-    return <p className="text-sm text-muted-foreground">No household in session.</p>;
+    return <p className="text-sm text-foreground">No household in session.</p>;
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold">Planning Targets</h1>
-        <p className="text-muted-foreground text-sm mt-1">
+        <p className="text-foreground text-sm mt-1">
           Effective water and calorie totals across readiness horizons
         </p>
       </div>
@@ -66,7 +66,7 @@ export default function PlanningPage() {
           <h2 className="text-lg font-semibold mb-1">{label}</h2>
           {data ? (
             <>
-              <div className="flex gap-4 text-sm text-muted-foreground mb-3">
+              <div className="flex gap-4 text-sm text-foreground mb-3">
                 <span className="flex items-center gap-1">
                   <Users size={13} /> {data.effectivePeople} people
                 </span>
@@ -86,20 +86,20 @@ export default function PlanningPage() {
                       key={key}
                       className="rounded-lg border border-border bg-card p-4 space-y-3"
                     >
-                      <p className="text-sm font-semibold text-muted-foreground">
+                      <p className="text-sm font-semibold text-foreground">
                         {HORIZON_LABELS[key] ?? key}
                       </p>
                       <div>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <p className="text-xs text-foreground flex items-center gap-1">
                           <Droplets size={11} className="text-blue-400" /> Water
                         </p>
                         <p className="text-lg font-bold">{h.waterLiters.toLocaleString()} L</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-foreground">
                           {litersToGallons(h.waterLiters).toFixed(1)} US gal
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <p className="text-xs text-foreground flex items-center gap-1">
                           <Flame size={11} className="text-orange-400" /> Calories
                         </p>
                         <p className="text-lg font-bold">{h.caloriesKcal.toLocaleString()} kcal</p>
@@ -108,11 +108,11 @@ export default function PlanningPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground text-sm">No planning horizon data available.</p>
+                <p className="text-foreground text-sm">No planning horizon data available.</p>
               )}
             </>
           ) : (
-            <p className="text-muted-foreground text-sm">
+            <p className="text-foreground text-sm">
               Unable to load planning data. Check API connection.
             </p>
           )}

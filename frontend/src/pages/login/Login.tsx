@@ -43,7 +43,7 @@ export default function LoginPage() {
         <div className="flex flex-col items-center gap-2">
           <ShieldCheck size={40} className="text-primary" />
           <h1 className="text-2xl font-bold tracking-tight">bePrepared</h1>
-          <p className="text-sm text-muted-foreground text-center">
+          <p className="text-sm text-foreground text-center">
             Sign in to manage your household preparedness
           </p>
         </div>
@@ -64,7 +64,7 @@ export default function LoginPage() {
                 type="text"
                 autoComplete="username"
                 required
-                className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm text-foreground placeholder:text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="admin"
               />
             </div>
@@ -82,7 +82,7 @@ export default function LoginPage() {
                 type="password"
                 autoComplete="current-password"
                 required
-                className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm text-foreground placeholder:text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="••••••••"
               />
             </div>
@@ -101,7 +101,7 @@ export default function LoginPage() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-xs text-muted-foreground">
+        <p className="text-center text-xs text-foreground">
           Content licensed under CC BY-NC-SA 4.0
         </p>
       </div>

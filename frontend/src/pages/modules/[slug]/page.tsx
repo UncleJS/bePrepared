@@ -78,7 +78,7 @@ export default function ModuleDetailPage() {
   return (
     <div className="space-y-8 max-w-3xl">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-1 text-sm text-muted-foreground">
+      <nav className="flex items-center gap-1 text-sm text-foreground">
         <Link to="/modules" className="hover:text-foreground transition-colors">
           Modules
         </Link>
@@ -92,8 +92,8 @@ export default function ModuleDetailPage() {
           <BookOpen size={22} className="text-primary" />
           <h1 className="text-2xl font-bold">{mod.title}</h1>
         </div>
-        {mod.description && <p className="text-muted-foreground text-sm">{mod.description}</p>}
-        <p className="text-xs text-muted-foreground capitalize">
+        {mod.description && <p className="text-foreground text-sm">{mod.description}</p>}
+        <p className="text-xs text-foreground capitalize">
           Category: <span className="text-foreground">{mod.category}</span>
           {" · "}
           {mod.sections.length} section{mod.sections.length !== 1 ? "s" : ""}
@@ -102,7 +102,7 @@ export default function ModuleDetailPage() {
 
       {/* Sections */}
       {mod.sections.length === 0 ? (
-        <p className="text-muted-foreground text-sm">No sections in this module yet.</p>
+        <p className="text-foreground text-sm">No sections in this module yet.</p>
       ) : (
         <div className="space-y-8">
           {mod.sections.map((section) => (
@@ -115,7 +115,7 @@ export default function ModuleDetailPage() {
 
               {/* Guidance docs */}
               {section.guidanceDocs.length === 0 ? (
-                <p className="text-muted-foreground text-sm pl-4">
+                <p className="text-foreground text-sm pl-4">
                   No guidance documents in this section yet.
                 </p>
               ) : (
@@ -156,7 +156,7 @@ export default function ModuleDetailPage() {
 
                         {/* Body — rendered as preformatted markdown text */}
                         {/* TODO: swap for <ReactMarkdown> once react-markdown is installed */}
-                        <pre className="text-sm text-muted-foreground whitespace-pre-wrap font-sans leading-relaxed">
+                        <pre className="text-sm text-foreground whitespace-pre-wrap font-sans leading-relaxed">
                           {doc.body}
                         </pre>
                       </div>

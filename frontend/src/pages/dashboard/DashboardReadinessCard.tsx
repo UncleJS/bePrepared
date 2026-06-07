@@ -18,7 +18,7 @@ export default function DashboardReadinessCard({ householdId }: { householdId: s
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold">Readiness score</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-foreground">
             Task completion across 72h, 14d, 30d, and 90d horizons.
           </p>
         </div>
@@ -37,7 +37,7 @@ export default function DashboardReadinessCard({ householdId }: { householdId: s
           >
             <div className="flex h-24 w-24 flex-col items-center justify-center rounded-full bg-card text-center">
               <span className="text-3xl font-bold">{loading ? "—" : `${overallPercent}%`}</span>
-              <span className="text-xs uppercase tracking-wide text-muted-foreground">overall</span>
+              <span className="text-xs uppercase tracking-wide text-foreground">overall</span>
             </div>
           </div>
         </div>
@@ -55,7 +55,7 @@ export default function DashboardReadinessCard({ householdId }: { householdId: s
               <div key={level} className="space-y-1.5">
                 <div className="flex items-center justify-between gap-3 text-sm">
                   <span>{LEVEL_LABELS[level] ?? level}</span>
-                  <span className="text-muted-foreground">
+                  <span className="text-foreground">
                     {complete}/{levelTasks.length || 0}
                   </span>
                 </div>

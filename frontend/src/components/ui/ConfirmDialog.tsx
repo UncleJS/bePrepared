@@ -28,12 +28,12 @@ export function ConfirmDialog({
         <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-card p-6 shadow-2xl outline-none">
           <Dialog.Title className="text-lg font-semibold">{title}</Dialog.Title>
           {description ? (
-            <Dialog.Description className="mt-2 text-sm text-muted-foreground">
+            <Dialog.Description className="mt-2 text-sm text-foreground">
               {description}
             </Dialog.Description>
           ) : null}
           <div className="mt-6 flex justify-end gap-2">
-            <Dialog.Close className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+            <Dialog.Close className="rounded-md border border-border px-3 py-2 text-sm text-foreground transition-colors hover:bg-accent hover:text-foreground">
               {cancelLabel}
             </Dialog.Close>
             <button

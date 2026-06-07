@@ -126,7 +126,7 @@ export function SideNav({
                   "flex items-center gap-2 pl-9 pr-4 py-2 text-xs font-medium transition-colors",
                   active
                     ? "bg-primary/15 text-primary border-r-2 border-primary"
-                    : "text-muted-foreground hover:text-white hover:bg-accent"
+                    : "text-foreground hover:text-white hover:bg-accent"
                 )}
               >
                 <Icon size={13} />

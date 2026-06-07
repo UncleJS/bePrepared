@@ -166,12 +166,12 @@ export function InventoryPanel() {
       <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold">Inventory</h2>
-          <p className="mt-1 text-sm text-muted-foreground">{items.length} items tracked</p>
+          <p className="mt-1 text-sm text-foreground">{items.length} items tracked</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
             to="/settings/inventory-categories"
-            className="inline-flex rounded-md border border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="inline-flex rounded-md border border-border px-3 py-2 text-sm text-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             Categories
           </Link>
@@ -239,7 +239,7 @@ export function InventoryPanel() {
                   onSort={handleSort}
                   className="text-left px-4 py-2"
                 />
-                <th className="text-right px-4 py-2 font-medium text-muted-foreground">Actions</th>
+                <th className="text-right px-4 py-2 font-medium text-foreground">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -265,10 +265,10 @@ export function InventoryPanel() {
         <section className="space-y-4 rounded-lg border border-border bg-card p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-foreground">
                 Lot management — {selectedItem.name}
               </h3>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-sm text-foreground">
                 Track batches, expiry dates, and replacement cycles.
               </p>
             </div>
@@ -288,7 +288,7 @@ export function InventoryPanel() {
                   setEditLotOpen(false);
                   lotActions.resetLotPanel();
                 }}
-                className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                className="rounded-md border border-border px-3 py-2 text-sm text-foreground transition-colors hover:bg-accent hover:text-foreground"
               >
                 Close
               </button>
@@ -306,20 +306,20 @@ export function InventoryPanel() {
               <table className="w-full text-sm">
                 <thead className="bg-muted/50">
                   <tr>
-                    <th className="text-left px-4 py-2 font-medium text-muted-foreground">Qty</th>
-                    <th className="text-left px-4 py-2 font-medium text-muted-foreground">
+                    <th className="text-left px-4 py-2 font-medium text-foreground">Qty</th>
+                    <th className="text-left px-4 py-2 font-medium text-foreground">
                       Acquired
                     </th>
-                    <th className="text-left px-4 py-2 font-medium text-muted-foreground">
+                    <th className="text-left px-4 py-2 font-medium text-foreground">
                       Expires
                     </th>
-                    <th className="text-left px-4 py-2 font-medium text-muted-foreground">
+                    <th className="text-left px-4 py-2 font-medium text-foreground">
                       Replace Days
                     </th>
-                    <th className="text-left px-4 py-2 font-medium text-muted-foreground">
+                    <th className="text-left px-4 py-2 font-medium text-foreground">
                       Batch Ref
                     </th>
-                    <th className="text-right px-4 py-2 font-medium text-muted-foreground">
+                    <th className="text-right px-4 py-2 font-medium text-foreground">
                       Actions
                     </th>
                   </tr>
@@ -360,7 +360,7 @@ export function InventoryPanel() {
           <button
             type="button"
             onClick={() => setCreateItemOpen(false)}
-            className="rounded-md border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="rounded-md border border-border px-4 py-2 text-sm text-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             Cancel
           </button>
@@ -399,7 +399,7 @@ export function InventoryPanel() {
               setEditItemOpen(false);
               itemActions.cancelEdit();
             }}
-            className="rounded-md border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="rounded-md border border-border px-4 py-2 text-sm text-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             Cancel
           </button>
@@ -430,7 +430,7 @@ export function InventoryPanel() {
           <button
             type="button"
             onClick={() => setCreateLotOpen(false)}
-            className="rounded-md border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="rounded-md border border-border px-4 py-2 text-sm text-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             Cancel
           </button>
@@ -467,7 +467,7 @@ export function InventoryPanel() {
               setEditLotOpen(false);
               lotActions.cancelLotEdit();
             }}
-            className="rounded-md border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="rounded-md border border-border px-4 py-2 text-sm text-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             Cancel
           </button>

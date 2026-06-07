@@ -55,19 +55,19 @@ export default function PoliciesPage() {
 
   if (isLoading || loading) return <LoadingSpinner label="Loading policies…" />;
   if (!householdId)
-    return <p className="text-sm text-muted-foreground">No household in session.</p>;
+    return <p className="text-sm text-foreground">No household in session.</p>;
 
   return (
     <div className="space-y-8">
       <div>
         <Link
           to="/settings"
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-3"
+          className="inline-flex items-center gap-1 text-sm text-foreground hover:text-foreground mb-3"
         >
           <ChevronLeft size={14} /> Settings
         </Link>
         <h1 className="text-2xl font-bold">Policies</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-sm text-foreground mt-1">
           Household policy overrides and scenario-specific planning values.
         </p>
       </div>

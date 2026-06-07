@@ -29,7 +29,7 @@ export function AppShell() {
         </main>
       </div>
 
-      <footer className="border-t border-border px-6 py-2 text-center text-xs text-muted-foreground">
+      <footer className="border-t border-border px-6 py-2 text-center text-xs text-foreground">
         Content licensed under CC BY-NC-SA 4.0
       </footer>
     </>

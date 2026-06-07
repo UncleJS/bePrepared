@@ -7,14 +7,14 @@ export function Timestamp({
   value: string | null | undefined;
   className?: string;
 }) {
-  if (!value) return <span className={className ?? "text-muted-foreground"}>—</span>;
+  if (!value) return <span className={className ?? "text-foreground"}>—</span>;
 
   const date = new Date(value);
 
   return (
     <time
       dateTime={Number.isNaN(date.getTime()) ? undefined : date.toISOString()}
-      className={className ?? "font-mono text-xs text-muted-foreground"}
+      className={className ?? "font-mono text-xs text-foreground"}
     >
       {fmtTs(value)}
     </time>

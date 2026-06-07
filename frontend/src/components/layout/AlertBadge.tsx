@@ -33,7 +33,7 @@ export function AlertBadge() {
   return (
     <Link
       to="/alerts"
-      className="inline-flex items-center gap-2 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+      className="inline-flex items-center gap-2 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-foreground"
     >
       <Bell size={14} />
       <span className="hidden sm:inline">Alerts</span>

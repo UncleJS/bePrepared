@@ -69,7 +69,7 @@ export default function MaintenancePage() {
       <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Maintenance</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-foreground">
             {sortedSchedules.length} schedules active
           </p>
         </div>
@@ -101,13 +101,13 @@ export default function MaintenancePage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr>
-                <th className="px-4 py-2 text-left font-medium text-muted-foreground">Equipment</th>
-                <th className="px-4 py-2 text-left font-medium text-muted-foreground">Schedule</th>
-                <th className="px-4 py-2 text-left font-medium text-muted-foreground">Interval</th>
-                <th className="px-4 py-2 text-left font-medium text-muted-foreground">Last Done</th>
-                <th className="px-4 py-2 text-left font-medium text-muted-foreground">Next Due</th>
-                <th className="px-4 py-2 text-left font-medium text-muted-foreground">Status</th>
-                <th className="px-4 py-2 text-right font-medium text-muted-foreground">Actions</th>
+                <th className="px-4 py-2 text-left font-medium text-foreground">Equipment</th>
+                <th className="px-4 py-2 text-left font-medium text-foreground">Schedule</th>
+                <th className="px-4 py-2 text-left font-medium text-foreground">Interval</th>
+                <th className="px-4 py-2 text-left font-medium text-foreground">Last Done</th>
+                <th className="px-4 py-2 text-left font-medium text-foreground">Next Due</th>
+                <th className="px-4 py-2 text-left font-medium text-foreground">Status</th>
+                <th className="px-4 py-2 text-right font-medium text-foreground">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -159,7 +159,7 @@ export default function MaintenancePage() {
           <button
             type="button"
             onClick={() => setCreateOpen(false)}
-            className="rounded-md border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="rounded-md border border-border px-4 py-2 text-sm text-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             Cancel
           </button>
@@ -191,7 +191,7 @@ export default function MaintenancePage() {
               setEditOpen(false);
               cancelEdit();
             }}
-            className="rounded-md border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="rounded-md border border-border px-4 py-2 text-sm text-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             Cancel
           </button>

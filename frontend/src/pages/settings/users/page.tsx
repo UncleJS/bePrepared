@@ -13,12 +13,12 @@ export default function UsersPage() {
       <div>
         <Link
           to="/settings"
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-3"
+          className="inline-flex items-center gap-1 text-sm text-foreground hover:text-foreground mb-3"
         >
           <ChevronLeft size={14} /> Settings
         </Link>
         <h1 className="text-2xl font-bold">Users</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-sm text-foreground mt-1">
           Manage user accounts and personal profiles.
         </p>
       </div>

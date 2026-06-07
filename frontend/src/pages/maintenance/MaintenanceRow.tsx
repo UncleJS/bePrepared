@@ -17,7 +17,7 @@ export function MaintenanceRow({
 
   if (!schedule.isActive) {
     statusLabel = "Inactive";
-    statusClass = "text-muted-foreground";
+    statusClass = "text-foreground";
   } else if (days !== null) {
     if (days < 0) {
       statusLabel = `Overdue ${Math.abs(days)}d`;
@@ -27,7 +27,7 @@ export function MaintenanceRow({
       statusClass = "font-medium text-yellow-400";
     } else {
       statusLabel = `${days}d`;
-      statusClass = "text-muted-foreground";
+      statusClass = "text-foreground";
     }
   }
 
@@ -35,19 +35,19 @@ export function MaintenanceRow({
     <tr
       className={`transition-colors hover:bg-accent/30 ${!schedule.isActive ? "opacity-60" : ""}`}
     >
-      <td className="px-4 py-2.5 text-muted-foreground">{equipmentName}</td>
+      <td className="px-4 py-2.5 text-foreground">{equipmentName}</td>
       <td className="px-4 py-2.5 font-medium">{schedule.name}</td>
-      <td className="px-4 py-2.5 text-muted-foreground">
+      <td className="px-4 py-2.5 text-foreground">
         {schedule.calDays ? `${schedule.calDays}d` : "—"}
       </td>
-      <td className="px-4 py-2.5 text-muted-foreground">{fmtDate(schedule.lastDoneAt)}</td>
-      <td className="px-4 py-2.5 text-muted-foreground">{fmtDate(schedule.nextDueAt)}</td>
+      <td className="px-4 py-2.5 text-foreground">{fmtDate(schedule.lastDoneAt)}</td>
+      <td className="px-4 py-2.5 text-foreground">{fmtDate(schedule.nextDueAt)}</td>
       <td className={`px-4 py-2.5 ${statusClass}`}>{statusLabel}</td>
       <td className="px-4 py-2.5 text-right">
         <button
           type="button"
           onClick={() => onEdit(schedule)}
-          className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+          className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-foreground hover:text-foreground"
         >
           <Pencil size={12} /> Edit
         </button>

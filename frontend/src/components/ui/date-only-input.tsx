@@ -67,7 +67,7 @@ export function DateOnlyInput({
         className={cn(
           "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 pr-10 font-mono text-sm shadow-sm",
           "transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-          "placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+          "placeholder:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
         )}
       />
 
@@ -75,7 +75,7 @@ export function DateOnlyInput({
         type="button"
         onClick={openPicker}
         aria-label="Open date picker"
-        className="absolute right-0 top-0 inline-flex h-9 w-9 items-center justify-center text-muted-foreground"
+        className="absolute right-0 top-0 inline-flex h-9 w-9 items-center justify-center text-foreground"
       >
         <CalendarDays className="h-4 w-4" />
       </button>

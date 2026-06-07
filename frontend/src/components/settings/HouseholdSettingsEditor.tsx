@@ -103,7 +103,7 @@ export function HouseholdSettingsEditor({
     <div className="space-y-6">
       {/* ── Own household settings ── */}
       <div className="rounded-lg border border-border bg-card p-4 space-y-4">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground">
           Your Household
         </h2>
 
@@ -163,7 +163,7 @@ export function HouseholdSettingsEditor({
       {/* ── Admin: manage all households ── */}
       {isAdmin && (
         <div className="rounded-lg border border-border bg-card p-4 space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground">
             Manage Households (Admin)
           </h2>
 
@@ -181,13 +181,13 @@ export function HouseholdSettingsEditor({
                 {allHouseholds.map((h) => (
                   <tr key={h.id}>
                     <td className="px-4 py-2.5 font-medium">{h.name}</td>
-                    <td className="px-4 py-2.5 text-muted-foreground">{h.targetPeople}</td>
-                    <td className="px-4 py-2.5 text-muted-foreground">{h.notes ?? "—"}</td>
+                    <td className="px-4 py-2.5 text-foreground">{h.targetPeople}</td>
+                    <td className="px-4 py-2.5 text-foreground">{h.notes ?? "—"}</td>
                   </tr>
                 ))}
                 {allHouseholds.length === 0 && (
                   <tr>
-                    <td colSpan={3} className="px-4 py-4 text-center text-sm text-muted-foreground">
+                    <td colSpan={3} className="px-4 py-4 text-center text-sm text-foreground">
                       No households found.
                     </td>
                   </tr>
@@ -198,7 +198,7 @@ export function HouseholdSettingsEditor({
 
           {/* Create household form */}
           <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground">
               Create Household
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">

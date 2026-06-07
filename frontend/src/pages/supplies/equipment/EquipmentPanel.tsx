@@ -140,12 +140,12 @@ export function EquipmentPanel() {
       <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold">Equipment</h2>
-          <p className="mt-1 text-sm text-muted-foreground">{equipment.length} items registered</p>
+          <p className="mt-1 text-sm text-foreground">{equipment.length} items registered</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
             to="/settings/equipment-categories"
-            className="inline-flex rounded-md border border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="inline-flex rounded-md border border-border px-3 py-2 text-sm text-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             Categories
           </Link>
@@ -155,7 +155,7 @@ export function EquipmentPanel() {
             className={`inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors ${
               showArchived
                 ? "border-primary bg-primary/10 text-primary"
-                : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                : "border-border text-foreground hover:bg-accent hover:text-foreground"
             }`}
           >
             <Archive size={14} />
@@ -232,7 +232,7 @@ export function EquipmentPanel() {
                   onSort={handleSort}
                   className="text-left px-4 py-2"
                 />
-                <th className="text-right px-4 py-2 font-medium text-muted-foreground">Actions</th>
+                <th className="text-right px-4 py-2 font-medium text-foreground">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -256,8 +256,8 @@ export function EquipmentPanel() {
       {showArchived ? (
         <div className="overflow-hidden rounded-lg border border-border">
           <div className="flex items-center gap-2 border-b border-border bg-muted/30 px-4 py-2">
-            <Archive size={13} className="text-muted-foreground" />
-            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <Archive size={13} className="text-foreground" />
+            <span className="text-xs font-semibold uppercase tracking-wide text-foreground">
               Archived ({archivedEquipment.length})
             </span>
           </div>
@@ -312,7 +312,7 @@ export function EquipmentPanel() {
                     onSort={handleSort}
                     className="text-left px-4 py-2"
                   />
-                  <th className="text-right px-4 py-2 font-medium text-muted-foreground">
+                  <th className="text-right px-4 py-2 font-medium text-foreground">
                     Actions
                   </th>
                 </tr>
@@ -352,7 +352,7 @@ export function EquipmentPanel() {
           <button
             type="button"
             onClick={() => setCreateOpen(false)}
-            className="rounded-md border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="rounded-md border border-border px-4 py-2 text-sm text-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             Cancel
           </button>
@@ -390,7 +390,7 @@ export function EquipmentPanel() {
               setEditOpen(false);
               actions.cancelEdit();
             }}
-            className="rounded-md border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="rounded-md border border-border px-4 py-2 text-sm text-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             Cancel
           </button>

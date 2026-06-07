@@ -21,19 +21,19 @@ export function EquipmentRow({
   return (
     <tr className={`transition-colors hover:bg-accent/30 ${isArchived ? "opacity-50" : ""}`}>
       <td className="px-4 py-2.5 font-medium">{item.name}</td>
-      <td className="px-4 py-2.5 text-muted-foreground">
+      <td className="px-4 py-2.5 text-foreground">
         {(item.categoryId && categoryMap[item.categoryId]) || item.categorySlug || "-"}
       </td>
-      <td className="px-4 py-2.5 text-xs text-muted-foreground">
+      <td className="px-4 py-2.5 text-xs text-foreground">
         {[item.model, item.serialNo].filter(Boolean).join(" / ") || "-"}
       </td>
-      <td className="px-4 py-2.5 text-muted-foreground">{item.location ?? "-"}</td>
+      <td className="px-4 py-2.5 text-foreground">{item.location ?? "-"}</td>
       <td className="px-4 py-2.5">
         <span className={`font-medium capitalize ${STATUS_COLORS[item.status]}`}>
           {item.status.replace("_", " ")}
         </span>
       </td>
-      <td className="px-4 py-2.5 text-muted-foreground">{fmtDate(item.acquiredAt)}</td>
+      <td className="px-4 py-2.5 text-foreground">{fmtDate(item.acquiredAt)}</td>
       <td className="px-4 py-2.5 text-right">
         <div className="inline-flex gap-2">
           {isArchived ? (
@@ -49,7 +49,7 @@ export function EquipmentRow({
               <button
                 type="button"
                 onClick={() => onEdit(item)}
-                className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+                className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-foreground hover:text-foreground"
               >
                 <Pencil size={12} /> Edit
               </button>

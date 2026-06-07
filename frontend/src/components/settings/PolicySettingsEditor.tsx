@@ -141,14 +141,14 @@ export function PolicySettingsEditor({ householdId, defaults, overrides }: Props
         <table className="w-full text-sm">
           <thead className="bg-muted/50">
             <tr>
-              <th className="text-left px-4 py-2 font-medium text-muted-foreground">Key</th>
-              <th className="text-left px-4 py-2 font-medium text-muted-foreground">
+              <th className="text-left px-4 py-2 font-medium text-foreground">Key</th>
+              <th className="text-left px-4 py-2 font-medium text-foreground">
                 System Default
               </th>
-              <th className="text-left px-4 py-2 font-medium text-muted-foreground">Value</th>
-              <th className="text-left px-4 py-2 font-medium text-muted-foreground">Unit</th>
-              <th className="text-left px-4 py-2 font-medium text-muted-foreground">Description</th>
-              <th className="text-left px-4 py-2 font-medium text-muted-foreground">Actions</th>
+              <th className="text-left px-4 py-2 font-medium text-foreground">Value</th>
+              <th className="text-left px-4 py-2 font-medium text-foreground">Unit</th>
+              <th className="text-left px-4 py-2 font-medium text-foreground">Description</th>
+              <th className="text-left px-4 py-2 font-medium text-foreground">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -182,8 +182,8 @@ export function PolicySettingsEditor({ householdId, defaults, overrides }: Props
                       />
                     </label>
                   </td>
-                  <td className="px-4 py-2.5 text-muted-foreground text-xs">{d.unit}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground text-xs">
+                  <td className="px-4 py-2.5 text-foreground text-xs">{d.unit}</td>
+                  <td className="px-4 py-2.5 text-foreground text-xs">
                     {d.description ?? "—"}
                   </td>
                   <td className="px-4 py-2.5">
@@ -200,7 +200,7 @@ export function PolicySettingsEditor({ householdId, defaults, overrides }: Props
                         type="button"
                         disabled={busy || !override}
                         onClick={() => resetOverride(d)}
-                        className="rounded-md border border-border px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-40"
+                        className="rounded-md border border-border px-2.5 py-1 text-xs text-foreground hover:text-foreground disabled:opacity-40"
                       >
                         Reset
                       </button>
@@ -211,7 +211,7 @@ export function PolicySettingsEditor({ householdId, defaults, overrides }: Props
             })}
             {sortedDefaults.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={6} className="px-4 py-8 text-center text-foreground">
                   No policy defaults. Run seed data.
                 </td>
               </tr>

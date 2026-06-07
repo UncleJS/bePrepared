@@ -158,7 +158,7 @@ function AdminUserManager({
 
   return (
     <div className="rounded-lg border border-border bg-card p-4 space-y-4">
-      <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-foreground">
         Users (Admin)
       </h3>
 
@@ -249,7 +249,7 @@ function AdminUserManager({
               ) : (
                 <tr key={user.id}>
                   <td className="px-4 py-2.5 font-medium">{user.username}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{user.email ?? "—"}</td>
+                  <td className="px-4 py-2.5 text-foreground">{user.email ?? "—"}</td>
                   <td className="px-4 py-2.5">{householdName(user.householdId)}</td>
                   <td className="px-4 py-2.5">
                     {user.isAdmin ? (
@@ -257,7 +257,7 @@ function AdminUserManager({
                         Admin
                       </span>
                     ) : (
-                      <span className="text-muted-foreground text-xs">User</span>
+                      <span className="text-foreground text-xs">User</span>
                     )}
                   </td>
                   <td className="px-4 py-2.5 flex gap-2">
@@ -283,7 +283,7 @@ function AdminUserManager({
             )}
             {users.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-4 text-center text-sm text-muted-foreground">
+                <td colSpan={5} className="px-4 py-4 text-center text-sm text-foreground">
                   No users found.
                 </td>
               </tr>
@@ -294,7 +294,7 @@ function AdminUserManager({
 
       {/* Create user form */}
       <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
-        <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <h4 className="text-xs font-semibold uppercase tracking-wide text-foreground">
           Create User
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
@@ -408,7 +408,7 @@ function MyProfileEditor({ me }: { me: User }) {
 
   return (
     <div className="rounded-lg border border-border bg-card p-4 space-y-4">
-      <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-foreground">
         My Profile
       </h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

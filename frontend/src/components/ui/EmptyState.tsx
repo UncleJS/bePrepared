@@ -18,9 +18,9 @@ export function EmptyState({
 }) {
   return (
     <div className="rounded-lg border border-border bg-card px-6 py-10 text-center">
-      <Inbox size={28} className="mx-auto mb-3 text-muted-foreground" />
+      <Inbox size={28} className="mx-auto mb-3 text-foreground" />
       <p className="text-sm font-semibold">{title}</p>
-      {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
+      {description ? <p className="mt-1 text-sm text-foreground">{description}</p> : null}
       {action?.href ? (
         <Link
           to={action.href}

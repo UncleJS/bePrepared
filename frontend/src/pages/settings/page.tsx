@@ -54,7 +54,7 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Settings</h1>
-        <p className="text-muted-foreground text-sm mt-1">
+        <p className="text-foreground text-sm mt-1">
           Configure your household, users, content, and policies.
         </p>
       </div>
@@ -69,7 +69,7 @@ export default function SettingsPage() {
             <Icon size={18} className="text-primary mt-0.5 shrink-0" />
             <div>
               <p className="font-semibold text-sm">{label}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+              <p className="text-xs text-foreground mt-0.5">{description}</p>
             </div>
           </Link>
         ))}

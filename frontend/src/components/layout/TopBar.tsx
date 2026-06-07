@@ -15,14 +15,14 @@ export function TopBar({ onOpenNav }: { onOpenNav: () => void }) {
       <button
         type="button"
         onClick={onOpenNav}
-        className="inline-flex rounded-md border border-border p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:hidden"
+        className="inline-flex rounded-md border border-border p-2 text-foreground transition-colors hover:bg-accent hover:text-foreground md:hidden"
         aria-label="Open navigation"
       >
         <Menu size={16} />
       </button>
       <ShieldCheck size={20} className="text-primary" />
       <span className="font-bold text-base tracking-tight">bePrepared</span>
-      <span className="ml-auto mr-1 hidden text-xs text-muted-foreground sm:inline">v0.1.0</span>
+      <span className="ml-auto mr-1 hidden text-xs text-foreground sm:inline">v0.1.0</span>
       {user ? (
         <HouseholdSwitcher sessionHouseholdId={user.householdId} isAdmin={user.isAdmin} />
       ) : null}

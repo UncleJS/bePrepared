@@ -39,7 +39,7 @@ export function SheetContent({
         )}
       >
         {children}
-        <Dialog.Close className="absolute right-4 top-4 rounded-md border border-border p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+        <Dialog.Close className="absolute right-4 top-4 rounded-md border border-border p-1 text-foreground transition-colors hover:bg-accent hover:text-foreground">
           <X size={16} />
           <span className="sr-only">Close</span>
         </Dialog.Close>
