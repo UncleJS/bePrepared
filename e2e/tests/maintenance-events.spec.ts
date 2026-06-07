@@ -26,7 +26,7 @@ test("records maintenance event history and refreshes schedule dates", async ({ 
     scheduleId = schedule.id;
 
     const event = await api.createMaintenanceEvent(schedule.id, {
-      performedAt: "2026-03-20",
+      performedAtUTC: "2026-03-20",
       performedBy: "E2E Runner",
       notes: "Verified pressure output",
     });

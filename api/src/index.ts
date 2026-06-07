@@ -85,7 +85,7 @@ const app = new Elysia()
     }
 
     const dbUser = await db.query.users.findFirst({
-      where: and(eq(users.id, auth.sub), isNull(users.archivedAt)),
+      where: and(eq(users.id, auth.sub), isNull(users.archivedAtUTC)),
     });
     if (!dbUser) {
       setRequestClaims(request, null);

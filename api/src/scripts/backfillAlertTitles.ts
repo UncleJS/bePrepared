@@ -20,7 +20,7 @@ async function main() {
   console.log("[backfill] Loading active alerts...");
 
   const activeAlerts = await db.query.alerts.findMany({
-    where: and(eq(alerts.isResolved, false), isNull(alerts.archivedAt)),
+    where: and(eq(alerts.isResolved, false), isNull(alerts.archivedAtUTC)),
   });
 
   console.log(`[backfill] Found ${activeAlerts.length} active alert(s) to process.`);
@@ -109,7 +109,7 @@ async function main() {
 
         const dueStr = sched.nextDueAt
           ? new Date(sched.nextDueAt).toISOString().slice(0, 10)
-          : (alert.dueAt?.toISOString().slice(0, 10) ?? "unknown");
+          : (alert.dueAtUTC?.toISOString().slice(0, 10) ?? "unknown");
         const parts: string[] = [`Due: ${dueStr}`];
         if (equip.location) parts.push(`Location: ${equip.location}`);
         if (equip.model) parts.push(`Model: ${equip.model}`);
@@ -135,7 +135,7 @@ async function main() {
 
       await db
         .update(alerts)
-        .set({ title: newTitle, detail: newDetail ?? undefined, updatedAt: new Date() })
+        .set({ title: newTitle, detail: newDetail ?? undefined, updatedAtUTC: new Date() })
         .where(eq(alerts.id, alert.id));
 
       console.log(`[backfill] ✓ ${alert.id}: "${alert.title}" → "${newTitle}"`);

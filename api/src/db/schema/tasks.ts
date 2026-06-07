@@ -28,16 +28,16 @@ export const tasks = mysqlTable("tasks", {
   recurDays: int("recur_days"), // recurrence interval in days
   sortOrder: int("sort_order").notNull().default(0),
   evidencePrompt: varchar("evidence_prompt", { length: 500 }),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
-  archivedAt: timestamp("archived_at"),
+  createdAtUTC: timestamp("created_at_UTC").notNull().defaultNow(),
+  updatedAtUTC: timestamp("updated_at_UTC").notNull().defaultNow().onUpdateNow(),
+  archivedAtUTC: timestamp("archived_at_UTC"),
 });
 
 export const taskDependencies = mysqlTable("task_dependencies", {
   id: varchar("id", { length: 36 }).primaryKey(),
   taskId: varchar("task_id", { length: 36 }).notNull(),
   dependsOnTaskId: varchar("depends_on_task_id", { length: 36 }).notNull(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+  createdAtUTC: timestamp("created_at_UTC").notNull().defaultNow(),
 });
 
 export const taskProgress = mysqlTable("task_progress", {
@@ -47,11 +47,11 @@ export const taskProgress = mysqlTable("task_progress", {
   status: mysqlEnum("status", ["pending", "in_progress", "completed", "overdue"])
     .notNull()
     .default("pending"),
-  completedAt: timestamp("completed_at"),
-  nextDueAt: timestamp("next_due_at"),
+  completedAtUTC: timestamp("completed_at_UTC"),
+  nextDueAtUTC: timestamp("next_due_at_UTC"),
   evidenceNote: text("evidence_note"),
   completedBy: varchar("completed_by", { length: 255 }),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
-  archivedAt: timestamp("archived_at"),
+  createdAtUTC: timestamp("created_at_UTC").notNull().defaultNow(),
+  updatedAtUTC: timestamp("updated_at_UTC").notNull().defaultNow().onUpdateNow(),
+  archivedAtUTC: timestamp("archived_at_UTC"),
 });

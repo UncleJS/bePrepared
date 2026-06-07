@@ -8,7 +8,7 @@ export const users = mysqlTable("users", {
   email: varchar("email", { length: 255 }),
   passwordHash: varchar("password_hash", { length: 255 }).notNull(),
   isAdmin: boolean("is_admin").notNull().default(false),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
-  archivedAt: timestamp("archived_at"),
+  createdAtUTC: timestamp("created_at_UTC").notNull().defaultNow(),
+  updatedAtUTC: timestamp("updated_at_UTC").notNull().defaultNow().onUpdateNow(),
+  archivedAtUTC: timestamp("archived_at_UTC"),
 });

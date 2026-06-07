@@ -1,9 +1,8 @@
 import { getStoredToken } from "@/contexts/AuthContext";
+import { API_BASE } from "@/lib/apiBase";
 
 const ACTIVE_HOUSEHOLD_COOKIE = "bp_active_household_id";
 const ACTIVE_HOUSEHOLD_EVENT = "bp:active-household-changed";
-
-const API_BASE = (import.meta.env.VITE_API_URL ?? "http://localhost:9996").replace(/\/$/, "");
 
 export function readActiveHouseholdCookie(): string | null {
   const cookieId = document.cookie

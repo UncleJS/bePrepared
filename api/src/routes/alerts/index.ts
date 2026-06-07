@@ -14,8 +14,8 @@ export const alertsRoute = new Elysia({ prefix: "/alerts", tags: ["alerts"] })
       if (!claims) return { error: "Forbidden" };
 
       const rows = await db.query.alerts.findMany({
-        where: and(eq(alerts.householdId, params.householdId), isNull(alerts.archivedAt)),
-        orderBy: alerts.dueAt,
+        where: and(eq(alerts.householdId, params.householdId), isNull(alerts.archivedAtUTC)),
+        orderBy: alerts.dueAtUTC,
       });
       if (query.status === "active") return rows.filter((r) => !r.isResolved);
       if (query.status === "resolved") return rows.filter((r) => r.isResolved);
@@ -56,7 +56,7 @@ export const alertsRoute = new Elysia({ prefix: "/alerts", tags: ["alerts"] })
 
       await db
         .update(alerts)
-        .set({ isResolved: true, resolvedAt: new Date() })
+        .set({ isResolved: true, resolvedAtUTC: new Date() })
         .where(and(eq(alerts.id, params.alertId), eq(alerts.householdId, params.householdId)));
       return { resolved: true };
     },
@@ -71,7 +71,7 @@ export const alertsRoute = new Elysia({ prefix: "/alerts", tags: ["alerts"] })
 
       await db
         .update(alerts)
-        .set({ archivedAt: new Date() })
+        .set({ archivedAtUTC: new Date() })
         .where(and(eq(alerts.id, params.alertId), eq(alerts.householdId, params.householdId)));
       return { archived: true };
     },

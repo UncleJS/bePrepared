@@ -6,8 +6,8 @@ export type Alert = {
   entityId: string;
   title: string;
   detail?: string | null;
-  dueAt?: string | null;
+  dueAtUTC?: string | null;
   isRead: boolean;
   isResolved: boolean;
-  createdAt: string;
+  createdAtUTC: string;
 };

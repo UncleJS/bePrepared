@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { setActiveHouseholdId } from "@/lib/api";
+import { API_BASE } from "@/lib/apiBase";
 
 const ACTIVE_HOUSEHOLD_COOKIE = "bp_active_household_id";
 
@@ -39,8 +40,6 @@ export function getStoredUser(): AuthUser | null {
     return null;
   }
 }
-
-const API_BASE = (import.meta.env.VITE_API_URL ?? "http://localhost:9996").replace(/\/$/, "");
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({ status: "loading" });

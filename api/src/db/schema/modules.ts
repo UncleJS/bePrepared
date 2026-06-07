@@ -6,9 +6,9 @@ export const moduleCategories = mysqlTable("module_categories", {
   slug: varchar("slug", { length: 100 }).notNull().unique(),
   title: varchar("title", { length: 255 }).notNull(),
   sortOrder: int("sort_order").notNull().default(0),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
-  archivedAt: timestamp("archived_at"),
+  createdAtUTC: timestamp("created_at_UTC").notNull().defaultNow(),
+  updatedAtUTC: timestamp("updated_at_UTC").notNull().defaultNow().onUpdateNow(),
+  archivedAtUTC: timestamp("archived_at_UTC"),
 });
 
 export const modules = mysqlTable("modules", {
@@ -21,9 +21,9 @@ export const modules = mysqlTable("modules", {
   categoryId: varchar("category_id", { length: 36 })
     .notNull()
     .references(() => moduleCategories.id),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
-  archivedAt: timestamp("archived_at"),
+  createdAtUTC: timestamp("created_at_UTC").notNull().defaultNow(),
+  updatedAtUTC: timestamp("updated_at_UTC").notNull().defaultNow().onUpdateNow(),
+  archivedAtUTC: timestamp("archived_at_UTC"),
 });
 
 export const sections = mysqlTable(
@@ -34,9 +34,9 @@ export const sections = mysqlTable(
     slug: varchar("slug", { length: 100 }).notNull(),
     title: varchar("title", { length: 255 }).notNull(),
     sortOrder: int("sort_order").notNull().default(0),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
-    archivedAt: timestamp("archived_at"),
+    createdAtUTC: timestamp("created_at_UTC").notNull().defaultNow(),
+    updatedAtUTC: timestamp("updated_at_UTC").notNull().defaultNow().onUpdateNow(),
+    archivedAtUTC: timestamp("archived_at_UTC"),
   },
   (table) => ({
     moduleSlugUnique: uniqueIndex("sections_module_slug_unique").on(table.moduleId, table.slug),
@@ -50,7 +50,7 @@ export const guidanceDocs = mysqlTable("guidance_docs", {
   body: text("body").notNull(), // Markdown (rendered in frontend)
   sortOrder: int("sort_order").notNull().default(0),
   badgeJson: text("badge_json"), // JSON array of shields.io badge configs
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
-  archivedAt: timestamp("archived_at"),
+  createdAtUTC: timestamp("created_at_UTC").notNull().defaultNow(),
+  updatedAtUTC: timestamp("updated_at_UTC").notNull().defaultNow().onUpdateNow(),
+  archivedAtUTC: timestamp("archived_at_UTC"),
 });

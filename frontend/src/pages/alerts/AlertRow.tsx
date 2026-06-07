@@ -29,8 +29,8 @@ export function AlertRow({
         ) : null}
         <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
           <span className="capitalize">{alert.category.replaceAll("_", " ")}</span>
-          {alert.dueAt ? <span>Due: {fmtDate(alert.dueAt)}</span> : null}
-          <Timestamp value={alert.createdAt} />
+          {alert.dueAtUTC ? <span>Due: {fmtDate(alert.dueAtUTC)}</span> : null}
+          <Timestamp value={alert.createdAtUTC} />
           {alert.isRead ? (
             <span className="rounded border border-border px-1 text-muted-foreground/60">read</span>
           ) : null}

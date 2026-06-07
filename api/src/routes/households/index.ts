@@ -13,10 +13,10 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
       const claims = requireAuth(request, set);
       if (!claims) return { error: "Unauthorized" };
       if (claims?.isAdmin) {
-        return db.query.households.findMany({ where: isNull(households.archivedAt) });
+        return db.query.households.findMany({ where: isNull(households.archivedAtUTC) });
       }
       return db.query.households.findMany({
-        where: and(eq(households.id, claims!.householdId), isNull(households.archivedAt)),
+        where: and(eq(households.id, claims!.householdId), isNull(households.archivedAtUTC)),
       });
     },
     { detail: { summary: "List all active households" } }
@@ -49,7 +49,7 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
       if (!claims) return { error: "Forbidden" };
 
       const row = await db.query.households.findFirst({
-        where: and(eq(households.id, params.id), isNull(households.archivedAt)),
+        where: and(eq(households.id, params.id), isNull(households.archivedAtUTC)),
       });
       if (!row) {
         set.status = 404;
@@ -66,8 +66,18 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
       const claims = requireHouseholdScope(request, set, params.id);
       if (!claims) return { error: "Forbidden" };
 
-      await db.update(households).set(body).where(eq(households.id, params.id));
-      return db.query.households.findFirst({ where: eq(households.id, params.id) });
+      await db
+        .update(households)
+        .set(body)
+        .where(and(eq(households.id, params.id), isNull(households.archivedAtUTC)));
+      const row = await db.query.households.findFirst({
+        where: and(eq(households.id, params.id), isNull(households.archivedAtUTC)),
+      });
+      if (!row) {
+        set.status = 404;
+        return { error: "Household not found" };
+      }
+      return row;
     },
     {
       body: t.Partial(
@@ -90,7 +100,7 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
 
       await db
         .update(households)
-        .set({ archivedAt: new Date() })
+        .set({ archivedAtUTC: new Date() })
         .where(eq(households.id, params.id));
       return { archived: true };
     },
@@ -107,7 +117,7 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
       return db.query.householdPeopleProfiles.findMany({
         where: and(
           eq(householdPeopleProfiles.householdId, params.id),
-          isNull(householdPeopleProfiles.archivedAt)
+          isNull(householdPeopleProfiles.archivedAtUTC)
         ),
       });
     },
@@ -157,14 +167,14 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
           and(
             eq(householdPeopleProfiles.id, params.profileId),
             eq(householdPeopleProfiles.householdId, params.id),
-            isNull(householdPeopleProfiles.archivedAt)
+            isNull(householdPeopleProfiles.archivedAtUTC)
           )
         );
       return db.query.householdPeopleProfiles.findFirst({
         where: and(
           eq(householdPeopleProfiles.id, params.profileId),
           eq(householdPeopleProfiles.householdId, params.id),
-          isNull(householdPeopleProfiles.archivedAt)
+          isNull(householdPeopleProfiles.archivedAtUTC)
         ),
       });
     },
@@ -190,12 +200,12 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
 
       await db
         .update(householdPeopleProfiles)
-        .set({ archivedAt: new Date() })
+        .set({ archivedAtUTC: new Date() })
         .where(
           and(
             eq(householdPeopleProfiles.id, params.profileId),
             eq(householdPeopleProfiles.householdId, params.id),
-            isNull(householdPeopleProfiles.archivedAt)
+            isNull(householdPeopleProfiles.archivedAtUTC)
           )
         );
       return { archived: true };

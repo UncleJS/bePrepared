@@ -8,18 +8,18 @@ const severityRank: Record<AlertSeverity, number> = {
 };
 
 export function computeAlertSeverity(
-  dueAt: Date,
+  dueAtUTC: Date,
   today: Date = new Date(),
   graceDays: number = 0
 ): AlertSeverity {
-  const due = dueAt.toISOString().slice(0, 10);
+  const due = dueAtUTC.toISOString().slice(0, 10);
   const now = today.toISOString().slice(0, 10);
 
   if (due > now) return "upcoming";
   if (due === now) return "due";
 
   if (graceDays > 0) {
-    const graceEnd = new Date(dueAt);
+    const graceEnd = new Date(dueAtUTC);
     graceEnd.setDate(graceEnd.getDate() + graceDays);
     if (now <= graceEnd.toISOString().slice(0, 10)) return "due";
   }

@@ -31,7 +31,7 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
       return db.query.householdPolicies.findMany({
         where: and(
           eq(householdPolicies.householdId, params.householdId),
-          isNull(householdPolicies.archivedAt)
+          isNull(householdPolicies.archivedAtUTC)
         ),
       });
     },
@@ -52,7 +52,7 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
             and(
               eq(householdPolicies.householdId, params.householdId),
               eq(householdPolicies.key, params.key),
-              isNull(householdPolicies.archivedAt)
+              isNull(householdPolicies.archivedAtUTC)
             )
           )
           .limit(1);
@@ -61,7 +61,7 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
         if (existing) {
           await tx
             .update(householdPolicies)
-            .set({ archivedAt: new Date() })
+            .set({ archivedAtUTC: new Date() })
             .where(eq(householdPolicies.id, existing.id));
 
           await tx.insert(auditLog).values({
@@ -107,12 +107,12 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
 
       await db
         .update(householdPolicies)
-        .set({ archivedAt: new Date() })
+        .set({ archivedAtUTC: new Date() })
         .where(
           and(
             eq(householdPolicies.householdId, params.householdId),
             eq(householdPolicies.key, params.key),
-            isNull(householdPolicies.archivedAt)
+            isNull(householdPolicies.archivedAtUTC)
           )
         );
       return { reset: true };
@@ -131,7 +131,7 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
         where: and(
           eq(scenarioPolicies.householdId, params.householdId),
           eq(scenarioPolicies.scenario, params.scenario),
-          isNull(scenarioPolicies.archivedAt)
+          isNull(scenarioPolicies.archivedAtUTC)
         ),
       });
     },
@@ -159,7 +159,7 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
               eq(scenarioPolicies.householdId, params.householdId),
               eq(scenarioPolicies.scenario, params.scenario),
               eq(scenarioPolicies.key, params.key),
-              isNull(scenarioPolicies.archivedAt)
+              isNull(scenarioPolicies.archivedAtUTC)
             )
           )
           .limit(1);
@@ -168,7 +168,7 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
         if (existing) {
           await tx
             .update(scenarioPolicies)
-            .set({ archivedAt: new Date() })
+            .set({ archivedAtUTC: new Date() })
             .where(eq(scenarioPolicies.id, existing.id));
         }
 
@@ -210,13 +210,13 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
 
       await db
         .update(scenarioPolicies)
-        .set({ archivedAt: new Date() })
+        .set({ archivedAtUTC: new Date() })
         .where(
           and(
             eq(scenarioPolicies.householdId, params.householdId),
             eq(scenarioPolicies.scenario, params.scenario),
             eq(scenarioPolicies.key, params.key),
-            isNull(scenarioPolicies.archivedAt)
+            isNull(scenarioPolicies.archivedAtUTC)
           )
         );
       return { reset: true };
@@ -242,7 +242,7 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
 
       return db.query.auditLog.findMany({
         where: eq(auditLog.householdId, params.householdId),
-        orderBy: auditLog.createdAt,
+        orderBy: auditLog.createdAtUTC,
       });
     },
     { detail: { summary: "Get policy change audit log for a household" } }

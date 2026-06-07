@@ -94,14 +94,14 @@ export async function resolvePolicy(
         eq(scenarioPolicies.householdId, householdId),
         eq(scenarioPolicies.scenario, scenario),
         inArray(scenarioPolicies.key, keys),
-        isNull(scenarioPolicies.archivedAt)
+        isNull(scenarioPolicies.archivedAtUTC)
       ),
     }),
     db.query.householdPolicies.findMany({
       where: and(
         eq(householdPolicies.householdId, householdId),
         inArray(householdPolicies.key, keys),
-        isNull(householdPolicies.archivedAt)
+        isNull(householdPolicies.archivedAtUTC)
       ),
     }),
     db.query.policyDefaults.findMany({
@@ -152,7 +152,7 @@ export async function resolveEffectivePeople(
   }
 
   const household = await db.query.households.findFirst({
-    where: and(eq(households.id, householdId), isNull(households.archivedAt)),
+    where: and(eq(households.id, householdId), isNull(households.archivedAtUTC)),
   });
   if (!household) throw new Error(`Household ${householdId} not found`);
 
@@ -161,7 +161,7 @@ export async function resolveEffectivePeople(
     where: and(
       eq(householdPeopleProfiles.householdId, householdId),
       eq(householdPeopleProfiles.scenarioBound, scenario),
-      isNull(householdPeopleProfiles.archivedAt)
+      isNull(householdPeopleProfiles.archivedAtUTC)
     ),
   });
   if (scenarioProfile) {
@@ -177,7 +177,7 @@ export async function resolveEffectivePeople(
     const activeProfile = await db.query.householdPeopleProfiles.findFirst({
       where: and(
         eq(householdPeopleProfiles.id, household.activeProfileId),
-        isNull(householdPeopleProfiles.archivedAt)
+        isNull(householdPeopleProfiles.archivedAtUTC)
       ),
     });
     if (activeProfile) {

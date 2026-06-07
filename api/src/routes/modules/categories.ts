@@ -1,7 +1,7 @@
 import { Elysia, t } from "elysia";
 import { db } from "../../db/client";
 import { moduleCategories } from "../../db/schema";
-import { eq, isNull, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { requireAdmin, requireAuth } from "../../lib/routeAuth";
 
@@ -25,7 +25,7 @@ export const moduleCategoriesRoute = new Elysia({
       return db
         .select()
         .from(moduleCategories)
-        .where(isNull(moduleCategories.archivedAt))
+        .where(isNull(moduleCategories.archivedAtUTC))
         .orderBy(moduleCategories.sortOrder);
     },
     { detail: { summary: "List all module categories" } }
@@ -86,10 +86,18 @@ export const moduleCategoriesRoute = new Elysia({
       const claims = requireAdmin(request, set);
       if (!claims) return { error: "Admin access required" };
 
-      await db.update(moduleCategories).set(body).where(eq(moduleCategories.id, params.id));
-      return db.query.moduleCategories.findFirst({
-        where: eq(moduleCategories.id, params.id),
+      await db
+        .update(moduleCategories)
+        .set(body)
+        .where(and(eq(moduleCategories.id, params.id), isNull(moduleCategories.archivedAtUTC)));
+      const row = await db.query.moduleCategories.findFirst({
+        where: and(eq(moduleCategories.id, params.id), isNull(moduleCategories.archivedAtUTC)),
       });
+      if (!row) {
+        set.status = 404;
+        return { error: "Module category not found" };
+      }
+      return row;
     },
     {
       body: t.Partial(
@@ -114,7 +122,7 @@ export const moduleCategoriesRoute = new Elysia({
 
       await db
         .update(moduleCategories)
-        .set({ archivedAt: sql`now()` })
+        .set({ archivedAtUTC: sql`now()` })
         .where(eq(moduleCategories.id, params.id));
       return { ok: true };
     },

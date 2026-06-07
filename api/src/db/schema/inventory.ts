@@ -19,9 +19,9 @@ export const inventoryCategories = mysqlTable("inventory_categories", {
   slug: varchar("slug", { length: 100 }).notNull(),
   moduleId: varchar("module_id", { length: 36 }),
   sortOrder: int("sort_order").notNull().default(0),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
-  archivedAt: timestamp("archived_at"),
+  createdAtUTC: timestamp("created_at_UTC").notNull().defaultNow(),
+  updatedAtUTC: timestamp("updated_at_UTC").notNull().defaultNow().onUpdateNow(),
+  archivedAtUTC: timestamp("archived_at_UTC"),
 });
 
 export const inventoryItems = mysqlTable("inventory_items", {
@@ -37,9 +37,9 @@ export const inventoryItems = mysqlTable("inventory_items", {
   defaultReplaceDays: int("default_replace_days"), // cycle-based replacement
   isTrackedByExpiry: boolean("is_tracked_by_expiry").notNull().default(false),
   notes: text("notes"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
-  archivedAt: timestamp("archived_at"),
+  createdAtUTC: timestamp("created_at_UTC").notNull().defaultNow(),
+  updatedAtUTC: timestamp("updated_at_UTC").notNull().defaultNow().onUpdateNow(),
+  archivedAtUTC: timestamp("archived_at_UTC"),
 });
 
 // Each physical lot/batch of an inventory item
@@ -54,8 +54,8 @@ export const inventoryLots = mysqlTable("inventory_lots", {
   nextReplaceAt: date("next_replace_at"),
   batchRef: varchar("batch_ref", { length: 255 }),
   notes: text("notes"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
-  archivedAt: timestamp("archived_at"), // archived = consumed/disposed
+  createdAtUTC: timestamp("created_at_UTC").notNull().defaultNow(),
+  updatedAtUTC: timestamp("updated_at_UTC").notNull().defaultNow().onUpdateNow(),
+  archivedAtUTC: timestamp("archived_at_UTC"), // archived = consumed/disposed
   replacedByLotId: varchar("replaced_by_lot_id", { length: 36 }), // restore ref
 });

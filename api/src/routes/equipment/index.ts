@@ -21,7 +21,7 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
       if (!claims) return { error: "Admin access required" };
 
       return db.query.batteryProfiles.findMany({
-        where: isNull(batteryProfiles.archivedAt),
+        where: isNull(batteryProfiles.archivedAtUTC),
       });
     },
     { detail: { summary: "List battery chemistry profiles" } }
@@ -77,14 +77,14 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
         where: and(
           isNull(equipmentCategories.householdId),
           eq(equipmentCategories.isSystem, true),
-          isNull(equipmentCategories.archivedAt)
+          isNull(equipmentCategories.archivedAtUTC)
         ),
         orderBy: equipmentCategories.sortOrder,
       });
       const customRows = await db.query.equipmentCategories.findMany({
         where: and(
           eq(equipmentCategories.householdId, params.householdId),
-          isNull(equipmentCategories.archivedAt)
+          isNull(equipmentCategories.archivedAtUTC)
         ),
         orderBy: equipmentCategories.sortOrder,
       });
@@ -170,7 +170,7 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
         where: and(
           eq(equipmentItems.householdId, params.householdId),
           eq(equipmentItems.categoryId, params.categoryId),
-          isNull(equipmentItems.archivedAt)
+          isNull(equipmentItems.archivedAtUTC)
         ),
       });
 
@@ -218,14 +218,14 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
               and(
                 eq(equipmentItems.householdId, params.householdId),
                 eq(equipmentItems.categoryId, params.categoryId),
-                isNull(equipmentItems.archivedAt)
+                isNull(equipmentItems.archivedAtUTC)
               )
             );
         }
 
         await tx
           .update(equipmentCategories)
-          .set({ archivedAt: new Date() })
+          .set({ archivedAtUTC: new Date() })
           .where(eq(equipmentCategories.id, params.categoryId));
 
         return { archived: true } as const;
@@ -253,8 +253,8 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
       if (!claims) return { error: "Forbidden" };
 
       const archivedFilter = query.archived
-        ? isNotNull(equipmentItems.archivedAt)
-        : isNull(equipmentItems.archivedAt);
+        ? isNotNull(equipmentItems.archivedAtUTC)
+        : isNull(equipmentItems.archivedAtUTC);
 
       return db.query.equipmentItems.findMany({
         where: and(eq(equipmentItems.householdId, params.householdId), archivedFilter),
@@ -278,7 +278,7 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
         where: and(
           eq(equipmentItems.id, params.itemId),
           eq(equipmentItems.householdId, params.householdId),
-          isNotNull(equipmentItems.archivedAt)
+          isNotNull(equipmentItems.archivedAtUTC)
         ),
       });
       if (!item) {
@@ -288,7 +288,7 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
 
       await db
         .update(equipmentItems)
-        .set({ archivedAt: null })
+        .set({ archivedAtUTC: null })
         .where(
           and(
             eq(equipmentItems.id, params.itemId),
@@ -386,14 +386,14 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
           and(
             eq(equipmentItems.id, params.itemId),
             eq(equipmentItems.householdId, params.householdId),
-            isNull(equipmentItems.archivedAt)
+            isNull(equipmentItems.archivedAtUTC)
           )
         );
       return db.query.equipmentItems.findFirst({
         where: and(
           eq(equipmentItems.id, params.itemId),
           eq(equipmentItems.householdId, params.householdId),
-          isNull(equipmentItems.archivedAt)
+          isNull(equipmentItems.archivedAtUTC)
         ),
       });
     },
@@ -428,12 +428,12 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
 
       await db
         .update(equipmentItems)
-        .set({ archivedAt: new Date() })
+        .set({ archivedAtUTC: new Date() })
         .where(
           and(
             eq(equipmentItems.id, params.itemId),
             eq(equipmentItems.householdId, params.householdId),
-            isNull(equipmentItems.archivedAt)
+            isNull(equipmentItems.archivedAtUTC)
           )
         );
       return { archived: true };

@@ -17,10 +17,10 @@ describe("alertSeverity", () => {
 
   it("supports a due grace window before escalating to overdue", () => {
     const today = new Date("2026-03-06T10:00:00.000Z");
-    const dueAt = new Date("2026-03-05T00:00:00.000Z");
+    const dueAtUTC = new Date("2026-03-05T00:00:00.000Z");
 
-    expect(computeAlertSeverity(dueAt, today, 2)).toBe("due");
-    expect(computeAlertSeverity(dueAt, new Date("2026-03-08T10:00:00.000Z"), 2)).toBe("overdue");
+    expect(computeAlertSeverity(dueAtUTC, today, 2)).toBe("due");
+    expect(computeAlertSeverity(dueAtUTC, new Date("2026-03-08T10:00:00.000Z"), 2)).toBe("overdue");
   });
 
   it("escalates severity monotonically", () => {

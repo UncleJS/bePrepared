@@ -16,9 +16,9 @@ export const households = mysqlTable("households", {
   targetPeople: int("target_people").notNull().default(2),
   activeProfileId: varchar("active_profile_id", { length: 36 }),
   notes: text("notes"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
-  archivedAt: timestamp("archived_at"),
+  createdAtUTC: timestamp("created_at_UTC").notNull().defaultNow(),
+  updatedAtUTC: timestamp("updated_at_UTC").notNull().defaultNow().onUpdateNow(),
+  archivedAtUTC: timestamp("archived_at_UTC"),
 });
 
 export const householdPeopleProfiles = mysqlTable(
@@ -31,9 +31,9 @@ export const householdPeopleProfiles = mysqlTable(
     isDefault: boolean("is_default").notNull().default(false),
     scenarioBound: mysqlEnum("scenario_bound", ["shelter_in_place", "evacuation"]),
     notes: text("notes"),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
-    archivedAt: timestamp("archived_at"),
+    createdAtUTC: timestamp("created_at_UTC").notNull().defaultNow(),
+    updatedAtUTC: timestamp("updated_at_UTC").notNull().defaultNow().onUpdateNow(),
+    archivedAtUTC: timestamp("archived_at_UTC"),
   },
   (table) => ({
     householdNameUnique: uniqueIndex("household_people_profiles_household_name_unique").on(

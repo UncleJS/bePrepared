@@ -26,7 +26,7 @@ export const usersRoute = new Elysia({ prefix: "/users", tags: ["users"] })
       if (!claims) return { error: "Admin access required" };
 
       const rows = await db.query.users.findMany({
-        where: isNull(users.archivedAt),
+        where: isNull(users.archivedAtUTC),
       });
       return rows.map(safeUser);
     },
@@ -41,7 +41,7 @@ export const usersRoute = new Elysia({ prefix: "/users", tags: ["users"] })
       if (!claims) return { error: "Unauthorized" };
 
       const user = await db.query.users.findFirst({
-        where: and(eq(users.id, claims.sub), isNull(users.archivedAt)),
+        where: and(eq(users.id, claims.sub), isNull(users.archivedAtUTC)),
       });
       if (!user) {
         set.status = 404;
@@ -72,7 +72,7 @@ export const usersRoute = new Elysia({ prefix: "/users", tags: ["users"] })
       await db.update(users).set(updates).where(eq(users.id, claims.sub));
 
       const updated = await db.query.users.findFirst({
-        where: and(eq(users.id, claims.sub), isNull(users.archivedAt)),
+        where: and(eq(users.id, claims.sub), isNull(users.archivedAtUTC)),
       });
       if (!updated) {
         set.status = 404;
@@ -138,7 +138,7 @@ export const usersRoute = new Elysia({ prefix: "/users", tags: ["users"] })
       if (!claims) return { error: "Admin access required" };
 
       const existing = await db.query.users.findFirst({
-        where: and(eq(users.id, params.id), isNull(users.archivedAt)),
+        where: and(eq(users.id, params.id), isNull(users.archivedAtUTC)),
       });
       if (!existing) {
         set.status = 404;
@@ -160,7 +160,7 @@ export const usersRoute = new Elysia({ prefix: "/users", tags: ["users"] })
       await db.update(users).set(updates).where(eq(users.id, params.id));
 
       const updated = await db.query.users.findFirst({
-        where: and(eq(users.id, params.id), isNull(users.archivedAt)),
+        where: and(eq(users.id, params.id), isNull(users.archivedAtUTC)),
       });
       if (!updated) {
         set.status = 404;
@@ -195,7 +195,7 @@ export const usersRoute = new Elysia({ prefix: "/users", tags: ["users"] })
       }
 
       const existing = await db.query.users.findFirst({
-        where: and(eq(users.id, params.id), isNull(users.archivedAt)),
+        where: and(eq(users.id, params.id), isNull(users.archivedAtUTC)),
       });
       if (!existing) {
         set.status = 404;
@@ -204,7 +204,7 @@ export const usersRoute = new Elysia({ prefix: "/users", tags: ["users"] })
 
       await db
         .update(users)
-        .set({ archivedAt: new Date() })
+        .set({ archivedAtUTC: new Date() })
         .where(and(eq(users.id, params.id), ne(users.id, claims.sub)));
 
       return { archived: true };

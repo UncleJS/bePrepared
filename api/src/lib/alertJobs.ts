@@ -87,7 +87,7 @@ async function getAlertPolicyForHousehold(householdId: string): Promise<AlertPol
       where: and(
         eq(householdPolicies.householdId, householdId),
         inArray(householdPolicies.key, [...KEYS]),
-        isNull(householdPolicies.archivedAt)
+        isNull(householdPolicies.archivedAtUTC)
       ),
     }),
     db.query.policyDefaults.findMany({
@@ -120,59 +120,65 @@ async function upsertAlert(data: {
   entityId: string;
   title: string;
   detail?: string;
-  dueAt?: Date;
+  dueAtUTC?: Date;
 }): Promise<AlertUpsertResult> {
-  try {
-    await db.insert(alerts).values({
-      id: randomUUID(),
-      householdId: data.householdId,
-      severity: data.severity,
-      category: data.category,
-      entityType: data.entityType,
-      entityId: data.entityId,
-      title: data.title,
-      detail: data.detail,
-      dueAt: data.dueAt,
-    });
-    return "inserted";
-  } catch (err) {
-    if (!isDuplicateKeyError(err)) throw err;
-  }
-
-  const existing = await db.query.alerts.findFirst({
-    where: and(
-      eq(alerts.householdId, data.householdId),
-      eq(alerts.entityType, data.entityType),
-      eq(alerts.entityId, data.entityId),
-      eq(alerts.isResolved, false),
-      isNull(alerts.archivedAt)
-    ),
-  });
-  if (!existing) {
-    throw new Error(
-      `Active alert disappeared during duplicate resolution for ${data.householdId}:${data.entityType}:${data.entityId}`
-    );
-  }
-
-  const decision = resolveAlertUpsertResult(existing.severity, data.severity);
-  if (decision === "escalated") {
-    await db
-      .update(alerts)
-      .set({
+  // Insert → on duplicate, look up the conflicting active alert. A concurrent
+  // resolve/archive can race between the duplicate-key error and the lookup,
+  // so retry the whole sequence a few times before giving up.
+  const MAX_ATTEMPTS = 3;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      await db.insert(alerts).values({
+        id: randomUUID(),
+        householdId: data.householdId,
         severity: data.severity,
+        category: data.category,
+        entityType: data.entityType,
+        entityId: data.entityId,
         title: data.title,
         detail: data.detail,
-        updatedAt: new Date(),
-      })
+        dueAtUTC: data.dueAtUTC,
+      });
+      return "inserted";
+    } catch (err) {
+      if (!isDuplicateKeyError(err)) throw err;
+    }
+
+    const existing = await db.query.alerts.findFirst({
+      where: and(
+        eq(alerts.householdId, data.householdId),
+        eq(alerts.entityType, data.entityType),
+        eq(alerts.entityId, data.entityId),
+        eq(alerts.isResolved, false),
+        isNull(alerts.archivedAtUTC)
+      ),
+    });
+    if (!existing) continue; // raced with a resolve/archive — retry the insert
+
+    const decision = resolveAlertUpsertResult(existing.severity, data.severity);
+    if (decision === "escalated") {
+      await db
+        .update(alerts)
+        .set({
+          severity: data.severity,
+          title: data.title,
+          detail: data.detail,
+          updatedAtUTC: new Date(),
+        })
+        .where(eq(alerts.id, existing.id));
+      return decision;
+    }
+
+    await db
+      .update(alerts)
+      .set({ title: data.title, detail: data.detail, updatedAtUTC: new Date() })
       .where(eq(alerts.id, existing.id));
     return decision;
   }
 
-  await db
-    .update(alerts)
-    .set({ title: data.title, detail: data.detail, updatedAt: new Date() })
-    .where(eq(alerts.id, existing.id));
-  return decision;
+  throw new Error(
+    `Active alert disappeared during duplicate resolution for ${data.householdId}:${data.entityType}:${data.entityId} after ${MAX_ATTEMPTS} attempts`
+  );
 }
 
 function isDuplicateKeyError(error: unknown): boolean {
@@ -188,7 +194,7 @@ function isDuplicateKeyError(error: unknown): boolean {
 async function processInventoryExpiry(metrics: JobCounters) {
   logger.info("[alertJobs] Processing inventory expiry...");
   const allHouseholds = await db.query.households.findMany({
-    where: isNull(households.archivedAt),
+    where: isNull(households.archivedAtUTC),
   });
   const today = new Date();
 
@@ -200,7 +206,7 @@ async function processInventoryExpiry(metrics: JobCounters) {
     const lots = await db.query.inventoryLots.findMany({
       where: and(
         eq(inventoryLots.householdId, hh.id),
-        isNull(inventoryLots.archivedAt),
+        isNull(inventoryLots.archivedAtUTC),
         isNotNull(inventoryLots.expiresAt),
         lte(inventoryLots.expiresAt, upcoming)
       ),
@@ -208,7 +214,7 @@ async function processInventoryExpiry(metrics: JobCounters) {
 
     // Build itemId → item map for this household (one query, not per-lot)
     const itemRows = await db.query.inventoryItems.findMany({
-      where: and(eq(inventoryItems.householdId, hh.id), isNull(inventoryItems.archivedAt)),
+      where: and(eq(inventoryItems.householdId, hh.id), isNull(inventoryItems.archivedAtUTC)),
     });
     const itemMap = new Map(itemRows.map((i) => [i.id, i]));
 
@@ -234,7 +240,7 @@ async function processInventoryExpiry(metrics: JobCounters) {
           entityId: lot.id,
           title: `Lot expiring: ${itemName}`,
           detail: parts.join(" · "),
-          dueAt: new Date(expStr),
+          dueAtUTC: new Date(expStr),
         });
         if (result === "inserted") metrics.inserted += 1;
         else if (result === "escalated") metrics.escalated += 1;
@@ -250,7 +256,7 @@ async function processInventoryExpiry(metrics: JobCounters) {
 async function processInventoryReplacement(metrics: JobCounters) {
   logger.info("[alertJobs] Processing inventory replacement cycles...");
   const allHouseholds = await db.query.households.findMany({
-    where: isNull(households.archivedAt),
+    where: isNull(households.archivedAtUTC),
   });
   const today = new Date();
 
@@ -262,7 +268,7 @@ async function processInventoryReplacement(metrics: JobCounters) {
     const lots = await db.query.inventoryLots.findMany({
       where: and(
         eq(inventoryLots.householdId, hh.id),
-        isNull(inventoryLots.archivedAt),
+        isNull(inventoryLots.archivedAtUTC),
         isNotNull(inventoryLots.nextReplaceAt),
         lte(inventoryLots.nextReplaceAt, upcoming)
       ),
@@ -270,7 +276,7 @@ async function processInventoryReplacement(metrics: JobCounters) {
 
     // Build itemId → item map for this household (one query, not per-lot)
     const itemRows = await db.query.inventoryItems.findMany({
-      where: and(eq(inventoryItems.householdId, hh.id), isNull(inventoryItems.archivedAt)),
+      where: and(eq(inventoryItems.householdId, hh.id), isNull(inventoryItems.archivedAtUTC)),
     });
     const itemMap = new Map(itemRows.map((i) => [i.id, i]));
 
@@ -296,7 +302,7 @@ async function processInventoryReplacement(metrics: JobCounters) {
           entityId: lot.id,
           title: `Replace: ${itemName}`,
           detail: parts.join(" · "),
-          dueAt: new Date(repStr),
+          dueAtUTC: new Date(repStr),
         });
         if (result === "inserted") metrics.inserted += 1;
         else if (result === "escalated") metrics.escalated += 1;
@@ -315,7 +321,7 @@ async function processInventoryReplacement(metrics: JobCounters) {
 async function processMaintenanceSchedules(metrics: JobCounters) {
   logger.info("[alertJobs] Processing maintenance schedules...");
   const allHouseholds = await db.query.households.findMany({
-    where: isNull(households.archivedAt),
+    where: isNull(households.archivedAtUTC),
   });
   const today = new Date();
 
@@ -334,8 +340,8 @@ async function processMaintenanceSchedules(metrics: JobCounters) {
       .where(
         and(
           eq(equipmentItems.householdId, hh.id),
-          isNull(equipmentItems.archivedAt),
-          isNull(maintenanceSchedules.archivedAt),
+          isNull(equipmentItems.archivedAtUTC),
+          isNull(maintenanceSchedules.archivedAtUTC),
           eq(maintenanceSchedules.isActive, true),
           isNotNull(maintenanceSchedules.nextDueAt),
           lte(maintenanceSchedules.nextDueAt, upcoming)
@@ -363,7 +369,7 @@ async function processMaintenanceSchedules(metrics: JobCounters) {
           entityId: sched.id,
           title: `Maintenance: ${equip.name} — ${sched.name}`,
           detail: parts.join(" · "),
-          dueAt: new Date(dueStr),
+          dueAtUTC: new Date(dueStr),
         });
         if (result === "inserted") metrics.inserted += 1;
         else if (result === "escalated") metrics.escalated += 1;

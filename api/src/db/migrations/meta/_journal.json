@@ -64,6 +64,13 @@
       "when": 1776038400000,
       "tag": "0008_fix_seed_uuid",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1780790400000,
+      "tag": "0009_utc_column_suffix",
+      "breakpoints": true
     }
   ]
 }

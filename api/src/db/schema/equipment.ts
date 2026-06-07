@@ -26,9 +26,9 @@ export const equipmentItems = mysqlTable("equipment_items", {
     .default("operational"),
   acquiredAt: date("acquired_at"),
   notes: text("notes"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
-  archivedAt: timestamp("archived_at"),
+  createdAtUTC: timestamp("created_at_UTC").notNull().defaultNow(),
+  updatedAtUTC: timestamp("updated_at_UTC").notNull().defaultNow().onUpdateNow(),
+  archivedAtUTC: timestamp("archived_at_UTC"),
 });
 
 export const equipmentCategories = mysqlTable("equipment_categories", {
@@ -38,9 +38,9 @@ export const equipmentCategories = mysqlTable("equipment_categories", {
   name: varchar("name", { length: 255 }).notNull(),
   slug: varchar("slug", { length: 100 }).notNull(),
   sortOrder: int("sort_order").notNull().default(0),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
-  archivedAt: timestamp("archived_at"),
+  createdAtUTC: timestamp("created_at_UTC").notNull().defaultNow(),
+  updatedAtUTC: timestamp("updated_at_UTC").notNull().defaultNow().onUpdateNow(),
+  archivedAtUTC: timestamp("archived_at_UTC"),
 });
 
 // Battery-specific profiling (linked to equipment_items or standalone)
@@ -62,7 +62,7 @@ export const batteryProfiles = mysqlTable(
     storageTempMin: int("storage_temp_min"), // celsius
     storageTempMax: int("storage_temp_max"),
     notes: text("notes"),
-    archivedAt: timestamp("archived_at"),
+    archivedAtUTC: timestamp("archived_at_UTC"),
   },
   (table) => ({
     nameUnique: uniqueIndex("battery_profiles_name_unique").on(table.name),
@@ -92,7 +92,7 @@ export const maintenanceTemplates = mysqlTable(
     usageMeterUnit: varchar("usage_meter_unit", { length: 50 }), // "hours", "cycles", "km"
     defaultUsageInterval: decimal("default_usage_interval", { precision: 10, scale: 2 }),
     graceDays: int("grace_days").notNull().default(7),
-    archivedAt: timestamp("archived_at"),
+    archivedAtUTC: timestamp("archived_at_UTC"),
   },
   (table) => ({
     categoryNameUnique: uniqueIndex("maintenance_templates_category_name_unique").on(
@@ -117,9 +117,9 @@ export const maintenanceSchedules = mysqlTable("maintenance_schedules", {
   nextDueAt: date("next_due_at"),
   nextDueMeter: decimal("next_due_meter", { precision: 10, scale: 2 }),
   isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
-  archivedAt: timestamp("archived_at"),
+  createdAtUTC: timestamp("created_at_UTC").notNull().defaultNow(),
+  updatedAtUTC: timestamp("updated_at_UTC").notNull().defaultNow().onUpdateNow(),
+  archivedAtUTC: timestamp("archived_at_UTC"),
 });
 
 // Completed maintenance events (full service history)
@@ -127,11 +127,11 @@ export const maintenanceEvents = mysqlTable("maintenance_events", {
   id: varchar("id", { length: 36 }).primaryKey(),
   scheduleId: varchar("schedule_id", { length: 36 }).notNull(),
   equipmentItemId: varchar("equipment_item_id", { length: 36 }).notNull(),
-  performedAt: timestamp("performed_at").notNull(),
+  performedAtUTC: timestamp("performed_at_UTC").notNull(),
   performedBy: varchar("performed_by", { length: 255 }),
   meterReading: decimal("meter_reading", { precision: 10, scale: 2 }),
   nextDueAt: date("next_due_at"),
   notes: text("notes"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  archivedAt: timestamp("archived_at"),
+  createdAtUTC: timestamp("created_at_UTC").notNull().defaultNow(),
+  archivedAtUTC: timestamp("archived_at_UTC"),
 });

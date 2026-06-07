@@ -34,7 +34,7 @@ export async function seedInventoryCategories() {
         isNull(inventoryCategories.householdId),
         eq(inventoryCategories.slug, c.slug),
         eq(inventoryCategories.isSystem, true),
-        isNull(inventoryCategories.archivedAt)
+        isNull(inventoryCategories.archivedAtUTC)
       ),
     });
 

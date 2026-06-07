@@ -41,7 +41,7 @@ const dbMock = {
           id: values.id,
           taskId: values.taskId,
           dependsOnTaskId: values.dependsOnTaskId,
-          createdAt: new Date(),
+          createdAtUTC: new Date(),
         });
         return;
       }
@@ -168,7 +168,7 @@ describe("tasksRoute critical CRUD", () => {
         id: "dep-1",
         taskId: "11111111-1111-1111-1111-111111111111",
         dependsOnTaskId: "22222222-2222-2222-2222-222222222222",
-        createdAt: new Date(),
+        createdAtUTC: new Date(),
       },
     ];
 

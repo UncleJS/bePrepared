@@ -28,7 +28,7 @@ export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] }
       const moduleRows = await db
         .select()
         .from(modules)
-        .where(isNull(modules.archivedAt))
+        .where(isNull(modules.archivedAtUTC))
         .orderBy(modules.sortOrder);
 
       if (moduleRows.length === 0) return [];
@@ -38,7 +38,7 @@ export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] }
       const sectionRows = await db
         .select()
         .from(sections)
-        .where(and(isNull(sections.archivedAt), inArray(sections.moduleId, moduleIds)))
+        .where(and(isNull(sections.archivedAtUTC), inArray(sections.moduleId, moduleIds)))
         .orderBy(sections.sortOrder);
 
       const sectionsByModule = new Map<string, typeof sectionRows>();
@@ -65,7 +65,7 @@ export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] }
       const moduleRows = await db
         .select()
         .from(modules)
-        .where(and(eq(modules.slug, params.slug), isNull(modules.archivedAt)))
+        .where(and(eq(modules.slug, params.slug), isNull(modules.archivedAtUTC)))
         .limit(1);
 
       const row = moduleRows[0];
@@ -77,7 +77,7 @@ export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] }
       const sectionRows = await db
         .select()
         .from(sections)
-        .where(and(eq(sections.moduleId, row.id), isNull(sections.archivedAt)))
+        .where(and(eq(sections.moduleId, row.id), isNull(sections.archivedAtUTC)))
         .orderBy(sections.sortOrder);
 
       const sectionIds = sectionRows.map((s) => s.id);
@@ -86,7 +86,7 @@ export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] }
             .select()
             .from(guidanceDocs)
             .where(
-              and(isNull(guidanceDocs.archivedAt), inArray(guidanceDocs.sectionId, sectionIds))
+              and(isNull(guidanceDocs.archivedAtUTC), inArray(guidanceDocs.sectionId, sectionIds))
             )
             .orderBy(guidanceDocs.sortOrder)
         : [];
@@ -158,8 +158,18 @@ export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] }
       if (body.sortOrder !== undefined) updates.sortOrder = body.sortOrder;
       if (body.categoryId !== undefined) updates.categoryId = body.categoryId;
 
-      await db.update(modules).set(updates).where(eq(modules.id, params.moduleId));
-      return db.query.modules.findFirst({ where: eq(modules.id, params.moduleId) });
+      await db
+        .update(modules)
+        .set(updates)
+        .where(and(eq(modules.id, params.moduleId), isNull(modules.archivedAtUTC)));
+      const row = await db.query.modules.findFirst({
+        where: and(eq(modules.id, params.moduleId), isNull(modules.archivedAtUTC)),
+      });
+      if (!row) {
+        set.status = 404;
+        return { error: "Module not found" };
+      }
+      return row;
     },
     {
       body: t.Partial(
@@ -188,7 +198,7 @@ export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] }
       const sectionRows = await db
         .select({ id: sections.id })
         .from(sections)
-        .where(and(eq(sections.moduleId, params.moduleId), isNull(sections.archivedAt)));
+        .where(and(eq(sections.moduleId, params.moduleId), isNull(sections.archivedAtUTC)));
 
       const sectionIds = sectionRows.map((s) => s.id);
 
@@ -196,18 +206,18 @@ export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] }
       if (sectionIds.length) {
         await db
           .update(guidanceDocs)
-          .set({ archivedAt: now })
-          .where(and(isNull(guidanceDocs.archivedAt), inArray(guidanceDocs.sectionId, sectionIds)));
+          .set({ archivedAtUTC: now })
+          .where(and(isNull(guidanceDocs.archivedAtUTC), inArray(guidanceDocs.sectionId, sectionIds)));
       }
 
       // 3. Archive sections
       await db
         .update(sections)
-        .set({ archivedAt: now })
-        .where(and(eq(sections.moduleId, params.moduleId), isNull(sections.archivedAt)));
+        .set({ archivedAtUTC: now })
+        .where(and(eq(sections.moduleId, params.moduleId), isNull(sections.archivedAtUTC)));
 
       // 4. Archive module
-      await db.update(modules).set({ archivedAt: now }).where(eq(modules.id, params.moduleId));
+      await db.update(modules).set({ archivedAtUTC: now }).where(eq(modules.id, params.moduleId));
 
       return { ok: true };
     },
@@ -292,11 +302,11 @@ export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] }
       // Cascade-archive docs first
       await db
         .update(guidanceDocs)
-        .set({ archivedAt: now })
-        .where(and(isNull(guidanceDocs.archivedAt), eq(guidanceDocs.sectionId, params.sectionId)));
+        .set({ archivedAtUTC: now })
+        .where(and(isNull(guidanceDocs.archivedAtUTC), eq(guidanceDocs.sectionId, params.sectionId)));
 
       // Archive section
-      await db.update(sections).set({ archivedAt: now }).where(eq(sections.id, params.sectionId));
+      await db.update(sections).set({ archivedAtUTC: now }).where(eq(sections.id, params.sectionId));
 
       return { ok: true };
     },
@@ -384,7 +394,7 @@ export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] }
 
       await db
         .update(guidanceDocs)
-        .set({ archivedAt: new Date() })
+        .set({ archivedAtUTC: new Date() })
         .where(eq(guidanceDocs.id, params.docId));
       return { ok: true };
     },

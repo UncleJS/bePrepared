@@ -9,7 +9,7 @@ type User = {
   email: string | null;
   householdId: string;
   isAdmin: boolean;
-  createdAt: string;
+  createdAtUTC: string;
 };
 
 type Household = {

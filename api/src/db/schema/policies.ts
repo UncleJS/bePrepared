@@ -16,7 +16,7 @@ export const policyDefaults = mysqlTable("policy_defaults", {
   valueInt: int("value_int"),
   unit: varchar("unit", { length: 50 }).notNull(),
   description: varchar("description", { length: 500 }),
-  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+  updatedAtUTC: timestamp("updated_at_UTC").notNull().defaultNow().onUpdateNow(),
 });
 
 // Household-level global overrides (per key)
@@ -27,9 +27,9 @@ export const householdPolicies = mysqlTable("household_policies", {
   valueDecimal: decimal("value_decimal", { precision: 10, scale: 4 }),
   valueInt: int("value_int"),
   unit: varchar("unit", { length: 50 }).notNull(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
-  archivedAt: timestamp("archived_at"),
+  createdAtUTC: timestamp("created_at_UTC").notNull().defaultNow(),
+  updatedAtUTC: timestamp("updated_at_UTC").notNull().defaultNow().onUpdateNow(),
+  archivedAtUTC: timestamp("archived_at_UTC"),
 });
 
 // Household + scenario overrides
@@ -41,9 +41,9 @@ export const scenarioPolicies = mysqlTable("scenario_policies", {
   valueDecimal: decimal("value_decimal", { precision: 10, scale: 4 }),
   valueInt: int("value_int"),
   unit: varchar("unit", { length: 50 }).notNull(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
-  archivedAt: timestamp("archived_at"),
+  createdAtUTC: timestamp("created_at_UTC").notNull().defaultNow(),
+  updatedAtUTC: timestamp("updated_at_UTC").notNull().defaultNow().onUpdateNow(),
+  archivedAtUTC: timestamp("archived_at_UTC"),
 });
 
 // Audit log for all policy / profile changes
@@ -56,5 +56,5 @@ export const auditLog = mysqlTable("audit_log", {
   changedBy: varchar("changed_by", { length: 255 }),
   oldValue: varchar("old_value", { length: 1000 }),
   newValue: varchar("new_value", { length: 1000 }),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+  createdAtUTC: timestamp("created_at_UTC").notNull().defaultNow(),
 });

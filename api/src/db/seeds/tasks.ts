@@ -514,7 +514,7 @@ export async function seedTasksAndDependencies() {
       where: and(
         eq(tasks.moduleId, moduleId),
         eq(tasks.title, task.title),
-        isNull(tasks.archivedAt)
+        isNull(tasks.archivedAtUTC)
       ),
     });
 

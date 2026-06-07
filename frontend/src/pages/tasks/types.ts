@@ -23,7 +23,7 @@ export type Progress = {
   id: string;
   taskId: string;
   status: "pending" | "in_progress" | "completed" | "overdue";
-  completedAt?: string;
+  completedAtUTC?: string;
   evidenceNote?: string;
 };
 

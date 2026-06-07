@@ -22,8 +22,8 @@ async function scheduleForHousehold(householdId: string, scheduleId: string) {
       and(
         eq(maintenanceSchedules.id, scheduleId),
         eq(equipmentItems.householdId, householdId),
-        isNull(maintenanceSchedules.archivedAt),
-        isNull(equipmentItems.archivedAt)
+        isNull(maintenanceSchedules.archivedAtUTC),
+        isNull(equipmentItems.archivedAtUTC)
       )
     )
     .limit(1);
@@ -39,7 +39,7 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
       if (!claims) return { error: "Unauthorized" };
 
       return db.query.maintenanceTemplates.findMany({
-        where: isNull(maintenanceTemplates.archivedAt),
+        where: isNull(maintenanceTemplates.archivedAtUTC),
       });
     },
     { detail: { summary: "List maintenance templates" } }
@@ -106,8 +106,8 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
         .where(
           and(
             eq(equipmentItems.householdId, params.householdId),
-            isNull(equipmentItems.archivedAt),
-            isNull(maintenanceSchedules.archivedAt)
+            isNull(equipmentItems.archivedAtUTC),
+            isNull(maintenanceSchedules.archivedAtUTC)
           )
         );
 
@@ -126,7 +126,7 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
         where: and(
           eq(equipmentItems.id, params.equipmentItemId),
           eq(equipmentItems.householdId, params.householdId),
-          isNull(equipmentItems.archivedAt)
+          isNull(equipmentItems.archivedAtUTC)
         ),
       });
       if (!equipment) {
@@ -223,7 +223,7 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
 
       await db
         .update(maintenanceSchedules)
-        .set({ archivedAt: new Date() })
+        .set({ archivedAtUTC: new Date() })
         .where(eq(maintenanceSchedules.id, params.scheduleId));
 
       return { archived: true };
@@ -244,7 +244,7 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
       }
 
       const id = randomUUID();
-      const performedDate = new Date(body.performedAt ?? new Date());
+      const performedDate = new Date(body.performedAtUTC ?? new Date());
       let nextDueDate: Date | undefined;
       if (found.schedule.calDays) {
         nextDueDate = new Date(performedDate);
@@ -256,7 +256,7 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
           id,
           scheduleId: params.scheduleId,
           equipmentItemId: found.schedule.equipmentItemId,
-          performedAt: performedDate,
+          performedAtUTC: performedDate,
           performedBy: body.performedBy,
           meterReading: body.meterReading != null ? String(body.meterReading) : undefined,
           nextDueAt: nextDueDate,
@@ -281,7 +281,7 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
     },
     {
       body: t.Object({
-        performedAt: t.Optional(t.String({ maxLength: 64 })),
+        performedAtUTC: t.Optional(t.String({ maxLength: 64 })),
         performedBy: t.Optional(t.String({ maxLength: 255 })),
         meterReading: t.Optional(t.Number({ minimum: 0, maximum: 1000000000 })),
         notes: t.Optional(t.String({ maxLength: 10000 })),
@@ -305,7 +305,7 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
       return db.query.maintenanceEvents.findMany({
         where: and(
           eq(maintenanceEvents.scheduleId, params.scheduleId),
-          isNull(maintenanceEvents.archivedAt)
+          isNull(maintenanceEvents.archivedAtUTC)
         ),
       });
     },
@@ -329,8 +329,8 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
         .where(
           and(
             eq(equipmentItems.householdId, params.householdId),
-            isNull(equipmentItems.archivedAt),
-            isNull(maintenanceSchedules.archivedAt),
+            isNull(equipmentItems.archivedAtUTC),
+            isNull(maintenanceSchedules.archivedAtUTC),
             eq(maintenanceSchedules.isActive, true),
             lte(maintenanceSchedules.nextDueAt, cutoff)
           )

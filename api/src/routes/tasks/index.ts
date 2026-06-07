@@ -4,19 +4,7 @@ import { tasks, taskDependencies, taskProgress } from "../../db/schema";
 import { eq, isNull, and, inArray } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { requireAdmin, requireAuth, requireHouseholdScope } from "../../lib/routeAuth";
-
-// ISO-8601 datetime / date validation (YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss[.sss]Z)
-const ISO8601_RE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?Z)?$/;
-function parseISODate(value: string, fieldName: string): Date {
-  if (!ISO8601_RE.test(value)) {
-    throw new Error(`${fieldName} must be ISO-8601 format (YYYY-MM-DD or YYYY-MM-DDTHH:mm:ssZ)`);
-  }
-  const d = new Date(value);
-  if (isNaN(d.getTime())) {
-    throw new Error(`${fieldName} is not a valid date`);
-  }
-  return d;
-}
+import { parseISODate } from "../_shared/dates";
 
 async function unresolvedTaskDependencies(householdId: string, taskId: string) {
   const dependencies = await db.query.taskDependencies.findMany({
@@ -29,7 +17,7 @@ async function unresolvedTaskDependencies(householdId: string, taskId: string) {
   const progressRows = await db.query.taskProgress.findMany({
     where: and(
       eq(taskProgress.householdId, householdId),
-      isNull(taskProgress.archivedAt),
+      isNull(taskProgress.archivedAtUTC),
       inArray(taskProgress.taskId, dependencyIds)
     ),
   });
@@ -42,7 +30,7 @@ async function unresolvedTaskDependencies(householdId: string, taskId: string) {
   if (unresolvedIds.length === 0) return [];
 
   const unresolvedTasks = await db.query.tasks.findMany({
-    where: and(isNull(tasks.archivedAt), inArray(tasks.id, unresolvedIds)),
+    where: and(isNull(tasks.archivedAtUTC), inArray(tasks.id, unresolvedIds)),
   });
 
   const titleById = new Map(unresolvedTasks.map((row) => [row.id, row.title]));
@@ -57,7 +45,7 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
       const claims = requireAuth(request, set);
       if (!claims) return { error: "Unauthorized" };
 
-      const conditions: ReturnType<typeof eq>[] = [isNull(tasks.archivedAt)];
+      const conditions: ReturnType<typeof eq>[] = [isNull(tasks.archivedAtUTC)];
 
       if (query.moduleId) {
         conditions.push(eq(tasks.moduleId, query.moduleId));
@@ -114,7 +102,7 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
       if (!claims) return { error: "Unauthorized" };
 
       const row = await db.query.tasks.findFirst({
-        where: and(eq(tasks.id, params.id), isNull(tasks.archivedAt)),
+        where: and(eq(tasks.id, params.id), isNull(tasks.archivedAtUTC)),
       });
       if (!row) {
         set.status = 404;
@@ -138,7 +126,7 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
 
       const dependencyIds = [...new Set(dependencyRows.map((row) => row.dependsOnTaskId))];
       const dependencyTasks = await db.query.tasks.findMany({
-        where: and(isNull(tasks.archivedAt), inArray(tasks.id, dependencyIds)),
+        where: and(isNull(tasks.archivedAtUTC), inArray(tasks.id, dependencyIds)),
       });
       const taskById = new Map(dependencyTasks.map((row) => [row.id, row]));
 
@@ -162,9 +150,9 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
       }
 
       const [task, dependsOn] = await Promise.all([
-        db.query.tasks.findFirst({ where: and(eq(tasks.id, params.id), isNull(tasks.archivedAt)) }),
+        db.query.tasks.findFirst({ where: and(eq(tasks.id, params.id), isNull(tasks.archivedAtUTC)) }),
         db.query.tasks.findFirst({
-          where: and(eq(tasks.id, body.dependsOnTaskId), isNull(tasks.archivedAt)),
+          where: and(eq(tasks.id, body.dependsOnTaskId), isNull(tasks.archivedAtUTC)),
         }),
       ]);
 
@@ -266,7 +254,7 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
 
       const row = await db.transaction(async (tx) => {
         const existing = await tx.query.tasks.findFirst({
-          where: and(eq(tasks.id, params.id), isNull(tasks.archivedAt)),
+          where: and(eq(tasks.id, params.id), isNull(tasks.archivedAtUTC)),
         });
         if (!existing) return null;
 
@@ -285,10 +273,10 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
             sortOrder: body.sortOrder,
             evidencePrompt: body.evidencePrompt,
           })
-          .where(and(eq(tasks.id, params.id), isNull(tasks.archivedAt)));
+          .where(and(eq(tasks.id, params.id), isNull(tasks.archivedAtUTC)));
 
         return tx.query.tasks.findFirst({
-          where: and(eq(tasks.id, params.id), isNull(tasks.archivedAt)),
+          where: and(eq(tasks.id, params.id), isNull(tasks.archivedAtUTC)),
         });
       });
 
@@ -343,7 +331,7 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
       return db.query.taskProgress.findMany({
         where: and(
           eq(taskProgress.householdId, params.householdId),
-          isNull(taskProgress.archivedAt)
+          isNull(taskProgress.archivedAtUTC)
         ),
       });
     },
@@ -360,8 +348,8 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
       let parsedCompletedAt: Date | undefined;
       let parsedNextDueAt: Date | undefined;
       try {
-        if (body.completedAt) parsedCompletedAt = parseISODate(body.completedAt, "completedAt");
-        if (body.nextDueAt) parsedNextDueAt = parseISODate(body.nextDueAt, "nextDueAt");
+        if (body.completedAtUTC) parsedCompletedAt = parseISODate(body.completedAtUTC, "completedAtUTC");
+        if (body.nextDueAtUTC) parsedNextDueAt = parseISODate(body.nextDueAtUTC, "nextDueAtUTC");
       } catch (err: any) {
         set.status = 400;
         return { error: err.message };
@@ -371,7 +359,7 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
         where: and(
           eq(taskProgress.householdId, params.householdId),
           eq(taskProgress.taskId, body.taskId),
-          isNull(taskProgress.archivedAt)
+          isNull(taskProgress.archivedAtUTC)
         ),
       });
 
@@ -392,15 +380,15 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
         const nextCompletedAt = parsedCompletedAt
           ? parsedCompletedAt
           : nextStatus === "completed"
-            ? (existing.completedAt ?? now)
+            ? (existing.completedAtUTC ?? now)
             : null;
 
         await db
           .update(taskProgress)
           .set({
             status: nextStatus,
-            completedAt: nextCompletedAt,
-            nextDueAt: parsedNextDueAt ?? existing.nextDueAt,
+            completedAtUTC: nextCompletedAt,
+            nextDueAtUTC: parsedNextDueAt ?? existing.nextDueAtUTC,
             evidenceNote: body.evidenceNote ?? existing.evidenceNote,
             completedBy: body.completedBy ?? existing.completedBy,
           })
@@ -408,7 +396,7 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
             and(
               eq(taskProgress.id, existing.id),
               eq(taskProgress.householdId, params.householdId),
-              isNull(taskProgress.archivedAt)
+              isNull(taskProgress.archivedAtUTC)
             )
           );
 
@@ -416,7 +404,7 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
           where: and(
             eq(taskProgress.id, existing.id),
             eq(taskProgress.householdId, params.householdId),
-            isNull(taskProgress.archivedAt)
+            isNull(taskProgress.archivedAtUTC)
           ),
         });
       }
@@ -438,8 +426,8 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
         householdId: params.householdId,
         taskId: body.taskId,
         status: body.status,
-        completedAt: parsedCompletedAt,
-        nextDueAt: parsedNextDueAt,
+        completedAtUTC: parsedCompletedAt,
+        nextDueAtUTC: parsedNextDueAt,
         evidenceNote: body.evidenceNote,
         completedBy: body.completedBy,
       });
@@ -456,8 +444,8 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
             t.Literal("overdue"),
           ])
         ),
-        completedAt: t.Optional(t.String({ maxLength: 64 })),
-        nextDueAt: t.Optional(t.String({ maxLength: 64 })),
+        completedAtUTC: t.Optional(t.String({ maxLength: 64 })),
+        nextDueAtUTC: t.Optional(t.String({ maxLength: 64 })),
         evidenceNote: t.Optional(t.String({ maxLength: 10000 })),
         completedBy: t.Optional(t.String({ maxLength: 255 })),
       }),
@@ -475,8 +463,8 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
       let parsedCompletedAt: Date | undefined;
       let parsedNextDueAt: Date | undefined;
       try {
-        if (body.completedAt) parsedCompletedAt = parseISODate(body.completedAt, "completedAt");
-        if (body.nextDueAt) parsedNextDueAt = parseISODate(body.nextDueAt, "nextDueAt");
+        if (body.completedAtUTC) parsedCompletedAt = parseISODate(body.completedAtUTC, "completedAtUTC");
+        if (body.nextDueAtUTC) parsedNextDueAt = parseISODate(body.nextDueAtUTC, "nextDueAtUTC");
       } catch (err: any) {
         set.status = 400;
         return { error: err.message };
@@ -486,7 +474,7 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
         where: and(
           eq(taskProgress.id, params.id),
           eq(taskProgress.householdId, params.householdId),
-          isNull(taskProgress.archivedAt)
+          isNull(taskProgress.archivedAtUTC)
         ),
       });
       if (!existing) {
@@ -511,11 +499,11 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
         .update(taskProgress)
         .set({
           status: body.status,
-          completedAt:
+          completedAtUTC:
             body.status === "completed" && !parsedCompletedAt
               ? now
               : (parsedCompletedAt ?? undefined),
-          nextDueAt: parsedNextDueAt,
+          nextDueAtUTC: parsedNextDueAt,
           evidenceNote: body.evidenceNote,
           completedBy: body.completedBy,
         })
@@ -523,14 +511,14 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
           and(
             eq(taskProgress.id, params.id),
             eq(taskProgress.householdId, params.householdId),
-            isNull(taskProgress.archivedAt)
+            isNull(taskProgress.archivedAtUTC)
           )
         );
       return db.query.taskProgress.findFirst({
         where: and(
           eq(taskProgress.id, params.id),
           eq(taskProgress.householdId, params.householdId),
-          isNull(taskProgress.archivedAt)
+          isNull(taskProgress.archivedAtUTC)
         ),
       });
     },
@@ -543,8 +531,8 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
             t.Literal("completed"),
             t.Literal("overdue"),
           ]),
-          completedAt: t.String({ maxLength: 64 }),
-          nextDueAt: t.String({ maxLength: 64 }),
+          completedAtUTC: t.String({ maxLength: 64 }),
+          nextDueAtUTC: t.String({ maxLength: 64 }),
           evidenceNote: t.String({ maxLength: 10000 }),
           completedBy: t.String({ maxLength: 255 }),
         })

@@ -7,7 +7,7 @@ export async function seedGuidanceDocs() {
   console.log("  Seeding guidance docs...");
 
   const rows = await db.query.sections.findMany({
-    where: isNull(sections.archivedAt),
+    where: isNull(sections.archivedAtUTC),
     orderBy: sections.sortOrder,
   });
 
@@ -18,7 +18,7 @@ export async function seedGuidanceDocs() {
       where: and(
         eq(guidanceDocs.sectionId, s.id),
         eq(guidanceDocs.title, title),
-        isNull(guidanceDocs.archivedAt)
+        isNull(guidanceDocs.archivedAtUTC)
       ),
     });
 

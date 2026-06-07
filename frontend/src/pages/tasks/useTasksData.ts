@@ -49,7 +49,7 @@ export function useTasksData(householdId: string | null) {
 
       const existing = progress[task.id];
       const nextStatus = existing?.status === "completed" ? "pending" : "completed";
-      const completedAt = nextStatus === "completed" ? new Date().toISOString() : undefined;
+      const completedAtUTC = nextStatus === "completed" ? new Date().toISOString() : undefined;
 
       setProgress((prev) => ({
         ...prev,
@@ -58,7 +58,7 @@ export function useTasksData(householdId: string | null) {
           id: existing?.id ?? "",
           taskId: task.id,
           status: nextStatus,
-          completedAt,
+          completedAtUTC,
         },
       }));
 
@@ -66,14 +66,14 @@ export function useTasksData(householdId: string | null) {
         if (existing?.id) {
           await apiFetch(`/tasks/${householdId}/progress/${existing.id}`, {
             method: "PATCH",
-            body: JSON.stringify({ status: nextStatus, completedAt }),
+            body: JSON.stringify({ status: nextStatus, completedAtUTC }),
           });
           return;
         }
 
         const created = await apiFetch<Progress>(`/tasks/${householdId}/progress`, {
           method: "POST",
-          body: JSON.stringify({ taskId: task.id, status: nextStatus, completedAt }),
+          body: JSON.stringify({ taskId: task.id, status: nextStatus, completedAtUTC }),
         });
         setProgress((prev) => ({ ...prev, [task.id]: created }));
       } catch (err) {

@@ -10,7 +10,7 @@ import {
 const base = {
   householdId: "house-1",
   isSystem: false,
-  archivedAt: null,
+  archivedAtUTC: null,
 };
 
 describe("categoryHelpers", () => {

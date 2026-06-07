@@ -44,7 +44,7 @@ type EquipmentItem = {
   id: string;
   name: string;
   status: "operational" | "needs_service" | "unserviceable" | "retired";
-  archivedAt?: string | null;
+  archivedAtUTC?: string | null;
 };
 
 type MaintenanceSchedule = {
@@ -62,7 +62,7 @@ type MaintenanceEvent = {
   id: string;
   scheduleId: string;
   equipmentItemId: string;
-  performedAt: string;
+  performedAtUTC: string;
   nextDueAt?: string | null;
   performedBy?: string | null;
   notes?: string | null;
@@ -117,7 +117,7 @@ type TaskProgress = {
   id: string;
   taskId: string;
   status: "pending" | "in_progress" | "completed" | "overdue";
-  completedAt?: string | null;
+  completedAtUTC?: string | null;
 };
 
 async function expectOk(response: APIResponse, label: string): Promise<void> {
@@ -293,7 +293,7 @@ export async function createApiClient() {
     async createMaintenanceEvent(
       scheduleId: string,
       body: {
-        performedAt?: string;
+        performedAtUTC?: string;
         performedBy?: string;
         meterReading?: number;
         notes?: string;
@@ -343,7 +343,7 @@ export async function createApiClient() {
     async upsertTaskProgress(body: {
       taskId: string;
       status?: TaskProgress["status"];
-      completedAt?: string;
+      completedAtUTC?: string;
     }): Promise<TaskProgress> {
       const response = await api.post(`/tasks/${session.householdId}/progress`, { data: body });
       await expectOk(response, "Upsert task progress");
@@ -353,7 +353,7 @@ export async function createApiClient() {
       progressId: string,
       body: {
         status?: TaskProgress["status"];
-        completedAt?: string;
+        completedAtUTC?: string;
       }
     ): Promise<TaskProgress> {
       const response = await api.patch(`/tasks/${session.householdId}/progress/${progressId}`, {

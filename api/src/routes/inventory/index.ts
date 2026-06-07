@@ -10,6 +10,7 @@ import {
   requireCustomCategoryForHousehold,
   validateCategoryReplacementInput,
 } from "../_shared/categoryHelpers";
+import { parseISODate } from "../_shared/dates";
 
 export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["inventory"] })
 
@@ -23,7 +24,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
         where: and(
           isNull(inventoryCategories.householdId),
           eq(inventoryCategories.isSystem, true),
-          isNull(inventoryCategories.archivedAt)
+          isNull(inventoryCategories.archivedAtUTC)
         ),
         orderBy: inventoryCategories.sortOrder,
       });
@@ -40,7 +41,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
       return db.query.inventoryCategories
         .findMany({
           where: and(
-            isNull(inventoryCategories.archivedAt),
+            isNull(inventoryCategories.archivedAtUTC),
             eq(inventoryCategories.isSystem, true)
           ),
           orderBy: inventoryCategories.sortOrder,
@@ -49,7 +50,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
           const customRows = await db.query.inventoryCategories.findMany({
             where: and(
               eq(inventoryCategories.householdId, params.householdId),
-              isNull(inventoryCategories.archivedAt)
+              isNull(inventoryCategories.archivedAtUTC)
             ),
             orderBy: inventoryCategories.sortOrder,
           });
@@ -136,7 +137,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
         where: and(
           eq(inventoryItems.householdId, params.householdId),
           eq(inventoryItems.categoryId, params.categoryId),
-          isNull(inventoryItems.archivedAt)
+          isNull(inventoryItems.archivedAtUTC)
         ),
       });
 
@@ -181,14 +182,14 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
               and(
                 eq(inventoryItems.householdId, params.householdId),
                 eq(inventoryItems.categoryId, params.categoryId),
-                isNull(inventoryItems.archivedAt)
+                isNull(inventoryItems.archivedAtUTC)
               )
             );
         }
 
         await tx
           .update(inventoryCategories)
-          .set({ archivedAt: new Date() })
+          .set({ archivedAtUTC: new Date() })
           .where(eq(inventoryCategories.id, params.categoryId));
 
         return { archived: true } as const;
@@ -218,14 +219,14 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
       const items = await db.query.inventoryItems.findMany({
         where: and(
           eq(inventoryItems.householdId, params.householdId),
-          isNull(inventoryItems.archivedAt)
+          isNull(inventoryItems.archivedAtUTC)
         ),
       });
 
       const lots = await db.query.inventoryLots.findMany({
         where: and(
           eq(inventoryLots.householdId, params.householdId),
-          isNull(inventoryLots.archivedAt)
+          isNull(inventoryLots.archivedAtUTC)
         ),
       });
 
@@ -321,14 +322,14 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
           and(
             eq(inventoryItems.id, params.itemId),
             eq(inventoryItems.householdId, params.householdId),
-            isNull(inventoryItems.archivedAt)
+            isNull(inventoryItems.archivedAtUTC)
           )
         );
       return db.query.inventoryItems.findFirst({
         where: and(
           eq(inventoryItems.id, params.itemId),
           eq(inventoryItems.householdId, params.householdId),
-          isNull(inventoryItems.archivedAt)
+          isNull(inventoryItems.archivedAtUTC)
         ),
       });
     },
@@ -359,12 +360,12 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
 
       await db
         .update(inventoryItems)
-        .set({ archivedAt: new Date() })
+        .set({ archivedAtUTC: new Date() })
         .where(
           and(
             eq(inventoryItems.id, params.itemId),
             eq(inventoryItems.householdId, params.householdId),
-            isNull(inventoryItems.archivedAt)
+            isNull(inventoryItems.archivedAtUTC)
           )
         );
       return { archived: true };
@@ -379,19 +380,30 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
       const claims = requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
+      // Validate date strings before any DB work
+      let acquiredAt: Date | undefined;
+      let expiresAt: Date | undefined;
+      try {
+        if (body.acquiredAt) acquiredAt = parseISODate(body.acquiredAt, "acquiredAt");
+        if (body.expiresAt) expiresAt = parseISODate(body.expiresAt, "expiresAt");
+      } catch (err: any) {
+        set.status = 400;
+        return { error: err.message };
+      }
+
       const id = randomUUID();
       const replaceDays = body.replaceDays ?? undefined;
       const nextReplaceAt =
-        replaceDays && body.acquiredAt
-          ? new Date(new Date(body.acquiredAt).getTime() + replaceDays * 86400000)
+        replaceDays && acquiredAt
+          ? new Date(acquiredAt.getTime() + replaceDays * 86400000)
           : undefined;
       await db.insert(inventoryLots).values({
         id,
         itemId: params.itemId,
         householdId: params.householdId,
         qty: String(body.qty),
-        acquiredAt: body.acquiredAt ? new Date(body.acquiredAt) : undefined,
-        expiresAt: body.expiresAt ? new Date(body.expiresAt) : undefined,
+        acquiredAt,
+        expiresAt,
         replaceDays: body.replaceDays,
         nextReplaceAt,
         batchRef: body.batchRef,
@@ -420,13 +432,13 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
 
       await db
         .update(inventoryLots)
-        .set({ archivedAt: new Date() })
+        .set({ archivedAtUTC: new Date() })
         .where(
           and(
             eq(inventoryLots.id, params.lotId),
             eq(inventoryLots.itemId, params.itemId),
             eq(inventoryLots.householdId, params.householdId),
-            isNull(inventoryLots.archivedAt)
+            isNull(inventoryLots.archivedAtUTC)
           )
         );
       return { archived: true };
@@ -440,20 +452,32 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
       const claims = requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
+      // Validate date strings before any DB work
+      let acquiredAt: Date | undefined;
+      let expiresAt: Date | undefined;
+      let parsedNextReplaceAt: Date | undefined;
+      try {
+        if (body.acquiredAt) acquiredAt = parseISODate(body.acquiredAt, "acquiredAt");
+        if (body.expiresAt) expiresAt = parseISODate(body.expiresAt, "expiresAt");
+        if (body.nextReplaceAt)
+          parsedNextReplaceAt = parseISODate(body.nextReplaceAt, "nextReplaceAt");
+      } catch (err: any) {
+        set.status = 400;
+        return { error: err.message };
+      }
+
       const replaceDays = body.replaceDays ?? undefined;
       const nextReplaceAt =
-        replaceDays && body.acquiredAt
-          ? new Date(new Date(body.acquiredAt).getTime() + replaceDays * 86400000)
-          : body.nextReplaceAt
-            ? new Date(body.nextReplaceAt)
-            : undefined;
+        replaceDays && acquiredAt
+          ? new Date(acquiredAt.getTime() + replaceDays * 86400000)
+          : parsedNextReplaceAt;
 
       await db
         .update(inventoryLots)
         .set({
           qty: body.qty != null ? String(body.qty) : undefined,
-          acquiredAt: body.acquiredAt ? new Date(body.acquiredAt) : undefined,
-          expiresAt: body.expiresAt ? new Date(body.expiresAt) : undefined,
+          acquiredAt,
+          expiresAt,
           replaceDays,
           nextReplaceAt,
           batchRef: body.batchRef,
@@ -464,7 +488,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
             eq(inventoryLots.id, params.lotId),
             eq(inventoryLots.itemId, params.itemId),
             eq(inventoryLots.householdId, params.householdId),
-            isNull(inventoryLots.archivedAt)
+            isNull(inventoryLots.archivedAtUTC)
           )
         );
 
@@ -473,7 +497,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
           eq(inventoryLots.id, params.lotId),
           eq(inventoryLots.itemId, params.itemId),
           eq(inventoryLots.householdId, params.householdId),
-          isNull(inventoryLots.archivedAt)
+          isNull(inventoryLots.archivedAtUTC)
         ),
       });
     },
@@ -507,7 +531,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
       return db.query.inventoryLots.findMany({
         where: and(
           eq(inventoryLots.householdId, params.householdId),
-          isNull(inventoryLots.archivedAt),
+          isNull(inventoryLots.archivedAtUTC),
           lte(inventoryLots.expiresAt, cutoff),
           gte(inventoryLots.expiresAt, today)
         ),

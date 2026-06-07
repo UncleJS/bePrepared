@@ -31,7 +31,7 @@ mock.module("../db/client", () => {
             id: "household-1",
             targetPeople: 2,
             activeProfileId: null,
-            archivedAt: null,
+            archivedAtUTC: null,
           }),
         },
         householdPeopleProfiles: {

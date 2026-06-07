@@ -24,7 +24,7 @@ export async function seedEquipmentCategories() {
         isNull(equipmentCategories.householdId),
         eq(equipmentCategories.slug, c.slug),
         eq(equipmentCategories.isSystem, true),
-        isNull(equipmentCategories.archivedAt)
+        isNull(equipmentCategories.archivedAtUTC)
       ),
     });
 

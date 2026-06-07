@@ -13,7 +13,7 @@ type Alert = {
   category: string;
   entityType: string;
   entityId: string;
-  dueAt?: string | null;
+  dueAtUTC?: string | null;
   isResolved: boolean;
 };
 
@@ -123,7 +123,7 @@ export default function DashboardAlerts({ householdId }: { householdId: string }
                         >
                           {ALERT_SEVERITY_LABEL[a.severity]}
                         </span>
-                        {a.dueAt && <span>{fmtDate(a.dueAt)}</span>}
+                        {a.dueAtUTC && <span>{fmtDate(a.dueAtUTC)}</span>}
                         <span className="capitalize">{a.category.replace("_", " ")}</span>
                       </div>
                     </div>

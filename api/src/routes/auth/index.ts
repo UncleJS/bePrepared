@@ -91,7 +91,7 @@ export const authRoute = new Elysia({ prefix: "/auth", tags: ["auth"] }).post(
     }
 
     const user = await db.query.users.findFirst({
-      where: and(eq(users.username, body.username), isNull(users.archivedAt)),
+      where: and(eq(users.username, body.username), isNull(users.archivedAtUTC)),
     });
 
     if (!user) {
