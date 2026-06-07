@@ -46,8 +46,7 @@ export default function PlanningPage() {
   }, [householdId]);
 
   if (isLoading || dataLoading) return <LoadingSpinner label="Loading planning…" />;
-  if (!householdId)
-    return <p className="text-sm text-foreground">No household in session.</p>;
+  if (!householdId) return <p className="text-sm text-foreground">No household in session.</p>;
 
   return (
     <div className="space-y-8">

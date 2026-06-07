@@ -150,7 +150,9 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
       }
 
       const [task, dependsOn] = await Promise.all([
-        db.query.tasks.findFirst({ where: and(eq(tasks.id, params.id), isNull(tasks.archivedAtUTC)) }),
+        db.query.tasks.findFirst({
+          where: and(eq(tasks.id, params.id), isNull(tasks.archivedAtUTC)),
+        }),
         db.query.tasks.findFirst({
           where: and(eq(tasks.id, body.dependsOnTaskId), isNull(tasks.archivedAtUTC)),
         }),
@@ -348,7 +350,8 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
       let parsedCompletedAt: Date | undefined;
       let parsedNextDueAt: Date | undefined;
       try {
-        if (body.completedAtUTC) parsedCompletedAt = parseISODate(body.completedAtUTC, "completedAtUTC");
+        if (body.completedAtUTC)
+          parsedCompletedAt = parseISODate(body.completedAtUTC, "completedAtUTC");
         if (body.nextDueAtUTC) parsedNextDueAt = parseISODate(body.nextDueAtUTC, "nextDueAtUTC");
       } catch (err: any) {
         set.status = 400;
@@ -463,7 +466,8 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
       let parsedCompletedAt: Date | undefined;
       let parsedNextDueAt: Date | undefined;
       try {
-        if (body.completedAtUTC) parsedCompletedAt = parseISODate(body.completedAtUTC, "completedAtUTC");
+        if (body.completedAtUTC)
+          parsedCompletedAt = parseISODate(body.completedAtUTC, "completedAtUTC");
         if (body.nextDueAtUTC) parsedNextDueAt = parseISODate(body.nextDueAtUTC, "nextDueAtUTC");
       } catch (err: any) {
         set.status = 400;

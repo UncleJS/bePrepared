@@ -207,7 +207,9 @@ export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] }
         await db
           .update(guidanceDocs)
           .set({ archivedAtUTC: now })
-          .where(and(isNull(guidanceDocs.archivedAtUTC), inArray(guidanceDocs.sectionId, sectionIds)));
+          .where(
+            and(isNull(guidanceDocs.archivedAtUTC), inArray(guidanceDocs.sectionId, sectionIds))
+          );
       }
 
       // 3. Archive sections
@@ -303,10 +305,15 @@ export const modulesRoute = new Elysia({ prefix: "/modules", tags: ["modules"] }
       await db
         .update(guidanceDocs)
         .set({ archivedAtUTC: now })
-        .where(and(isNull(guidanceDocs.archivedAtUTC), eq(guidanceDocs.sectionId, params.sectionId)));
+        .where(
+          and(isNull(guidanceDocs.archivedAtUTC), eq(guidanceDocs.sectionId, params.sectionId))
+        );
 
       // Archive section
-      await db.update(sections).set({ archivedAtUTC: now }).where(eq(sections.id, params.sectionId));
+      await db
+        .update(sections)
+        .set({ archivedAtUTC: now })
+        .where(eq(sections.id, params.sectionId));
 
       return { ok: true };
     },

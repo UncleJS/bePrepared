@@ -8,9 +8,7 @@ export function LoadingSpinner({
   className?: string;
 }) {
   return (
-    <div
-      className={`flex items-center justify-center gap-2 text-sm text-foreground ${className}`}
-    >
+    <div className={`flex items-center justify-center gap-2 text-sm text-foreground ${className}`}>
       <Loader2 size={16} className="animate-spin" />
       <span>{label}</span>
     </div>

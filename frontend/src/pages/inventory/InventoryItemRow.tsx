@@ -42,9 +42,7 @@ export function InventoryItemRow({
       </td>
       <td className="px-4 py-2.5 text-foreground">{item.location ?? "-"}</td>
       <td className="px-4 py-2.5 text-right font-mono">{totalQty}</td>
-      <td className="px-4 py-2.5 text-right font-mono text-foreground">
-        {item.targetQty ?? "-"}
-      </td>
+      <td className="px-4 py-2.5 text-right font-mono text-foreground">{item.targetQty ?? "-"}</td>
       <td className="px-4 py-2.5 text-xs">
         {dueDays == null ? (
           <span className="text-foreground">-</span>

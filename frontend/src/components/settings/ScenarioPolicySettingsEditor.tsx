@@ -180,9 +180,7 @@ export function ScenarioPolicySettingsEditor({
                         className="w-full rounded-md border border-border bg-card px-2 py-1 text-sm"
                       />
                     </label>
-                    <span className="text-xs text-foreground whitespace-nowrap">
-                      {d.unit}
-                    </span>
+                    <span className="text-xs text-foreground whitespace-nowrap">{d.unit}</span>
                     <button
                       type="button"
                       disabled={busy}
@@ -200,9 +198,7 @@ export function ScenarioPolicySettingsEditor({
                       Reset
                     </button>
                   </div>
-                  <p className="text-xs text-foreground">
-                    {d.description ?? "Scenario override"}
-                  </p>
+                  <p className="text-xs text-foreground">{d.description ?? "Scenario override"}</p>
                 </div>
               );
             })}

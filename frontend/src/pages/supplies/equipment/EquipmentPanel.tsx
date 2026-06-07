@@ -312,9 +312,7 @@ export function EquipmentPanel() {
                     onSort={handleSort}
                     className="text-left px-4 py-2"
                   />
-                  <th className="text-right px-4 py-2 font-medium text-foreground">
-                    Actions
-                  </th>
+                  <th className="text-right px-4 py-2 font-medium text-foreground">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">

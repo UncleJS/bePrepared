@@ -222,9 +222,7 @@ export default function TasksPage() {
                               {task.title}
                             </p>
                             {task.description && (
-                              <p className="mt-0.5 text-xs text-foreground">
-                                {task.description}
-                              </p>
+                              <p className="mt-0.5 text-xs text-foreground">{task.description}</p>
                             )}
                             <div className="mt-1 flex flex-wrap gap-2">
                               <Badge>{task.taskClass}</Badge>
@@ -255,9 +253,7 @@ export default function TasksPage() {
                   );
                 })}
                 {levelTasks.length === 0 && (
-                  <li className="px-4 py-3 text-sm text-foreground">
-                    No tasks for this level.
-                  </li>
+                  <li className="px-4 py-3 text-sm text-foreground">No tasks for this level.</li>
                 )}
               </ul>
             )}

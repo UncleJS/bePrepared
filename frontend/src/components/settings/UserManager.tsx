@@ -408,9 +408,7 @@ function MyProfileEditor({ me }: { me: User }) {
 
   return (
     <div className="rounded-lg border border-border bg-card p-4 space-y-4">
-      <h3 className="text-sm font-semibold uppercase tracking-wide text-foreground">
-        My Profile
-      </h3>
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-foreground">My Profile</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <label className="space-y-1">
           <span className="block text-xs font-bold uppercase tracking-wide text-primary">

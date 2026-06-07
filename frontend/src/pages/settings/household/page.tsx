@@ -39,8 +39,7 @@ export default function HouseholdPage() {
   }, [householdId, isAdmin]);
 
   if (isLoading || loading) return <LoadingSpinner label="Loading…" />;
-  if (!householdId)
-    return <p className="text-sm text-foreground">No household in session.</p>;
+  if (!householdId) return <p className="text-sm text-foreground">No household in session.</p>;
 
   return (
     <div className="space-y-6">
@@ -52,9 +51,7 @@ export default function HouseholdPage() {
           <ChevronLeft size={14} /> Settings
         </Link>
         <h1 className="text-2xl font-bold">Household</h1>
-        <p className="text-sm text-foreground mt-1">
-          Edit your household name, size, and notes.
-        </p>
+        <p className="text-sm text-foreground mt-1">Edit your household name, size, and notes.</p>
       </div>
 
       {household ? (

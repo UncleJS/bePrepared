@@ -28,11 +28,7 @@ export function composeDateTime(date: string, time: string, withSeconds: boolean
 }
 
 /** Replace one segment of an "HH:mm:ss" string, defaulting missing segments to "00". */
-export function setTimeSegment(
-  time: string,
-  segment: "hour" | "minute" | "second",
-  value: string
-) {
+export function setTimeSegment(time: string, segment: "hour" | "minute" | "second", value: string) {
   const [h = "00", m = "00", s = "00"] = time.split(":");
   const next = {
     hour: segment === "hour" ? value : h.padStart(2, "0"),

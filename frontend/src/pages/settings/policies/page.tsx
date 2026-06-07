@@ -54,8 +54,7 @@ export default function PoliciesPage() {
   }, [householdId]);
 
   if (isLoading || loading) return <LoadingSpinner label="Loading policies…" />;
-  if (!householdId)
-    return <p className="text-sm text-foreground">No household in session.</p>;
+  if (!householdId) return <p className="text-sm text-foreground">No household in session.</p>;
 
   return (
     <div className="space-y-8">

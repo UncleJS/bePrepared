@@ -9,8 +9,7 @@ export default function DashboardPage() {
   const { householdId, isLoading } = useActiveHouseholdId();
 
   if (isLoading) return <LoadingSpinner label="Loading session…" />;
-  if (!householdId)
-    return <p className="text-sm text-foreground">No household in session.</p>;
+  if (!householdId) return <p className="text-sm text-foreground">No household in session.</p>;
 
   return (
     <div className="space-y-6">

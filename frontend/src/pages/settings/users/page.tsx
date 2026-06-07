@@ -18,9 +18,7 @@ export default function UsersPage() {
           <ChevronLeft size={14} /> Settings
         </Link>
         <h1 className="text-2xl font-bold">Users</h1>
-        <p className="text-sm text-foreground mt-1">
-          Manage user accounts and personal profiles.
-        </p>
+        <p className="text-sm text-foreground mt-1">Manage user accounts and personal profiles.</p>
       </div>
 
       {isAdmin ? <UserManager /> : <AdminAccessNotice section="Users" />}

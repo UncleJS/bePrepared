@@ -142,9 +142,7 @@ export function PolicySettingsEditor({ householdId, defaults, overrides }: Props
           <thead className="bg-muted/50">
             <tr>
               <th className="text-left px-4 py-2 font-medium text-foreground">Key</th>
-              <th className="text-left px-4 py-2 font-medium text-foreground">
-                System Default
-              </th>
+              <th className="text-left px-4 py-2 font-medium text-foreground">System Default</th>
               <th className="text-left px-4 py-2 font-medium text-foreground">Value</th>
               <th className="text-left px-4 py-2 font-medium text-foreground">Unit</th>
               <th className="text-left px-4 py-2 font-medium text-foreground">Description</th>
@@ -183,9 +181,7 @@ export function PolicySettingsEditor({ householdId, defaults, overrides }: Props
                     </label>
                   </td>
                   <td className="px-4 py-2.5 text-foreground text-xs">{d.unit}</td>
-                  <td className="px-4 py-2.5 text-foreground text-xs">
-                    {d.description ?? "—"}
-                  </td>
+                  <td className="px-4 py-2.5 text-foreground text-xs">{d.description ?? "—"}</td>
                   <td className="px-4 py-2.5">
                     <div className="flex items-center gap-2">
                       <button

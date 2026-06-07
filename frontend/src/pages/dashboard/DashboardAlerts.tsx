@@ -108,9 +108,7 @@ export default function DashboardAlerts({ householdId }: { householdId: string }
                     <AlertTriangle size={15} className="shrink-0 mt-0.5 text-yellow-400" />
                     <div className="flex-1 min-w-0">
                       <p className="font-medium">{a.title}</p>
-                      {a.detail && (
-                        <p className="text-xs text-foreground mt-0.5">{a.detail}</p>
-                      )}
+                      {a.detail && <p className="text-xs text-foreground mt-0.5">{a.detail}</p>}
                       <div className="flex gap-3 mt-1 text-xs text-foreground">
                         <span
                           className={

@@ -24,9 +24,7 @@ export function AlertRow({
       />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium">{alert.title}</p>
-        {alert.detail ? (
-          <p className="mt-0.5 text-xs text-foreground">{alert.detail}</p>
-        ) : null}
+        {alert.detail ? <p className="mt-0.5 text-xs text-foreground">{alert.detail}</p> : null}
         <div className="mt-1 flex flex-wrap gap-3 text-xs text-foreground">
           <span className="capitalize">{alert.category.replaceAll("_", " ")}</span>
           {alert.dueAtUTC ? <span>Due: {fmtDate(alert.dueAtUTC)}</span> : null}

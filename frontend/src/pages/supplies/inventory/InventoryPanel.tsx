@@ -307,21 +307,13 @@ export function InventoryPanel() {
                 <thead className="bg-muted/50">
                   <tr>
                     <th className="text-left px-4 py-2 font-medium text-foreground">Qty</th>
-                    <th className="text-left px-4 py-2 font-medium text-foreground">
-                      Acquired
-                    </th>
-                    <th className="text-left px-4 py-2 font-medium text-foreground">
-                      Expires
-                    </th>
+                    <th className="text-left px-4 py-2 font-medium text-foreground">Acquired</th>
+                    <th className="text-left px-4 py-2 font-medium text-foreground">Expires</th>
                     <th className="text-left px-4 py-2 font-medium text-foreground">
                       Replace Days
                     </th>
-                    <th className="text-left px-4 py-2 font-medium text-foreground">
-                      Batch Ref
-                    </th>
-                    <th className="text-right px-4 py-2 font-medium text-foreground">
-                      Actions
-                    </th>
+                    <th className="text-left px-4 py-2 font-medium text-foreground">Batch Ref</th>
+                    <th className="text-right px-4 py-2 font-medium text-foreground">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
