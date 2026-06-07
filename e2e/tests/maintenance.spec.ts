@@ -33,7 +33,9 @@ test("creates and updates a maintenance schedule for an equipment item", async (
     await createDialog.locator('label:has-text("Schedule Name") + input').fill(scheduleName);
     await createDialog.locator('label:has-text("Interval (days)") + input').fill("45");
     await createDialog.locator('label:has-text("Grace Period (days)") + input').fill("5");
-    await createDialog.locator('label:has-text("Next Due Date") + input').fill("2026-05-01");
+    await createDialog
+      .locator('label:has-text("Next Due Date") + div input[type="text"]')
+      .fill("2026-05-01");
     await createDialog.getByRole("button", { name: "Create schedule" }).click();
 
     await expect(page.getByText("Maintenance schedule created.")).toBeVisible();
@@ -50,8 +52,12 @@ test("creates and updates a maintenance schedule for an equipment item", async (
     ).toBeVisible();
     await editDialog.locator('label:has-text("Schedule Name") + input').fill(updatedScheduleName);
     await editDialog.locator('label:has-text("Interval (days)") + input').fill("60");
-    await editDialog.locator('label:has-text("Last Done Date") + input').fill("2026-03-20");
-    await editDialog.locator('label:has-text("Next Due Date") + input').fill("2026-05-19");
+    await editDialog
+      .locator('label:has-text("Last Done Date") + div input[type="text"]')
+      .fill("2026-03-20");
+    await editDialog
+      .locator('label:has-text("Next Due Date") + div input[type="text"]')
+      .fill("2026-05-19");
     await editDialog.getByRole("switch").click();
     await editDialog.getByRole("button", { name: "Save changes" }).click();
 

@@ -18,9 +18,13 @@ test("handles module back navigation and missing module slugs", async ({ page })
       page.getByRole("heading", { name: "Preparedness Modules", level: 1 })
     ).toBeVisible();
 
-    const response = await page.goto(`/modules/${api.uniqueName("missing-module")}`);
-    expect(response?.status()).toBe(404);
-    await expect(page.getByText("This page could not be found.", { exact: true })).toBeVisible();
+    // The SPA serves 200 for every route; a missing module slug redirects
+    // back to the modules list (see pages/modules/[slug]/page.tsx).
+    await page.goto(`/modules/${api.uniqueName("missing-module")}`);
+    await expect(page).toHaveURL(/\/modules$/);
+    await expect(
+      page.getByRole("heading", { name: "Preparedness Modules", level: 1 })
+    ).toBeVisible();
   } finally {
     await api.dispose();
   }

@@ -29,8 +29,12 @@ test("creates an inventory item and adds a lot from the UI", async ({ page }) =>
     const lotDialog = page.getByRole("dialog");
     await expect(lotDialog.getByRole("heading", { name: "Add lot" })).toBeVisible();
     await lotDialog.locator('label:has-text("Lot Quantity *") + input').fill("4");
-    await lotDialog.locator('label:has-text("Lot Acquired Date") + input').fill("2026-03-20");
-    await lotDialog.locator('label:has-text("Lot Expiry Date") + input').fill("2026-09-20");
+    await lotDialog
+      .locator('label:has-text("Lot Acquired Date") + div input[type="text"]')
+      .fill("2026-03-20");
+    await lotDialog
+      .locator('label:has-text("Lot Expiry Date") + div input[type="text"]')
+      .fill("2026-09-20");
     await lotDialog.locator('label:has-text("Batch Reference") + input').fill(batchRef);
     await lotDialog.getByRole("button", { name: "Add lot" }).click();
 

@@ -10,13 +10,17 @@ test("updates household settings and persists the family size", async ({ page })
   try {
     await page.goto("/settings/household");
 
-    const familySizeInput = page.getByLabel("Household Size (People)");
+    // Two fields share this label: the "Your Household" editor (rendered first)
+    // and the admin "Create Household" form — target the editor.
+    const familySizeInput = page.getByLabel("Household Size (People)").first();
     await familySizeInput.fill(String(nextTargetPeople));
     await page.getByRole("button", { name: "Save Household" }).click();
 
     await expect(page.getByText("Household settings updated.")).toBeVisible();
     await page.reload();
-    await expect(page.getByLabel("Household Size (People)")).toHaveValue(String(nextTargetPeople));
+    await expect(page.getByLabel("Household Size (People)").first()).toHaveValue(
+      String(nextTargetPeople)
+    );
   } finally {
     await api.updateHousehold({ targetPeople: originalTargetPeople });
     await api.dispose();
