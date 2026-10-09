@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { useActiveHouseholdId } from "@/lib/useActiveHouseholdId";
 import {
@@ -30,19 +30,26 @@ export default function PlanningPage() {
   const [sip, setSip] = useState<PlanningResult | null>(null);
   const [evac, setEvac] = useState<PlanningResult | null>(null);
   const [dataLoading, setDataLoading] = useState(false);
+  const generation = useRef(0);
 
   useEffect(() => {
     if (!householdId) return;
+    const requestId = ++generation.current;
     setDataLoading(true);
+    setSip(null);
+    setEvac(null);
     Promise.all([
       fetchPlanning(householdId, "shelter_in_place"),
       fetchPlanning(householdId, "evacuation"),
     ])
       .then(([s, e]) => {
+        if (requestId !== generation.current) return;
         setSip(s);
         setEvac(e);
       })
-      .finally(() => setDataLoading(false));
+      .finally(() => {
+        if (requestId === generation.current) setDataLoading(false);
+      });
   }, [householdId]);
 
   if (isLoading || dataLoading) return <LoadingSpinner label="Loading planning…" />;

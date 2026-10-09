@@ -11,6 +11,7 @@ import {
   validateCategoryReplacementInput,
 } from "../_shared/categoryHelpers";
 import { parseISODate } from "../_shared/dates";
+import { DEFAULT_LIST_LIMIT, markTruncated } from "../../lib/listLimits";
 
 function optionalISODate(value: string | undefined, field: string): Date | undefined {
   if (!value) return undefined;
@@ -262,9 +263,12 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
         ? isNotNull(equipmentItems.archivedAtUTC)
         : isNull(equipmentItems.archivedAtUTC);
 
-      return db.query.equipmentItems.findMany({
+      const rows = await db.query.equipmentItems.findMany({
         where: and(eq(equipmentItems.householdId, params.householdId), archivedFilter),
+        limit: DEFAULT_LIST_LIMIT,
       });
+      markTruncated(set, rows.length);
+      return rows;
     },
     {
       query: t.Object({ archived: t.Optional(t.BooleanString()) }),

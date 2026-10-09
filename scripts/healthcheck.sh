@@ -239,30 +239,33 @@ check_http_container() {
 # on 503 when MariaDB is unreachable or returns an error.
 
 check_api_db() {
-  local output
-  output="$(podman exec beprepared-api \
-    wget -qO- "http://127.0.0.1:${API_PORT}/health" 2>/dev/null || true)"
+  local live ready live_status ready_status
+  live="$(podman exec beprepared-api \
+    wget -qO- "http://127.0.0.1:${API_PORT}/live" 2>/dev/null || true)"
+  live_status="$(echo "$live" | grep -oP '"status"\s*:\s*"\K[^"]+' || true)"
 
-  local db_status
-  db_status="$(echo "$output" | grep -oP '"status"\s*:\s*"\K[^"]+' || true)"
-
-  if [[ "$db_status" == "ok" ]]; then
-    say "  [ok]   api db check     : SELECT 1 succeeded  (status=ok)"
-  elif [[ "$db_status" == "error" ]]; then
-    fail "  [FAIL] api db check     : /health returned status=error"
-    fail "         → The API reached its /health endpoint but the database"
-    fail "           query (SELECT 1) failed.  MariaDB may be down, refusing"
-    fail "           connections, or the credentials in .env are wrong."
+  if [[ "$live_status" == "ok" ]]; then
+    say "  [ok]   api /live        : SELECT 1 succeeded  (status=ok)"
+  elif [[ "$live_status" == "error" ]]; then
+    fail "  [FAIL] api /live        : DB ping failed"
+    fail "         → MariaDB may be down or credentials in .env are wrong."
     fail "           Fix: ./scripts/restart.sh db"
-    fail "           Logs: ./scripts/logs.sh db"
   else
-    fail "  [FAIL] api db check     : unexpected /health response"
-    fail "         → Could not reach http://127.0.0.1:${API_PORT}/health from"
-    fail "           inside the beprepared-api container.  The API process may"
-    fail "           have crashed or is still starting up."
-    fail "           Raw response: ${output:-<empty>}"
+    fail "  [FAIL] api /live        : unexpected response"
+    fail "           Raw response: ${live:-<empty>}"
     fail "           Fix: ./scripts/restart.sh api"
-    fail "           Logs: ./scripts/logs.sh api"
+  fi
+
+  ready="$(podman exec beprepared-api \
+    wget -qO- "http://127.0.0.1:${API_PORT}/health" 2>/dev/null || true)"
+  ready_status="$(echo "$ready" | grep -oP '"status"\s*:\s*"\K[^"]+' || true)"
+  if [[ "$ready_status" == "ok" ]]; then
+    say "  [ok]   api /health      : seeded and ready"
+  elif echo "$ready" | grep -q 'db_not_seeded'; then
+    say "  [warn] api /health      : not seeded (ok if --skip-seed)"
+  else
+    fail "  [FAIL] api /health      : unexpected response"
+    fail "           Raw response: ${ready:-<empty>}"
   fi
 }
 
@@ -284,7 +287,7 @@ check_podman_health "beprepared-db" \
   "MariaDB healthcheck.sh failed: server may not be accepting connections or InnoDB is not yet initialised."
 
 check_podman_health "beprepared-api" \
-  "API /health probe failed: the Bun/Elysia process may have crashed or the DB connection was lost."
+  "API /live probe failed: the Bun/Elysia process may have crashed or the DB connection was lost."
 
 check_podman_health "beprepared-worker" \
   "/tmp/worker.ready is missing: the worker has not completed a successful scheduler tick since startup."
@@ -296,9 +299,9 @@ say ""
 say "--- endpoint reachability ---"
 check_api_db
 # API port is not published to the host — probe from inside the container.
-check_http_container "api/health" "beprepared-api" \
-  "http://127.0.0.1:${API_PORT}/health" "^2" \
-  "The API /health endpoint did not return a 2xx status code."
+check_http_container "api/live" "beprepared-api" \
+  "http://127.0.0.1:${API_PORT}/live" "^2" \
+  "The API /live endpoint did not return a 2xx status code."
 
 # Frontend is probed from inside its own container to avoid host dependencies.
 check_http_container "frontend" "beprepared-frontend" \

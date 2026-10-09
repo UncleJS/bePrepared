@@ -13,19 +13,23 @@ export function useActiveHouseholdId() {
 
   const resolvedHouseholdId = useMemo(() => resolveClientHouseholdId(user), [user]);
 
-  const [householdId, setHouseholdId] = useState<string | null>(null);
+  // Cookie overrides for admins; seed from the resolved id so the first paint
+  // after auth does not flash "No household in session."
+  const [cookieOverride, setCookieOverride] = useState<string | null>(null);
 
   useEffect(() => {
     if (user && !user.isAdmin) clearActiveHouseholdCookie();
-    setHouseholdId(resolvedHouseholdId);
-  }, [resolvedHouseholdId, user]);
+  }, [user]);
 
   useEffect(() => {
     return onActiveHouseholdChange((id) => {
-      if (user?.isAdmin) setHouseholdId(id || resolvedHouseholdId);
-      else setHouseholdId(resolvedHouseholdId);
+      if (user?.isAdmin) setCookieOverride(id || null);
+      else setCookieOverride(null);
     });
-  }, [resolvedHouseholdId, user]);
+  }, [user]);
+
+  const householdId =
+    user?.isAdmin && cookieOverride ? cookieOverride : resolvedHouseholdId;
 
   return { householdId, isLoading, user };
 }

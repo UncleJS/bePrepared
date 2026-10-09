@@ -4,7 +4,7 @@ import { alerts } from "../../db/schema";
 import { eq, isNull, and, desc } from "drizzle-orm";
 import { requireHouseholdScope, requireAdmin } from "../../lib/routeAuth";
 import { runAllJobs } from "../../lib/alertJobs";
-import { DEFAULT_LIST_LIMIT } from "../../lib/listLimits";
+import { DEFAULT_LIST_LIMIT, markTruncated, mysqlAffectedRows } from "../../lib/listLimits";
 
 export const alertsRoute = new Elysia({ prefix: "/alerts", tags: ["alerts"] })
 
@@ -22,11 +22,13 @@ export const alertsRoute = new Elysia({ prefix: "/alerts", tags: ["alerts"] })
       }
       if (query.unread === "true") filters.push(eq(alerts.isRead, false));
 
-      return db.query.alerts.findMany({
+      const rows = await db.query.alerts.findMany({
         where: and(...filters),
         orderBy: [alerts.dueAtUTC, desc(alerts.id)],
         limit: DEFAULT_LIST_LIMIT,
       });
+      markTruncated(set, rows.length);
+      return rows;
     },
     {
       query: t.Object({
@@ -44,10 +46,20 @@ export const alertsRoute = new Elysia({ prefix: "/alerts", tags: ["alerts"] })
       const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
-      await db
+      const result = await db
         .update(alerts)
         .set({ isRead: true })
-        .where(and(eq(alerts.id, params.alertId), eq(alerts.householdId, params.householdId)));
+        .where(
+          and(
+            eq(alerts.id, params.alertId),
+            eq(alerts.householdId, params.householdId),
+            isNull(alerts.archivedAtUTC)
+          )
+        );
+      if (mysqlAffectedRows(result) === 0) {
+        set.status = 404;
+        return { error: "Alert not found" };
+      }
       return { read: true };
     },
     { detail: { summary: "Mark an alert as read" } }
@@ -59,10 +71,20 @@ export const alertsRoute = new Elysia({ prefix: "/alerts", tags: ["alerts"] })
       const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
-      await db
+      const result = await db
         .update(alerts)
         .set({ isResolved: true, resolvedAtUTC: new Date() })
-        .where(and(eq(alerts.id, params.alertId), eq(alerts.householdId, params.householdId)));
+        .where(
+          and(
+            eq(alerts.id, params.alertId),
+            eq(alerts.householdId, params.householdId),
+            isNull(alerts.archivedAtUTC)
+          )
+        );
+      if (mysqlAffectedRows(result) === 0) {
+        set.status = 404;
+        return { error: "Alert not found" };
+      }
       return { resolved: true };
     },
     { detail: { summary: "Mark an alert as resolved" } }
@@ -74,10 +96,20 @@ export const alertsRoute = new Elysia({ prefix: "/alerts", tags: ["alerts"] })
       const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
-      await db
+      const result = await db
         .update(alerts)
         .set({ archivedAtUTC: new Date() })
-        .where(and(eq(alerts.id, params.alertId), eq(alerts.householdId, params.householdId)));
+        .where(
+          and(
+            eq(alerts.id, params.alertId),
+            eq(alerts.householdId, params.householdId),
+            isNull(alerts.archivedAtUTC)
+          )
+        );
+      if (mysqlAffectedRows(result) === 0) {
+        set.status = 404;
+        return { error: "Alert not found" };
+      }
       return { archived: true };
     },
     { detail: { summary: "Archive (dismiss) an alert" } }
@@ -89,8 +121,16 @@ export const alertsRoute = new Elysia({ prefix: "/alerts", tags: ["alerts"] })
       const claims = requireAdmin(request, set);
       if (!claims) return { error: "Forbidden" };
 
-      const metrics = await runAllJobs();
-      return { ok: true, metrics };
+      try {
+        const metrics = await runAllJobs();
+        return { ok: true, metrics };
+      } catch (err) {
+        if (err instanceof Error && err.message.includes("already running")) {
+          set.status = 409;
+          return { error: err.message };
+        }
+        throw err;
+      }
     },
     { detail: { summary: "Deprecated alias for admin alert job trigger" } }
   );
@@ -101,8 +141,16 @@ export const adminAlertsRoute = new Elysia({ prefix: "/admin/alerts", tags: ["al
     const claims = requireAdmin(request, set);
     if (!claims) return { error: "Forbidden" };
 
-    const metrics = await runAllJobs();
-    return { ok: true, metrics };
+    try {
+      const metrics = await runAllJobs();
+      return { ok: true, metrics };
+    } catch (err) {
+      if (err instanceof Error && err.message.includes("already running")) {
+        set.status = 409;
+        return { error: err.message };
+      }
+      throw err;
+    }
   },
   { detail: { summary: "Manually trigger alert job run (admin only)" } }
 );

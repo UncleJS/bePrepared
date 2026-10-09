@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import {
   HORIZON_LABELS,
@@ -66,13 +66,18 @@ export default function DashboardPlanning({ householdId }: { householdId: string
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const generation = useRef(0);
   const load = useCallback(() => {
+    const requestId = ++generation.current;
     setLoading(true);
     setError(null);
+    setSip(null);
+    setEvac(null);
     Promise.allSettled([
       apiFetch<PlanningResult | PlanningApiResult>(`/planning/${householdId}/shelter_in_place`),
       apiFetch<PlanningResult | PlanningApiResult>(`/planning/${householdId}/evacuation`),
     ]).then(([sipRes, evacRes]) => {
+      if (requestId !== generation.current) return;
       if (sipRes.status === "fulfilled") setSip(normalizePlanning(sipRes.value));
       else setSip(null);
       if (evacRes.status === "fulfilled") setEvac(normalizePlanning(evacRes.value));

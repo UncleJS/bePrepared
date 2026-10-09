@@ -19,6 +19,7 @@ import * as schema from "../db/schema";
 import { eq, isNull, and, lte, isNotNull, inArray } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { assertRunSucceeded, type JobCounters, type RunMetrics } from "./alertJobStatus";
+import { withAlertJobLock } from "./alertJobLock";
 
 export { AlertJobsFailedError, assertRunSucceeded, countJobErrors } from "./alertJobStatus";
 export type { JobCounters, RunMetrics } from "./alertJobStatus";
@@ -196,6 +197,7 @@ async function processInventoryExpiry(metrics: JobCounters) {
     where: isNull(households.archivedAtUTC),
   });
   const today = new Date();
+  const liveEntityIds = new Set<string>();
 
   for (const hh of allHouseholds) {
     const { upcomingDays, graceDays } = await getAlertPolicyForHousehold(hh.id);
@@ -227,6 +229,7 @@ async function processInventoryExpiry(metrics: JobCounters) {
         metrics.skipped += 1;
         continue;
       }
+      liveEntityIds.add(lot.id);
       try {
         const expStr = new Date(lot.expiresAt).toISOString().slice(0, 10);
         const severity = computeAlertSeverity(new Date(lot.expiresAt), today, graceDays);
@@ -254,6 +257,8 @@ async function processInventoryExpiry(metrics: JobCounters) {
       }
     }
   }
+
+  await resolveStaleAlerts("expiry", "inventory_lot", liveEntityIds, metrics);
 }
 
 async function processInventoryReplacement(metrics: JobCounters) {
@@ -262,6 +267,7 @@ async function processInventoryReplacement(metrics: JobCounters) {
     where: isNull(households.archivedAtUTC),
   });
   const today = new Date();
+  const liveEntityIds = new Set<string>();
 
   for (const hh of allHouseholds) {
     const { upcomingDays, graceDays } = await getAlertPolicyForHousehold(hh.id);
@@ -293,6 +299,7 @@ async function processInventoryReplacement(metrics: JobCounters) {
         metrics.skipped += 1;
         continue;
       }
+      liveEntityIds.add(lot.id);
       try {
         const repStr = new Date(lot.nextReplaceAt).toISOString().slice(0, 10);
         const severity = computeAlertSeverity(new Date(lot.nextReplaceAt), today, graceDays);
@@ -323,6 +330,8 @@ async function processInventoryReplacement(metrics: JobCounters) {
       }
     }
   }
+
+  await resolveStaleAlerts("replacement", "inventory_lot", liveEntityIds, metrics);
 }
 
 async function processMaintenanceSchedules(metrics: JobCounters) {
@@ -331,6 +340,7 @@ async function processMaintenanceSchedules(metrics: JobCounters) {
     where: isNull(households.archivedAtUTC),
   });
   const today = new Date();
+  const liveEntityIds = new Set<string>();
 
   for (const hh of allHouseholds) {
     const { upcomingDays } = await getAlertPolicyForHousehold(hh.id);
@@ -360,6 +370,7 @@ async function processMaintenanceSchedules(metrics: JobCounters) {
         metrics.skipped += 1;
         continue;
       }
+      liveEntityIds.add(sched.id);
       try {
         const dueStr = new Date(sched.nextDueAt).toISOString().slice(0, 10);
         // Use the schedule's own grace_days (falls back to 0 if not set)
@@ -390,13 +401,48 @@ async function processMaintenanceSchedules(metrics: JobCounters) {
       }
     }
   }
+
+  await resolveStaleAlerts("maintenance", "maintenance_schedule", liveEntityIds, metrics);
 }
 
 // ---------------------------------------------------------------------------
 // Main entry point — returns metrics so callers can report results
 // ---------------------------------------------------------------------------
 
-export async function runAllJobs(): Promise<RunMetrics> {
+/** Resolve active alerts whose entity is no longer a live candidate. Exported for tests. */
+export async function resolveStaleAlerts(
+  category: AlertCategory,
+  entityType: string,
+  liveEntityIds: Set<string>,
+  metrics: JobCounters
+) {
+  const active = await db.query.alerts.findMany({
+    where: and(
+      eq(alerts.category, category),
+      eq(alerts.entityType, entityType),
+      eq(alerts.isResolved, false),
+      isNull(alerts.archivedAtUTC)
+    ),
+  });
+  for (const row of active) {
+    if (liveEntityIds.has(row.entityId)) continue;
+    try {
+      await db
+        .update(alerts)
+        .set({ isResolved: true, resolvedAtUTC: new Date(), updatedAtUTC: new Date() })
+        .where(eq(alerts.id, row.id));
+      metrics.skipped += 1;
+    } catch (err) {
+      metrics.errors += 1;
+      logger.error("[alertJobs] Stale alert resolve failed", {
+        alertId: row.id,
+        err: String(err),
+      });
+    }
+  }
+}
+
+async function runAllJobsUnlocked(): Promise<RunMetrics> {
   const start = Date.now();
   const metrics = createRunMetrics();
   logger.info("[alertJobs] Run started", { ts: new Date().toISOString() });
@@ -412,4 +458,8 @@ export async function runAllJobs(): Promise<RunMetrics> {
     throw err;
   }
   return metrics;
+}
+
+export async function runAllJobs(): Promise<RunMetrics> {
+  return withAlertJobLock(runAllJobsUnlocked);
 }

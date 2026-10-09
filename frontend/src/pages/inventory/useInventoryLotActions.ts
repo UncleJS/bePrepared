@@ -76,6 +76,11 @@ export function useInventoryLotActions({
     setMessage(null);
     try {
       const qty = asNumberOrUndef(lotEditForm.qty);
+      if (qty == null || qty < 0) {
+        setError("Lot quantity must be 0 or greater.");
+        setSaving(false);
+        return;
+      }
       await apiFetch(`/inventory/${householdId}/items/${selectedItemId}/lots/${editingLotId}`, {
         method: "PATCH",
         body: JSON.stringify({

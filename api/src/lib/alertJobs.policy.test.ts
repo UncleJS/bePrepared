@@ -27,7 +27,15 @@ const db = {
   },
 };
 
-mock.module("../db/client", () => ({ db }));
+mock.module("../db/client", () => ({
+  db,
+  pool: {
+    getConnection: async () => ({
+      query: async () => [[{ got: 1 }]],
+      release: () => undefined,
+    }),
+  },
+}));
 
 const { getAlertPolicyForHousehold, upsertAlert } = await import("./alertJobs");
 

@@ -52,15 +52,17 @@ mkdir -p ~/.config/containers/systemd
 # 1. Clone or extract the project
 cd ~/bePrepared
 
-# 2. Copy and edit secrets
+# 2. Copy and edit secrets (one operator file)
 cp .env.example .env
 # Edit .env — set DB password, ports, AUTH_SECRET, etc.
+# install.sh runs scripts/split-env.sh to write .env.db / .env.api /
+# .env.worker / .env.frontend so each container only sees what it needs.
 
 # 3. Run the install script (handles steps 3–6 automatically)
 ./scripts/install.sh
 ```
 
-`install.sh` builds all three container images, installs Quadlet unit files, starts the pod, waits for MariaDB, runs migrations, and seeds reference data. Pass `--skip-seed` to skip seeding on reinstalls.
+`install.sh` builds all three container images, installs Quadlet unit files, starts MariaDB, migrates, seeds reference data, then starts API/worker/frontend. Pass `--skip-seed` to skip seeding on reinstalls.
 
 To run the steps manually instead:
 
@@ -70,20 +72,25 @@ podman build -f deploy/Containerfile.api      -t beprepared-api:latest .
 podman build -f deploy/Containerfile.worker   -t beprepared-worker:latest .
 podman build -f deploy/Containerfile.frontend -t beprepared-frontend:latest .
 
+./scripts/split-env.sh
+
 # Install Quadlet units (substitute this checkout for %%REPO_DIR%%)
 REPO_DIR="$(pwd)"
+WORKER_HEALTH_MMIN=30
 mkdir -p ~/.config/containers/systemd
 for f in deploy/quadlet/*.container deploy/quadlet/*.pod deploy/quadlet/*.volume; do
-  sed "s|%%REPO_DIR%%|${REPO_DIR}|g" "$f" > ~/.config/containers/systemd/"$(basename "$f")"
+  sed -e "s|%%REPO_DIR%%|${REPO_DIR}|g" \
+      -e "s|%%WORKER_HEALTH_MMIN%%|${WORKER_HEALTH_MMIN}|g" \
+      "$f" > ~/.config/containers/systemd/"$(basename "$f")"
 done
 
-# Reload systemd and start the pod
+# Reload systemd, start DB only, migrate + seed, then start app services
 systemctl --user daemon-reload
-systemctl --user start beprepared-pod
-
-# Wait ~5s for MariaDB to initialise, then run migrations + seed
-podman exec beprepared-api bun run db:migrate
-podman exec beprepared-api bun run db:seed
+systemctl --user start beprepared-pod beprepared-db
+# Wait ~5s for MariaDB to initialise
+podman exec beprepared-api bun run db:migrate   # uses one-shot API image if needed
+podman exec beprepared-api bun run db:seed:reference
+systemctl --user start beprepared-api beprepared-worker beprepared-frontend
 ```
 
 ---
@@ -113,10 +120,10 @@ Description=bePrepared MariaDB
 After=beprepared-pod.service
 
 [Container]
-Image=docker.io/library/mariadb:11
+Image=docker.io/library/mariadb:11.4
 Pod=beprepared.pod
 ContainerName=beprepared-db
-EnvironmentFile=%h/bePrepared/.env
+EnvironmentFile=%%REPO_DIR%%/.env.db
 Volume=beprepared-db.volume:/var/lib/mysql:Z
 Environment=MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
 Environment=MARIADB_DATABASE=${DB_NAME}
@@ -391,6 +398,14 @@ gzip backup-*.sql
 
 ### Restore
 
+Prefer the helper (stops API/worker, loads the dump, restarts, runs status):
+
+```bash
+./scripts/restore.sh backups/backup-YYYYMMDD-HHmmss.sql.gz
+```
+
+Manual equivalent:
+
 ```bash
 # Stop API and worker first to prevent writes
 systemctl --user stop beprepared-api beprepared-worker
@@ -402,6 +417,7 @@ gunzip -c backup-YYYYMMDD-HHmmss.sql.gz | \
 
 # Restart
 systemctl --user start beprepared-api beprepared-worker
+./scripts/status.sh
 ```
 
 ### Data volume location
@@ -443,7 +459,7 @@ Record for each drill:
 
 [↑ TOC](#table-of-contents)
 
-Copy `.env.example` to `.env` and fill in values.
+Copy `.env.example` to `.env` and fill in values. `scripts/split-env.sh` (run by install/update) writes `.env.db`, `.env.api`, `.env.worker`, and `.env.frontend` from that file — edit only `.env`.
 
 | Variable                             | Required | Default                 | Notes                                                    |
 | ------------------------------------ | -------- | ----------------------- | -------------------------------------------------------- |
@@ -455,12 +471,12 @@ Copy `.env.example` to `.env` and fill in values.
 | `DB_ROOT_PASSWORD`                   | yes      | —                       | MariaDB container only                                   |
 | `DATABASE_URL`                       | yes      | —                       | `mysql://user:pass@host:3306/dbname`                     |
 | `PORT`                               | no       | `9995`                  | API listen port (internal)                               |
-| `VITE_API_URL`                       | yes      | `http://localhost:9995` | Browser API base URL (used by the Vite SPA at runtime)   |
+| `VITE_API_URL`                       | yes      | `http://localhost:9995` | Browser API base URL (baked at Vite build time)          |
 | `CORS_ORIGINS`                       | yes      | `http://localhost:9999` | Comma-separated allowed browser origins                  |
 | `ALLOW_LOCALHOST_CORS_IN_PRODUCTION` | no       | `true`                  | Localhost install default; set false for a public origin |
 | `AUTH_SECRET`                        | yes      | —                       | Random secret for JWT signing; `openssl rand -base64 32` |
 | `AUTH_ENABLED`                       | no       | `true`                  | Set `false` only for local dev (never in production)     |
-| `WORKER_INTERVAL_MS`                 | no       | `900000`                | Alert worker run interval in ms (default = 15 minutes)   |
+| `WORKER_INTERVAL_MS`                 | no       | `900000`                | Alert worker interval (ms); default 15 min; max ~6 hours |
 | `NODE_ENV`                           | no       | `production`            |                                                          |
 
 ---

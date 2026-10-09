@@ -5,6 +5,7 @@ import { eq, isNull, and, inArray } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { requireAdmin, requireAuth, requireHouseholdScope } from "../../lib/routeAuth";
 import { parseISODate } from "../_shared/dates";
+import { DEFAULT_LIST_LIMIT, markTruncated } from "../../lib/listLimits";
 
 async function unresolvedTaskDependencies(householdId: string, taskId: string) {
   const dependencies = await db.query.taskDependencies.findMany({
@@ -330,12 +331,15 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
       const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
-      return db.query.taskProgress.findMany({
+      const rows = await db.query.taskProgress.findMany({
         where: and(
           eq(taskProgress.householdId, params.householdId),
           isNull(taskProgress.archivedAtUTC)
         ),
+        limit: DEFAULT_LIST_LIMIT,
       });
+      markTruncated(set, rows.length);
+      return rows;
     },
     { detail: { summary: "Get all task progress for a household" } }
   )
@@ -356,6 +360,14 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
       } catch (err: any) {
         set.status = 400;
         return { error: err.message };
+      }
+
+      const task = await db.query.tasks.findFirst({
+        where: and(eq(tasks.id, body.taskId), isNull(tasks.archivedAtUTC)),
+      });
+      if (!task) {
+        set.status = 404;
+        return { error: "Task not found" };
       }
 
       const existing = await db.query.taskProgress.findFirst({

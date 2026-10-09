@@ -1,7 +1,7 @@
 import { Elysia, t } from "elysia";
 import { db } from "../../db/client";
 import { users } from "../../db/schema";
-import { eq, isNull, and, ne } from "drizzle-orm";
+import { eq, isNull, and, ne, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { requireAdmin, requireAuth } from "../../lib/routeAuth";
 import { issueApiToken } from "../../lib/authToken";
@@ -201,20 +201,6 @@ export const usersRoute = new Elysia({ prefix: "/users", tags: ["users"] })
         updates.credentialsVersion = existing.credentialsVersion + 1;
       }
       if (body.householdId !== undefined) updates.householdId = body.householdId;
-      if (body.isAdmin === false && existing.isAdmin) {
-        const otherAdmins = await db.query.users.findMany({
-          where: and(
-            eq(users.isAdmin, true),
-            isNull(users.archivedAtUTC),
-            ne(users.id, existing.id)
-          ),
-          limit: 1,
-        });
-        if (otherAdmins.length === 0) {
-          set.status = 409;
-          return { error: "Cannot remove the last admin" };
-        }
-      }
       if (body.isAdmin !== undefined) updates.isAdmin = body.isAdmin;
 
       if (Object.keys(updates).length === 0) {
@@ -222,7 +208,33 @@ export const usersRoute = new Elysia({ prefix: "/users", tags: ["users"] })
         return { error: "No fields to update" };
       }
 
-      await db.update(users).set(updates).where(eq(users.id, params.id));
+      try {
+        await db.transaction(async (tx) => {
+          if (body.isAdmin === false && existing.isAdmin) {
+            await tx.execute(
+              sql`SELECT id FROM users WHERE is_admin = 1 AND archived_at_UTC IS NULL FOR UPDATE`
+            );
+            const otherAdmins = await tx.query.users.findMany({
+              where: and(
+                eq(users.isAdmin, true),
+                isNull(users.archivedAtUTC),
+                ne(users.id, existing.id)
+              ),
+              limit: 1,
+            });
+            if (otherAdmins.length === 0) {
+              throw new Error("LAST_ADMIN");
+            }
+          }
+          await tx.update(users).set(updates).where(eq(users.id, params.id));
+        });
+      } catch (err) {
+        if (err instanceof Error && err.message === "LAST_ADMIN") {
+          set.status = 409;
+          return { error: "Cannot remove the last admin" };
+        }
+        throw err;
+      }
 
       const updated = await db.query.users.findFirst({
         where: and(eq(users.id, params.id), isNull(users.archivedAtUTC)),
@@ -268,10 +280,36 @@ export const usersRoute = new Elysia({ prefix: "/users", tags: ["users"] })
         return { error: "User not found" };
       }
 
-      await db
-        .update(users)
-        .set({ archivedAtUTC: new Date() })
-        .where(and(eq(users.id, params.id), ne(users.id, claims.sub)));
+      try {
+        await db.transaction(async (tx) => {
+          if (existing.isAdmin) {
+            await tx.execute(
+              sql`SELECT id FROM users WHERE is_admin = 1 AND archived_at_UTC IS NULL FOR UPDATE`
+            );
+            const otherAdmins = await tx.query.users.findMany({
+              where: and(
+                eq(users.isAdmin, true),
+                isNull(users.archivedAtUTC),
+                ne(users.id, existing.id)
+              ),
+              limit: 1,
+            });
+            if (otherAdmins.length === 0) {
+              throw new Error("LAST_ADMIN");
+            }
+          }
+          await tx
+            .update(users)
+            .set({ archivedAtUTC: new Date() })
+            .where(and(eq(users.id, params.id), ne(users.id, claims.sub)));
+        });
+      } catch (err) {
+        if (err instanceof Error && err.message === "LAST_ADMIN") {
+          set.status = 409;
+          return { error: "Cannot archive the last admin" };
+        }
+        throw err;
+      }
 
       return { archived: true };
     },

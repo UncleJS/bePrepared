@@ -130,17 +130,27 @@ check_unit() {
 # guaranteed to be present in the minimal container images.
 
 check_api_health() {
-  # GET /health — the API does a SELECT 1 and returns {"status":"ok"} on 200
-  # or {"status":"error"} on 503 if the DB is unreachable.
-  local output
-  output="$(podman exec beprepared-api \
-    wget -qO- "http://127.0.0.1:${API_PORT}/health" 2>/dev/null || true)"
-  local code
-  code="$(echo "$output" | grep -oP '"status"\s*:\s*"\K[^"]+' || true)"
-  if [[ "$code" == "ok" ]]; then
-    say "  [ok]   api /health   : status=ok"
+  # /live = liveness (DB ping). /health = readiness (seeded modules).
+  local live ready live_code ready_code
+  live="$(podman exec beprepared-api \
+    wget -qO- "http://127.0.0.1:${API_PORT}/live" 2>/dev/null || true)"
+  live_code="$(echo "$live" | grep -oP '"status"\s*:\s*"\K[^"]+' || true)"
+  if [[ "$live_code" == "ok" ]]; then
+    say "  [ok]   api /live     : status=ok"
   else
-    fail_line "  [FAIL] api /health   : status=${code:-no response}"
+    fail_line "  [FAIL] api /live     : status=${live_code:-no response}"
+    say "         Hint: run ./scripts/healthcheck.sh for details"
+  fi
+
+  ready="$(podman exec beprepared-api \
+    wget -qO- "http://127.0.0.1:${API_PORT}/health" 2>/dev/null || true)"
+  ready_code="$(echo "$ready" | grep -oP '"status"\s*:\s*"\K[^"]+' || true)"
+  if [[ "$ready_code" == "ok" ]]; then
+    say "  [ok]   api /health   : status=ok"
+  elif echo "$ready" | grep -q 'db_not_seeded'; then
+    say "  [warn] api /health   : not seeded (ok if --skip-seed)"
+  else
+    fail_line "  [FAIL] api /health   : status=${ready_code:-no response}"
     say "         Hint: run ./scripts/healthcheck.sh for details"
   fi
 }

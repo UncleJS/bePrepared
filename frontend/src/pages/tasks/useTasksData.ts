@@ -93,7 +93,7 @@ export function useTasksData(householdId: string | null) {
         });
         setProgress((prev) => ({ ...prev, [task.id]: created }));
       } catch (err) {
-        console.error(err);
+        setError(err instanceof Error ? err.message : "Failed to update task.");
         await loadData();
       }
     },

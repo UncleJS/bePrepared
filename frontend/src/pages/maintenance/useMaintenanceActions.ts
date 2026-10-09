@@ -49,8 +49,14 @@ export function useMaintenanceActions({ householdId, reloadSchedules, setError }
         body: JSON.stringify({
           templateId: form.templateId || undefined,
           name: form.name.trim(),
-          calDays: form.calDays ? Number(form.calDays) : undefined,
-          graceDays: form.graceDays ? Number(form.graceDays) : undefined,
+          calDays:
+            form.calDays && Number.isFinite(Number(form.calDays))
+              ? Number(form.calDays)
+              : undefined,
+          graceDays:
+            form.graceDays && Number.isFinite(Number(form.graceDays))
+              ? Number(form.graceDays)
+              : undefined,
           nextDueAt: form.nextDueAt || undefined,
         }),
       });
@@ -89,8 +95,14 @@ export function useMaintenanceActions({ householdId, reloadSchedules, setError }
         method: "PATCH",
         body: JSON.stringify({
           name: editForm.name.trim(),
-          calDays: editForm.calDays ? Number(editForm.calDays) : undefined,
-          graceDays: editForm.graceDays ? Number(editForm.graceDays) : undefined,
+          calDays:
+            editForm.calDays && Number.isFinite(Number(editForm.calDays))
+              ? Number(editForm.calDays)
+              : undefined,
+          graceDays:
+            editForm.graceDays && Number.isFinite(Number(editForm.graceDays))
+              ? Number(editForm.graceDays)
+              : undefined,
           nextDueAt: editForm.nextDueAt || undefined,
           lastDoneAt: editForm.lastDoneAt || undefined,
           isActive: editForm.isActive,

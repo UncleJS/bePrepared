@@ -41,7 +41,7 @@ This deep dive reviews:
 
 [↑ TOC](#table-of-contents)
 
-The worker runs immediately on startup and then every `WORKER_INTERVAL_MS` (default: 1 hour).
+The worker runs immediately on startup and then every `WORKER_INTERVAL_MS` (default: 900000 ms = 15 minutes). Keep the interval at or below 6 hours so the Quadlet health `-mmin` window (2× interval) stays practical.
 
 Current jobs:
 

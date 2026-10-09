@@ -16,7 +16,16 @@ export function toForm(task: Task): TaskForm {
   };
 }
 
+function finiteOrUndef(raw: string): number | undefined {
+  if (!raw.trim()) return undefined;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : undefined;
+}
+
 export function toPayload(form: TaskForm) {
+  const recurDays =
+    form.isRecurring && form.recurDays.trim() ? finiteOrUndef(form.recurDays) : undefined;
+  const sortOrder = form.sortOrder.trim() ? finiteOrUndef(form.sortOrder) : 0;
   return {
     moduleId: form.moduleId,
     sectionId: form.sectionId || undefined,
@@ -26,8 +35,8 @@ export function toPayload(form: TaskForm) {
     readinessLevel: form.readinessLevel,
     scenario: form.scenario,
     isRecurring: form.isRecurring,
-    recurDays: form.isRecurring && form.recurDays.trim() ? Number(form.recurDays) : undefined,
-    sortOrder: form.sortOrder.trim() ? Number(form.sortOrder) : 0,
+    recurDays,
+    sortOrder: sortOrder ?? 0,
     evidencePrompt: form.evidencePrompt.trim() || undefined,
   };
 }

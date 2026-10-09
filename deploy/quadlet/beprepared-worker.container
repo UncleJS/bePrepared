@@ -12,17 +12,17 @@ Image=localhost/beprepared-worker:latest
 Pod=beprepared.pod
 ContainerName=beprepared-worker
 
-EnvironmentFile=%%REPO_DIR%%/.env
+EnvironmentFile=%%REPO_DIR%%/.env.worker
 PodmanArgs=--read-only
 PodmanArgs=--tmpfs=/tmp:rw,nosuid,nodev,noexec,size=64m
 PodmanArgs=--security-opt=no-new-privileges
 PodmanArgs=--cap-drop=all
 PodmanArgs=--memory=512m
 
-# Functional healthcheck: /tmp/worker.ready must exist and be ≤30 min old
-# (2× the 15-min run interval). Stale = worker silently stopped scheduling.
+# Functional healthcheck: /tmp/worker.ready must exist and be recent.
+# %%WORKER_HEALTH_MMIN%% is substituted at install from 2× WORKER_INTERVAL_MS.
 # HealthOnFailure=kill lets systemd own the restart so StartLimitBurst applies.
-HealthCmd=find /tmp/worker.ready -mmin -30 | grep -q .
+HealthCmd=find /tmp/worker.ready -mmin -%%WORKER_HEALTH_MMIN%% | grep -q .
 HealthInterval=30s
 HealthTimeout=5s
 HealthStartPeriod=120s

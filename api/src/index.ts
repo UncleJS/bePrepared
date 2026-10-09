@@ -21,6 +21,7 @@ import { maintenanceRoute } from "./routes/maintenance";
 import { adminAlertsRoute, alertsRoute } from "./routes/alerts";
 import { settingsRoute } from "./routes/settings";
 import { planningRoute } from "./routes/planning";
+import { shouldRejectBodySize } from "./lib/bodyLimit";
 
 const PORT = Number(process.env.PORT ?? 9995);
 const NODE_ENV = (process.env.NODE_ENV ?? "development").toLowerCase();
@@ -33,8 +34,6 @@ const CORS_ORIGINS = (process.env.CORS_ORIGINS ?? "http://localhost:9997")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
-
-const MAX_BODY_BYTES = 1_000_000;
 
 if (AUTH_ENABLED) {
   assertAcceptableAuthSecret(API_AUTH_SECRET, NODE_ENV);
@@ -88,6 +87,43 @@ function isDuplicateKey(error: unknown): boolean {
 
 export function createApp() {
   return new Elysia()
+    .onRequest(async ({ request }) => {
+      const method = request.method.toUpperCase();
+      const mayHaveBody = method === "POST" || method === "PUT" || method === "PATCH";
+      if (!mayHaveBody) return;
+
+      const contentType = request.headers.get("content-type");
+      const contentLengthHeader = request.headers.get("content-length");
+      const transferEncoding = request.headers.get("transfer-encoding");
+      let measuredBytes: number | undefined;
+      if (
+        (contentLengthHeader == null || contentLengthHeader === "") &&
+        contentType &&
+        !transferEncoding
+      ) {
+        try {
+          measuredBytes = (await request.clone().arrayBuffer()).byteLength;
+        } catch {
+          return new Response(JSON.stringify({ error: "Payload too large" }), {
+            status: 413,
+            headers: { "content-type": "application/json" },
+          });
+        }
+      }
+      if (
+        shouldRejectBodySize({
+          transferEncoding,
+          contentLengthHeader,
+          contentType,
+          measuredBytes,
+        })
+      ) {
+        return new Response(JSON.stringify({ error: "Payload too large" }), {
+          status: 413,
+          headers: { "content-type": "application/json" },
+        });
+      }
+    })
     .derive(({ request }) => {
       if (!AUTH_ENABLED || !API_AUTH_SECRET) return { auth: null };
       const token = bearerFromHeader(request.headers.get("authorization"));
@@ -96,11 +132,6 @@ export function createApp() {
     })
     .onBeforeHandle(async ({ request, set, auth }) => {
       const pathname = new URL(request.url).pathname;
-      const contentLength = Number(request.headers.get("content-length") ?? "0");
-      if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
-        set.status = 413;
-        return { error: "Payload too large" };
-      }
 
       if (!AUTH_ENABLED) return;
       if (isPublicPath(pathname)) return;

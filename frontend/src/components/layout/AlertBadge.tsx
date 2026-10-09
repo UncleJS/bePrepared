@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Bell } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { useActiveHouseholdId } from "@/lib/useActiveHouseholdId";
@@ -12,16 +12,23 @@ type Alert = {
 export function AlertBadge() {
   const { householdId } = useActiveHouseholdId();
   const [count, setCount] = useState(0);
+  const generation = useRef(0);
 
   const load = useCallback(() => {
     if (!householdId) {
       setCount(0);
       return;
     }
-
+    const requestId = ++generation.current;
     void apiFetch<Alert[]>(`/alerts/${householdId}?status=active`)
-      .then((rows) => setCount(rows.filter((row) => !row.isResolved).length))
-      .catch(() => setCount(0));
+      .then((rows) => {
+        if (requestId !== generation.current) return;
+        setCount(rows.filter((row) => !row.isResolved).length);
+      })
+      .catch(() => {
+        if (requestId !== generation.current) return;
+        setCount(0);
+      });
   }, [householdId]);
 
   useEffect(() => {

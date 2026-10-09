@@ -4,6 +4,7 @@ export function safeCallbackUrl(raw: string | null | undefined, fallback = "/das
   if (!raw.startsWith("/")) return fallback;
   if (raw.startsWith("//") || raw.startsWith("/\\")) return fallback;
   if (raw.includes("://") || raw.includes("\\")) return fallback;
+  if (raw === "/login" || raw.startsWith("/login?")) return fallback;
   return raw;
 }
 

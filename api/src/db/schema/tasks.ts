@@ -1,4 +1,5 @@
 // schema/tasks.ts
+import { sql } from "drizzle-orm";
 import {
   mysqlTable,
   varchar,
@@ -7,6 +8,7 @@ import {
   boolean,
   timestamp,
   mysqlEnum,
+  uniqueIndex,
 } from "drizzle-orm/mysql-core";
 
 export const tasks = mysqlTable("tasks", {
@@ -40,18 +42,28 @@ export const taskDependencies = mysqlTable("task_dependencies", {
   createdAtUTC: timestamp("created_at_UTC").notNull().defaultNow(),
 });
 
-export const taskProgress = mysqlTable("task_progress", {
-  id: varchar("id", { length: 36 }).primaryKey(),
-  householdId: varchar("household_id", { length: 36 }).notNull(),
-  taskId: varchar("task_id", { length: 36 }).notNull(),
-  status: mysqlEnum("status", ["pending", "in_progress", "completed", "overdue"])
-    .notNull()
-    .default("pending"),
-  completedAtUTC: timestamp("completed_at_UTC"),
-  nextDueAtUTC: timestamp("next_due_at_UTC"),
-  evidenceNote: text("evidence_note"),
-  completedBy: varchar("completed_by", { length: 255 }),
-  createdAtUTC: timestamp("created_at_UTC").notNull().defaultNow(),
-  updatedAtUTC: timestamp("updated_at_UTC").notNull().defaultNow().onUpdateNow(),
-  archivedAtUTC: timestamp("archived_at_UTC"),
-});
+export const taskProgress = mysqlTable(
+  "task_progress",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    householdId: varchar("household_id", { length: 36 }).notNull(),
+    taskId: varchar("task_id", { length: 36 }).notNull(),
+    status: mysqlEnum("status", ["pending", "in_progress", "completed", "overdue"])
+      .notNull()
+      .default("pending"),
+    completedAtUTC: timestamp("completed_at_UTC"),
+    nextDueAtUTC: timestamp("next_due_at_UTC"),
+    evidenceNote: text("evidence_note"),
+    completedBy: varchar("completed_by", { length: 255 }),
+    createdAtUTC: timestamp("created_at_UTC").notNull().defaultNow(),
+    updatedAtUTC: timestamp("updated_at_UTC").notNull().defaultNow().onUpdateNow(),
+    archivedAtUTC: timestamp("archived_at_UTC"),
+    activeTaskKey: varchar("active_task_key", { length: 128 }).generatedAlwaysAs(
+      sql`CASE WHEN \`archived_at_UTC\` IS NULL THEN CONCAT(\`household_id\`, ':', \`task_id\`) ELSE CONCAT(\`household_id\`, ':', \`task_id\`, ':', \`id\`) END`,
+      { mode: "stored" }
+    ),
+  },
+  (table) => ({
+    activeTaskUnique: uniqueIndex("task_progress_active_task_unique").on(table.activeTaskKey),
+  })
+);

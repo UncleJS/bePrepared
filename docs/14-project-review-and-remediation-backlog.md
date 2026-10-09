@@ -20,6 +20,7 @@
 9. [G) Post-Review Session 2 Improvements](#g-post-review-session-2-improvements)
 10. [H) Production A+ hardening (2026-10-09)](#h-production-a-hardening-2026-10-09)
 11. [I) Production gap fixes (2026-10-09)](#i-production-gap-fixes-2026-10-09)
+12. [J) Close remaining production gaps (2026-10-09)](#j-close-remaining-production-gaps-2026-10-09)
 
 > Persistent checklist from the full-repo review. Keep this file as the working index for future deep dives.
 
@@ -141,7 +142,7 @@
 - [x] **Add deployment post-restart verification script** for service status and basic endpoint checks.
 - [x] **Document recurring backup-restore drill cadence** with pass/fail criteria in operations docs.
 - [x] **Document degraded-mode recovery runbook** for DB/API/worker/frontend restart sequencing.
-- [ ] **Split shared deploy env into service-scoped env files** (deferred by operator choice; revisit when secret-minimization becomes priority).
+- [x] **Split shared deploy env into service-scoped env files** (`scripts/split-env.sh` → `.env.db` / `.env.api` / `.env.worker` / `.env.frontend`; Quadlets load the matching file).
 
 ---
 
@@ -203,6 +204,20 @@ Applied as a full codebase sweep on 2026-03-06. All 20 API tests continued passi
 - [x] Archiving an item archives its lots. Alert upserts refresh `dueAtUTC`. Grace fallback is 3 days.
 - [x] Non-admins cannot use an archived household. The last admin cannot be demoted. Login no longer runs alert jobs.
 - [x] Equipment archived loads cannot leave the list spinner up. Failed household loads clear the previous household. Every signed-in user can edit their profile.
+
+---
+
+## J) Close remaining production gaps (2026-10-09)
+
+[↑ TOC](#table-of-contents)
+
+- [x] Real body byte cap: POST/PUT/PATCH require a finite `Content-Length` ≤ 1 MB (rejects missing/chunked).
+- [x] List caps + `X-Truncated` on equipment, task progress, maintenance, inventory expiring/lots, and related lists.
+- [x] Last-admin demote/archive uses a transaction with a locked admin count.
+- [x] Migration `0013`: active policy uniqueness, scenario-bound profile uniqueness, FKs, maintenance scan index.
+- [x] Soft-delete mutations return 404 when no active row matched; alert reconcile resolves stale entities; `GET_LOCK` serializes `runAllJobs`.
+- [x] Frontend generation/`key={householdId}` guards for settings, planning, dashboard, AlertBadge, CategoryManager; lot qty / callbackUrl / cookie sync polish.
+- [x] Service-scoped env files, `restore.sh`, status `/live`+`/health`, MariaDB `11.4`, CI Containerfile builds, worker health `-mmin` from interval.
 
 ---
 

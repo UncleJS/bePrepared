@@ -1,4 +1,5 @@
 // schema/households.ts
+import { sql } from "drizzle-orm";
 import {
   mysqlTable,
   varchar,
@@ -34,11 +35,18 @@ export const householdPeopleProfiles = mysqlTable(
     createdAtUTC: timestamp("created_at_UTC").notNull().defaultNow(),
     updatedAtUTC: timestamp("updated_at_UTC").notNull().defaultNow().onUpdateNow(),
     archivedAtUTC: timestamp("archived_at_UTC"),
+    activeScenarioKey: varchar("active_scenario_key", { length: 120 }).generatedAlwaysAs(
+      sql`CASE WHEN \`scenario_bound\` IS NOT NULL AND \`archived_at_UTC\` IS NULL THEN CONCAT(\`household_id\`, ':', \`scenario_bound\`) ELSE CONCAT(\`household_id\`, ':', IFNULL(\`scenario_bound\`, '_'), ':', \`id\`) END`,
+      { mode: "stored" }
+    ),
   },
   (table) => ({
     householdNameUnique: uniqueIndex("household_people_profiles_household_name_unique").on(
       table.householdId,
       table.name
+    ),
+    activeScenarioUnique: uniqueIndex("household_people_profiles_active_scenario_unique").on(
+      table.activeScenarioKey
     ),
   })
 );

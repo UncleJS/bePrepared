@@ -1,7 +1,7 @@
 import { Elysia, t } from "elysia";
 import { db } from "../../db/client";
 import { households, householdPeopleProfiles } from "../../db/schema";
-import { eq, isNull, and } from "drizzle-orm";
+import { eq, isNull, and, ne } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { requireAdmin, requireAuth, requireHouseholdScope } from "../../lib/routeAuth";
 
@@ -144,6 +144,20 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
       const claims = await requireHouseholdScope(request, set, params.id);
       if (!claims) return { error: "Forbidden" };
 
+      if (body.scenarioBound) {
+        const conflict = await db.query.householdPeopleProfiles.findFirst({
+          where: and(
+            eq(householdPeopleProfiles.householdId, params.id),
+            eq(householdPeopleProfiles.scenarioBound, body.scenarioBound),
+            isNull(householdPeopleProfiles.archivedAtUTC)
+          ),
+        });
+        if (conflict) {
+          set.status = 409;
+          return { error: "A profile is already bound to this scenario" };
+        }
+      }
+
       const id = randomUUID();
       await db.insert(householdPeopleProfiles).values({
         id,
@@ -173,6 +187,21 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
     async ({ request, set, params, body }) => {
       const claims = await requireHouseholdScope(request, set, params.id);
       if (!claims) return { error: "Forbidden" };
+
+      if (body.scenarioBound) {
+        const conflict = await db.query.householdPeopleProfiles.findFirst({
+          where: and(
+            eq(householdPeopleProfiles.householdId, params.id),
+            eq(householdPeopleProfiles.scenarioBound, body.scenarioBound),
+            isNull(householdPeopleProfiles.archivedAtUTC),
+            ne(householdPeopleProfiles.id, params.profileId)
+          ),
+        });
+        if (conflict) {
+          set.status = 409;
+          return { error: "A profile is already bound to this scenario" };
+        }
+      }
 
       await db
         .update(householdPeopleProfiles)
@@ -212,16 +241,24 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
       const claims = await requireHouseholdScope(request, set, params.id);
       if (!claims) return { error: "Forbidden" };
 
-      await db
-        .update(householdPeopleProfiles)
-        .set({ archivedAtUTC: new Date() })
-        .where(
-          and(
-            eq(householdPeopleProfiles.id, params.profileId),
-            eq(householdPeopleProfiles.householdId, params.id),
-            isNull(householdPeopleProfiles.archivedAtUTC)
-          )
-        );
+      await db.transaction(async (tx) => {
+        await tx
+          .update(householdPeopleProfiles)
+          .set({ archivedAtUTC: new Date() })
+          .where(
+            and(
+              eq(householdPeopleProfiles.id, params.profileId),
+              eq(householdPeopleProfiles.householdId, params.id),
+              isNull(householdPeopleProfiles.archivedAtUTC)
+            )
+          );
+        await tx
+          .update(households)
+          .set({ activeProfileId: null })
+          .where(
+            and(eq(households.id, params.id), eq(households.activeProfileId, params.profileId))
+          );
+      });
       return { archived: true };
     },
     { detail: { summary: "Archive a people profile" } }

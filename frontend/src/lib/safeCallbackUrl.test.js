@@ -13,6 +13,11 @@ describe("safeCallbackUrl", () => {
     expect(safeCallbackUrl("javascript:alert(1)")).toBe("/dashboard");
     expect(safeCallbackUrl(null)).toBe("/dashboard");
   });
+
+  it("rejects /login callback loops", () => {
+    expect(safeCallbackUrl("/login")).toBe("/dashboard");
+    expect(safeCallbackUrl("/login?next=/tasks")).toBe("/dashboard");
+  });
 });
 
 describe("isHttpsUrl", () => {

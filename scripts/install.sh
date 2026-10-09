@@ -122,37 +122,42 @@ podman build \
   "$PROJECT_ROOT"
 echo "==> Images built."
 
+# ── Split env ─────────────────────────────────────────────────────────────────
+# Operators edit one .env; containers load service-scoped files.
+
+echo "==> Splitting .env into per-service files..."
+"$SCRIPT_DIR/split-env.sh"
+
 # ── Quadlet sync ──────────────────────────────────────────────────────────────
 # Copy Quadlet unit files from deploy/quadlet/ to the systemd user-unit dir.
-# %%REPO_DIR%% becomes this clone's absolute path so EnvironmentFile points at
-# the repo-local .env regardless of where the project is checked out.
+# %%REPO_DIR%% becomes this clone's absolute path. %%WORKER_HEALTH_MMIN%% is
+# 2× WORKER_INTERVAL_MS in minutes (minimum 30).
+
+WORKER_INTERVAL_MS="$(grep '^WORKER_INTERVAL_MS=' "$ENV_FILE" | cut -d= -f2- || true)"
+WORKER_INTERVAL_MS="${WORKER_INTERVAL_MS:-900000}"
+WORKER_HEALTH_MMIN=$(( (WORKER_INTERVAL_MS * 2 + 59999) / 60000 ))
+if [[ "$WORKER_HEALTH_MMIN" -lt 30 ]]; then WORKER_HEALTH_MMIN=30; fi
 
 echo "==> Installing Quadlet units to $QUADLET_DIR..."
 mkdir -p "$QUADLET_DIR"
 for f in "$DEPLOY_DIR/quadlet/"*.container "$DEPLOY_DIR/quadlet/"*.volume "$DEPLOY_DIR/quadlet/"*.pod; do
   dest="${QUADLET_DIR}/$(basename "${f}")"
-  sed "s|%%REPO_DIR%%|${PROJECT_ROOT}|g" "${f}" > "${dest}"
+  sed -e "s|%%REPO_DIR%%|${PROJECT_ROOT}|g" \
+      -e "s|%%WORKER_HEALTH_MMIN%%|${WORKER_HEALTH_MMIN}|g" \
+      "${f}" > "${dest}"
 done
-echo "==> Units installed."
+echo "==> Units installed (worker health window: ${WORKER_HEALTH_MMIN} min)."
 
 # ── systemd reload ────────────────────────────────────────────────────────────
-# Required after adding or modifying unit files so systemd discovers them.
-
 echo "==> Reloading systemd user daemon..."
 systemctl --user daemon-reload
 
-# ── Start ─────────────────────────────────────────────────────────────────────
-# Start the pod and all member services. systemd respects unit dependencies so
-# the DB starts before the API and worker.
+# ── Start DB first ────────────────────────────────────────────────────────────
+# Migrate before API/worker accept traffic so the first worker tick is not
+# racing an empty schema.
 
-echo "==> Starting beprepared units..."
-systemctl --user start beprepared-pod beprepared-db beprepared-api beprepared-worker beprepared-frontend
-
-# ── DB wait ───────────────────────────────────────────────────────────────────
-# Poll using the application DB user (not root) against the application
-# database. A simple root ping is not sufficient — MariaDB accepts the root
-# connection before it has finished running the init scripts that create the
-# app DB and app user, so migrations would fail immediately on a fresh start.
+echo "==> Starting pod and database..."
+systemctl --user start beprepared-pod beprepared-db
 
 echo "==> Waiting for MariaDB to initialise (up to 120s)..."
 DB_USER="$(grep '^DB_USER=' "$ENV_FILE" | cut -d= -f2- || true)"
@@ -173,16 +178,8 @@ for i in $(seq 1 120); do
   sleep 1
 done
 
-# ── Migrate ───────────────────────────────────────────────────────────────────
-# Apply any pending Drizzle schema migrations. Safe to re-run; already-applied
-# migrations are no-ops.
-
 echo "==> Running DB migrations..."
 "$SCRIPT_DIR/db.sh" migrate
-
-# ── Seed ──────────────────────────────────────────────────────────────────────
-# Load reference / fixture data. Skipped when --skip-seed is passed.
-# The seed script itself must be idempotent (INSERT IGNORE / upserts).
 
 if [[ "$SKIP_SEED" == "false" ]]; then
   echo "==> Running reference seed..."
@@ -195,8 +192,8 @@ else
   echo "==> Skipping DB seed (--skip-seed)."
 fi
 
-# ── Verify ────────────────────────────────────────────────────────────────────
-# Run a quick health check to confirm all services are up and responding.
+echo "==> Starting API, worker, and frontend..."
+systemctl --user start beprepared-api beprepared-worker beprepared-frontend
 
 echo ""
 echo "==> Verifying services..."

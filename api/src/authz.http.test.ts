@@ -21,8 +21,14 @@ type UserRow = {
 let user: UserRow | null = null;
 let profile: { id: string; householdId: string } | null = null;
 let item: { id: string } | null = null;
+let taskRow: { id: string } | null = null;
 let householdArchivedAt: Date | null = null;
 let otherAdmins: UserRow[] = [];
+let updateAffectedRows = 1;
+let insertThrowsDup = false;
+let alertListRows: Array<{ id: string; isResolved: boolean; isRead: boolean }> = [
+  { id: "alert-1", isResolved: true, isRead: true },
+];
 const updates: Record<string, unknown>[] = [];
 const queries: { alerts?: unknown; audit?: unknown; lots?: unknown } = {};
 
@@ -32,16 +38,23 @@ const db = {
       limit: async () => [{ id: "module-1" }],
     }),
   }),
+  execute: async () => [[]],
   update: () => ({
     set: (values: Record<string, unknown>) => ({
       where: async () => {
         updates.push(values);
         if (user) Object.assign(user, values);
+        return [{ affectedRows: updateAffectedRows }];
       },
     }),
   }),
   insert: () => ({
-    values: async () => undefined,
+    values: async () => {
+      if (insertThrowsDup) {
+        throw Object.assign(new Error("Duplicate entry"), { code: "ER_DUP_ENTRY" });
+      }
+      return undefined;
+    },
   }),
   transaction: async (fn: (tx: object) => Promise<void>) => fn(db),
   query: {
@@ -68,10 +81,17 @@ const db = {
         return [];
       },
     },
+    tasks: {
+      findFirst: async () => taskRow,
+    },
+    taskProgress: {
+      findFirst: async () => null,
+      findMany: async () => [],
+    },
     alerts: {
       findMany: async (query: unknown) => {
         queries.alerts = query;
-        return [{ id: "alert-1", isResolved: true, isRead: true }];
+        return alertListRows;
       },
     },
     auditLog: {
@@ -83,9 +103,16 @@ const db = {
   },
 };
 
-mock.module("./db/client", () => ({ db }));
-mock.module("../db/client", () => ({ db }));
-mock.module("../../db/client", () => ({ db }));
+const pool = {
+  getConnection: async () => ({
+    query: async () => [[{ got: 1 }]],
+    release: () => undefined,
+  }),
+};
+
+mock.module("./db/client", () => ({ db, pool }));
+mock.module("../db/client", () => ({ db, pool }));
+mock.module("../../db/client", () => ({ db, pool }));
 
 const { createApp } = await import("./index");
 const { issueApiToken } = await import("./lib/authToken");
@@ -114,8 +141,12 @@ beforeEach(() => {
   clearLoginAttempts();
   profile = null;
   item = null;
+  taskRow = null;
   householdArchivedAt = null;
   otherAdmins = [];
+  updateAffectedRows = 1;
+  insertThrowsDup = false;
+  alertListRows = [{ id: "alert-1", isResolved: true, isRead: true }];
   updates.length = 0;
   queries.alerts = undefined;
   queries.audit = undefined;
@@ -422,5 +453,137 @@ describe("authz over HTTP", () => {
     expect(res.status).toBe(200);
     const archived = updates.filter((row) => "archivedAtUTC" in row);
     expect(archived).toHaveLength(2);
+  });
+
+  it("rejects POST bodies without a usable Content-Length", async () => {
+    const res = await app.handle(
+      new Request("http://localhost/auth/login", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "transfer-encoding": "chunked",
+        },
+        body: JSON.stringify({ username: "a", password: "b" }),
+      })
+    );
+    expect(res.status).toBe(413);
+  });
+
+  it("rejects oversize Content-Length without hanging", async () => {
+    const res = await app.handle(
+      new Request("http://localhost/auth/login", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "content-length": "2000000",
+        },
+        // Body can be small; the declared Content-Length alone must trip 413.
+        body: "{}",
+      })
+    );
+    expect(res.status).toBe(413);
+  });
+
+  it("sets X-Truncated when a list returns exactly the limit", async () => {
+    user = {
+      id: "user-1",
+      username: "member",
+      householdId: HOUSEHOLD,
+      isAdmin: false,
+      passwordHash: "x",
+      credentialsVersion: 1,
+      email: null,
+      archivedAtUTC: null,
+    };
+    alertListRows = Array.from({ length: 500 }, (_, i) => ({
+      id: `alert-${i}`,
+      isResolved: false,
+      isRead: false,
+    }));
+
+    const res = await app.handle(
+      new Request(`http://localhost/alerts/${HOUSEHOLD}?status=active`, {
+        headers: { authorization: `Bearer ${bearerFor(user)}` },
+      })
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get("x-truncated")).toBe("true");
+  });
+
+  it("returns 404 when resolving an already-archived alert", async () => {
+    user = {
+      id: "user-1",
+      username: "member",
+      householdId: HOUSEHOLD,
+      isAdmin: false,
+      passwordHash: "x",
+      credentialsVersion: 1,
+      email: null,
+      archivedAtUTC: null,
+    };
+    updateAffectedRows = 0;
+
+    const res = await app.handle(
+      new Request(`http://localhost/alerts/${HOUSEHOLD}/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/resolve`, {
+        method: "PATCH",
+        headers: { authorization: `Bearer ${bearerFor(user)}` },
+      })
+    );
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 404 when creating progress for an unknown taskId", async () => {
+    user = {
+      id: "user-1",
+      username: "member",
+      householdId: HOUSEHOLD,
+      isAdmin: false,
+      passwordHash: "x",
+      credentialsVersion: 1,
+      email: null,
+      archivedAtUTC: null,
+    };
+    taskRow = null;
+
+    const res = await app.handle(
+      new Request(`http://localhost/tasks/${HOUSEHOLD}/progress`, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${bearerFor(user)}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          taskId: "44444444-4444-4444-4444-444444444444",
+          status: "completed",
+        }),
+      })
+    );
+    expect(res.status).toBe(404);
+  });
+
+  it("maps ER_DUP_ENTRY to 409 for uniqueness conflicts", async () => {
+    user = {
+      id: "user-1",
+      username: "admin",
+      householdId: HOUSEHOLD,
+      isAdmin: true,
+      passwordHash: "x",
+      credentialsVersion: 1,
+      email: null,
+      archivedAtUTC: null,
+    };
+    insertThrowsDup = true;
+
+    const res = await app.handle(
+      new Request("http://localhost/households", {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${bearerFor(user)}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ name: "Dup" }),
+      })
+    );
+    expect(res.status).toBe(409);
   });
 });

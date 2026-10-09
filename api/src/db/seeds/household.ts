@@ -14,7 +14,11 @@ export async function seedHousehold() {
       targetPeople: 2,
       notes: "Default demo household created during initial seed. Edit in Settings.",
     })
-    .onDuplicateKeyUpdate({ set: { name: "My Household" } });
+    .onDuplicateKeyUpdate({
+      set: {
+        notes: "Default demo household created during initial seed. Edit in Settings.",
+      },
+    });
 
   const profiles = [
     {

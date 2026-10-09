@@ -8,15 +8,15 @@ StartLimitIntervalSec=300
 StartLimitBurst=5
 
 [Container]
-Image=docker.io/library/mariadb:11
+Image=docker.io/library/mariadb:11.4
 Pod=beprepared.pod
 ContainerName=beprepared-db
 
-EnvironmentFile=%%REPO_DIR%%/.env
+EnvironmentFile=%%REPO_DIR%%/.env.db
 
 Volume=beprepared-db.volume:/var/lib/mysql:Z
 
-# Functional healthcheck: the official mariadb:11 image ships healthcheck.sh
+# Functional healthcheck: the official mariadb:11.4 image ships healthcheck.sh
 # which validates connections and InnoDB initialisation.
 # HealthOnFailure=kill lets systemd own the restart so StartLimitBurst applies.
 HealthCmd=healthcheck.sh --connect --innodb_initialized

@@ -48,14 +48,25 @@ export function useInventoryItemActions({
 
       const createQty = asNumberOrUndef(createForm.initialLotQty);
       if (createQty != null && createQty > 0) {
-        await apiFetch(`/inventory/${householdId}/items/${createdItem.id}/lots`, {
-          method: "POST",
-          body: JSON.stringify({
-            qty: createQty,
-            acquiredAt: createForm.initialAcquiredAt || undefined,
-            expiresAt: createForm.initialExpiresAt || undefined,
-          }),
-        });
+        try {
+          await apiFetch(`/inventory/${householdId}/items/${createdItem.id}/lots`, {
+            method: "POST",
+            body: JSON.stringify({
+              qty: createQty,
+              acquiredAt: createForm.initialAcquiredAt || undefined,
+              expiresAt: createForm.initialExpiresAt || undefined,
+            }),
+          });
+        } catch (lotErr) {
+          setCreateForm(EMPTY_ITEM_FORM);
+          setError(
+            lotErr instanceof Error
+              ? `Item created, but the initial lot failed: ${lotErr.message}`
+              : "Item created, but the initial lot failed."
+          );
+          await loadData(householdId);
+          return;
+        }
       }
 
       setCreateForm(EMPTY_ITEM_FORM);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useActiveHouseholdId } from "@/lib/useActiveHouseholdId";
 import { apiFetch } from "@/lib/api";
 import { PolicySettingsEditor } from "@/components/settings/PolicySettingsEditor";
@@ -32,10 +32,14 @@ export default function PoliciesPage() {
     evacuation: [],
   });
   const [loading, setLoading] = useState(false);
+  const generation = useRef(0);
 
   useEffect(() => {
     if (!householdId) return;
+    const requestId = ++generation.current;
     setLoading(true);
+    setOverrides([]);
+    setScenarioPolicies({ shelter_in_place: [], evacuation: [] });
     Promise.allSettled([
       apiFetch<PolicyDefault[]>("/settings/defaults"),
       apiFetch<HouseholdPolicy[]>(`/settings/${householdId}/policies`),
@@ -43,6 +47,7 @@ export default function PoliciesPage() {
       apiFetch<ScenarioPolicy[]>(`/settings/${householdId}/scenario/evacuation`),
     ])
       .then(([d, o, s, e]) => {
+        if (requestId !== generation.current) return;
         setDefaults(d.status === "fulfilled" ? d.value : []);
         setOverrides(o.status === "fulfilled" ? o.value : []);
         setScenarioPolicies({
@@ -50,7 +55,9 @@ export default function PoliciesPage() {
           evacuation: e.status === "fulfilled" ? e.value : [],
         });
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (requestId === generation.current) setLoading(false);
+      });
   }, [householdId]);
 
   if (isLoading || loading) return <LoadingSpinner label="Loading policies…" />;
@@ -73,12 +80,18 @@ export default function PoliciesPage() {
 
       <section>
         <h2 className="text-lg font-semibold mb-3">Policy Defaults</h2>
-        <PolicySettingsEditor householdId={householdId} defaults={defaults} overrides={overrides} />
+        <PolicySettingsEditor
+          key={`policies-${householdId}`}
+          householdId={householdId}
+          defaults={defaults}
+          overrides={overrides}
+        />
       </section>
 
       <section>
         <h2 className="text-lg font-semibold mb-3">Scenario Overrides</h2>
         <ScenarioPolicySettingsEditor
+          key={`scenario-${householdId}`}
           householdId={householdId}
           defaults={defaults}
           scenarioPolicies={scenarioPolicies}

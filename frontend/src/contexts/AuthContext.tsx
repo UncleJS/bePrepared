@@ -125,6 +125,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (prev.status !== "authenticated") return prev;
       const nextUser = user ? { ...prev.user, ...user } : prev.user;
       localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
+      if (!nextUser.isAdmin) clearActiveHouseholdCookie();
+      else if (user?.householdId) setActiveHouseholdId(nextUser.householdId);
       return { status: "authenticated", user: nextUser, token };
     });
   }

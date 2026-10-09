@@ -73,7 +73,7 @@ Open http://localhost:9997 — UI and API docs at http://localhost:9996/docs (de
 - [ ] `~/.config/containers/systemd/` directory exists
 - [ ] `.env` created from `.env.example` and filled in
 - [ ] Strong passwords set for `DB_ROOT_PASSWORD` and `DB_PASSWORD`
-- [ ] `~/bePrepared/data/mariadb/` directory created for volume mount
+- [ ] Named MariaDB volume will be created by Quadlet (`beprepared-db.volume` → `systemd-beprepared-db`) — no bind-mount directory needed
 
 ### Build images
 
@@ -88,7 +88,8 @@ Open http://localhost:9997 — UI and API docs at http://localhost:9996/docs (de
 - [ ] `systemctl --user start beprepared-pod` run
 - [ ] Wait ~10s for MariaDB to initialise
 - [ ] `podman exec -it beprepared-api bun run db:migrate` run
-- [ ] `podman exec -it beprepared-api bun run db:seed` run
+- [ ] `podman exec -it beprepared-api bun run db:seed:reference` run (or use `./scripts/install.sh`)
+- [ ] API `/live` (liveness) and `/health` (readiness) both return ok
 
 ### Verify
 

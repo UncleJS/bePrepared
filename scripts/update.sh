@@ -66,15 +66,15 @@ for arg in "$@"; do
       echo ""
       echo "Options:"
       echo "  --skip-pull      Skip 'git pull' (useful when already on desired commit)"
-      echo "  --skip-migrate   Skip running DB migrations after rebuild"
+      echo "  --skip-migrate   Skip stopping API/worker and running DB migrations"
       echo "  -h, --help       Show this help message"
       echo ""
       echo "Steps performed:"
       echo "  1. git pull (unless --skip-pull)"
-      echo "  2. Rebuild all container images (api, worker, frontend)"
-      echo "  3. Restart all services"
-      echo "  4. Run DB migrations (unless --skip-migrate)"
-      echo "  5. Run status checks"
+      echo "  2. Split .env into per-service files and sync Quadlet units"
+      echo "  3. Rebuild all container images (api, worker, frontend)"
+      echo "  4. Stop API/worker, migrate, then restart the pod (unless --skip-migrate)"
+      echo "  5. Run status checks (/live and /health)"
       exit 0
       ;;
     *) echo "Unknown argument: $arg"; exit 1 ;;
@@ -101,11 +101,21 @@ fi
 # Rebuild all three prod images without restarting. Migrations run before
 # the new API and worker accept traffic.
 
+echo "==> Splitting .env into per-service files..."
+"$SCRIPT_DIR/split-env.sh"
+
+WORKER_INTERVAL_MS="$(grep '^WORKER_INTERVAL_MS=' "$PROJECT_ROOT/.env" | cut -d= -f2- || true)"
+WORKER_INTERVAL_MS="${WORKER_INTERVAL_MS:-900000}"
+WORKER_HEALTH_MMIN=$(( (WORKER_INTERVAL_MS * 2 + 59999) / 60000 ))
+if [[ "$WORKER_HEALTH_MMIN" -lt 30 ]]; then WORKER_HEALTH_MMIN=30; fi
+
 echo "==> Syncing Quadlet units..."
 mkdir -p "$QUADLET_DIR"
 for f in "$DEPLOY_DIR/quadlet/"*.container "$DEPLOY_DIR/quadlet/"*.volume "$DEPLOY_DIR/quadlet/"*.pod; do
   dest="${QUADLET_DIR}/$(basename "${f}")"
-  sed "s|%%REPO_DIR%%|${PROJECT_ROOT}|g" "${f}" > "${dest}"
+  sed -e "s|%%REPO_DIR%%|${PROJECT_ROOT}|g" \
+      -e "s|%%WORKER_HEALTH_MMIN%%|${WORKER_HEALTH_MMIN}|g" \
+      "${f}" > "${dest}"
 done
 systemctl --user daemon-reload
 echo ""

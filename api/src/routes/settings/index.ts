@@ -4,7 +4,7 @@ import { policyDefaults, householdPolicies, scenarioPolicies, auditLog } from ".
 import { eq, and, isNull, desc } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { requireAuth, requireHouseholdScope } from "../../lib/routeAuth";
-import { DEFAULT_LIST_LIMIT } from "../../lib/listLimits";
+import { DEFAULT_LIST_LIMIT, markTruncated } from "../../lib/listLimits";
 
 const scenarioParamSchema = t.Union([t.Literal("shelter_in_place"), t.Literal("evacuation")]);
 
@@ -92,6 +92,10 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
       return db.query.householdPolicies.findFirst({ where: eq(householdPolicies.id, id) });
     },
     {
+      params: t.Object({
+        householdId: t.String({ minLength: 1, maxLength: 36 }),
+        key: t.String({ minLength: 1, maxLength: 100 }),
+      }),
       body: t.Object({
         unit: t.String({ minLength: 1, maxLength: 50 }),
         valueDecimal: t.Optional(t.Number({ minimum: 0, maximum: 1000000000 })),
@@ -119,7 +123,13 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
         );
       return { reset: true };
     },
-    { detail: { summary: "Reset a household policy override (revert to default)" } }
+    {
+      params: t.Object({
+        householdId: t.String({ minLength: 1, maxLength: 36 }),
+        key: t.String({ minLength: 1, maxLength: 100 }),
+      }),
+      detail: { summary: "Reset a household policy override (revert to default)" },
+    }
   )
 
   // Scenario-specific overrides
@@ -242,11 +252,13 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
       const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
-      return db.query.auditLog.findMany({
+      const rows = await db.query.auditLog.findMany({
         where: eq(auditLog.householdId, params.householdId),
         orderBy: desc(auditLog.createdAtUTC),
         limit: DEFAULT_LIST_LIMIT,
       });
+      markTruncated(set, rows.length);
+      return rows;
     },
     { detail: { summary: "Get policy change audit log for a household" } }
   );

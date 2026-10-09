@@ -12,7 +12,7 @@ Image=localhost/beprepared-frontend:latest
 Pod=beprepared.pod
 ContainerName=beprepared-frontend
 
-EnvironmentFile=%%REPO_DIR%%/.env
+EnvironmentFile=%%REPO_DIR%%/.env.frontend
 Environment=PORT=9999
 # Bind the Vite preview server to all interfaces so the health probe
 # can reach it via 127.0.0.1 inside the shared Podman pod network namespace.

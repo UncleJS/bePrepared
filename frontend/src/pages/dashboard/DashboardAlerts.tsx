@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiFetch, fmtDate } from "@/lib/api";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
@@ -22,13 +22,24 @@ export default function DashboardAlerts({ householdId }: { householdId: string }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const generation = useRef(0);
   const load = useCallback(() => {
+    const requestId = ++generation.current;
     setLoading(true);
     setError(null);
+    setAlerts([]);
     apiFetch<Alert[]>(`/alerts/${householdId}?status=active`)
-      .then(setAlerts)
-      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load alerts."))
-      .finally(() => setLoading(false));
+      .then((rows) => {
+        if (requestId !== generation.current) return;
+        setAlerts(rows);
+      })
+      .catch((err) => {
+        if (requestId !== generation.current) return;
+        setError(err instanceof Error ? err.message : "Failed to load alerts.");
+      })
+      .finally(() => {
+        if (requestId === generation.current) setLoading(false);
+      });
   }, [householdId]);
 
   useEffect(() => {

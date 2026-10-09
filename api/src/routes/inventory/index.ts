@@ -11,7 +11,7 @@ import {
   validateCategoryReplacementInput,
 } from "../_shared/categoryHelpers";
 import { parseISODate } from "../_shared/dates";
-import { DEFAULT_LIST_LIMIT } from "../../lib/listLimits";
+import { DEFAULT_LIST_LIMIT, markTruncated, mysqlAffectedRows } from "../../lib/listLimits";
 
 export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["inventory"] })
 
@@ -43,7 +43,8 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
         .findMany({
           where: and(
             isNull(inventoryCategories.archivedAtUTC),
-            eq(inventoryCategories.isSystem, true)
+            eq(inventoryCategories.isSystem, true),
+            isNull(inventoryCategories.householdId)
           ),
           orderBy: inventoryCategories.sortOrder,
         })
@@ -224,6 +225,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
         ),
         limit: DEFAULT_LIST_LIMIT,
       });
+      markTruncated(set, items.length);
 
       const itemIds = items.map((item) => item.id);
       const lots =
@@ -366,8 +368,8 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
       if (!claims) return { error: "Forbidden" };
 
       const archivedAt = new Date();
-      await db.transaction(async (tx) => {
-        await tx
+      const archived = await db.transaction(async (tx) => {
+        const itemResult = await tx
           .update(inventoryItems)
           .set({ archivedAtUTC: archivedAt })
           .where(
@@ -377,6 +379,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
               isNull(inventoryItems.archivedAtUTC)
             )
           );
+        if (mysqlAffectedRows(itemResult) === 0) return false;
         await tx
           .update(inventoryLots)
           .set({ archivedAtUTC: archivedAt })
@@ -387,7 +390,12 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
               isNull(inventoryLots.archivedAtUTC)
             )
           );
+        return true;
       });
+      if (!archived) {
+        set.status = 404;
+        return { error: "Item not found" };
+      }
       return { archived: true };
     },
     { detail: { summary: "Archive an inventory item" } }
@@ -560,14 +568,17 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
       const cutoff = new Date();
       cutoff.setDate(cutoff.getDate() + days);
       const today = new Date();
-      return db.query.inventoryLots.findMany({
+      const lots = await db.query.inventoryLots.findMany({
         where: and(
           eq(inventoryLots.householdId, params.householdId),
           isNull(inventoryLots.archivedAtUTC),
           lte(inventoryLots.expiresAt, cutoff),
           gte(inventoryLots.expiresAt, today)
         ),
+        limit: DEFAULT_LIST_LIMIT,
       });
+      markTruncated(set, lots.length);
+      return lots;
     },
     {
       query: t.Object({ days: t.Optional(t.Number({ minimum: 1, maximum: 3650 })) }),

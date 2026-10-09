@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiFetch } from "@/lib/api";
 import { useActiveHouseholdId } from "@/lib/useActiveHouseholdId";
@@ -38,15 +38,29 @@ export function CategoryManager({
   const [replacementId, setReplacementId] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const generation = useRef(0);
+  const nameId = useId();
+  const slugId = useId();
+  const sortId = useId();
 
   const load = useCallback(async () => {
     if (!householdId) return;
-    const [cats, rows] = await Promise.all([
-      apiFetch<Category[]>(categoryPath(householdId)),
-      apiFetch<Item[]>(itemPath(householdId)),
-    ]);
-    setCategories(cats);
-    setItems(rows);
+    const requestId = ++generation.current;
+    setCategories([]);
+    setItems([]);
+    setError(null);
+    try {
+      const [cats, rows] = await Promise.all([
+        apiFetch<Category[]>(categoryPath(householdId)),
+        apiFetch<Item[]>(itemPath(householdId)),
+      ]);
+      if (requestId !== generation.current) return;
+      setCategories(cats);
+      setItems(rows);
+    } catch (e) {
+      if (requestId !== generation.current) return;
+      setError(e instanceof Error ? e.message : "Failed to load categories.");
+    }
   }, [householdId, categoryPath, itemPath]);
 
   useEffect(() => {
@@ -89,10 +103,14 @@ export function CategoryManager({
 
       <div className="grid grid-cols-1 gap-3 rounded-lg border border-border bg-card p-4 md:grid-cols-4">
         <div className="space-y-1">
-          <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+          <label
+            htmlFor={nameId}
+            className="block text-xs font-bold uppercase tracking-wide text-primary"
+          >
             Category Name
           </label>
           <input
+            id={nameId}
             className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
             placeholder={namePlaceholder}
             value={name}
@@ -100,10 +118,14 @@ export function CategoryManager({
           />
         </div>
         <div className="space-y-1">
-          <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+          <label
+            htmlFor={slugId}
+            className="block text-xs font-bold uppercase tracking-wide text-primary"
+          >
             Category Slug (Unique Key)
           </label>
           <input
+            id={slugId}
             className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
             placeholder={slugPlaceholder}
             value={slug}
@@ -111,10 +133,14 @@ export function CategoryManager({
           />
         </div>
         <div className="space-y-1">
-          <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+          <label
+            htmlFor={sortId}
+            className="block text-xs font-bold uppercase tracking-wide text-primary"
+          >
             Sort Order (Lower First)
           </label>
           <input
+            id={sortId}
             className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
             placeholder="100"
             value={sortOrder}
@@ -126,9 +152,14 @@ export function CategoryManager({
           className="inline-flex self-end justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
           onClick={async () => {
             try {
+              const order = Number(sortOrder);
+              if (!Number.isFinite(order)) {
+                setError("Sort order must be a number.");
+                return;
+              }
               await apiFetch(categoryPath(householdId), {
                 method: "POST",
-                body: JSON.stringify({ name, slug, sortOrder: Number(sortOrder) }),
+                body: JSON.stringify({ name, slug, sortOrder: order }),
               });
               setName("");
               setSlug("");

@@ -10,6 +10,7 @@ import { eq, isNull, and, lte } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { requireAdmin, requireAuth, requireHouseholdScope } from "../../lib/routeAuth";
 import { parseISODate } from "../_shared/dates";
+import { DEFAULT_LIST_LIMIT, markTruncated } from "../../lib/listLimits";
 
 function optionalISODate(value: string | undefined, field: string): Date | undefined {
   if (!value) return undefined;
@@ -115,9 +116,12 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
             isNull(equipmentItems.archivedAtUTC),
             isNull(maintenanceSchedules.archivedAtUTC)
           )
-        );
+        )
+        .limit(DEFAULT_LIST_LIMIT);
 
-      return rows.map((r) => r.schedule);
+      const schedules = rows.map((r) => r.schedule);
+      markTruncated(set, schedules.length);
+      return schedules;
     },
     { detail: { summary: "List maintenance schedules for a household" } }
   )
@@ -337,12 +341,15 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
         return { error: "Schedule not found" };
       }
 
-      return db.query.maintenanceEvents.findMany({
+      const events = await db.query.maintenanceEvents.findMany({
         where: and(
           eq(maintenanceEvents.scheduleId, params.scheduleId),
           isNull(maintenanceEvents.archivedAtUTC)
         ),
+        limit: DEFAULT_LIST_LIMIT,
       });
+      markTruncated(set, events.length);
+      return events;
     },
     { detail: { summary: "Get maintenance history for a schedule" } }
   )

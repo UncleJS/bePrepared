@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useActiveHouseholdId } from "@/lib/useActiveHouseholdId";
 import { apiFetch } from "@/lib/api";
 import { HouseholdSettingsEditor } from "@/components/settings/HouseholdSettingsEditor";
@@ -19,23 +19,40 @@ export default function HouseholdPage() {
   const [household, setHousehold] = useState<Household | null>(null);
   const [allHouseholds, setAllHouseholds] = useState<Household[]>([]);
   const [loading, setLoading] = useState(false);
+  const generation = useRef(0);
 
   useEffect(() => {
     if (!householdId) return;
+    const requestId = ++generation.current;
     setLoading(true);
+    setHousehold(null);
     const fetches: Promise<void>[] = [
       apiFetch<Household>(`/households/${householdId}`)
-        .then(setHousehold)
-        .catch(() => {}),
+        .then((row) => {
+          if (requestId !== generation.current) return;
+          setHousehold(row);
+        })
+        .catch(() => {
+          if (requestId !== generation.current) return;
+          setHousehold(null);
+        }),
     ];
     if (isAdmin) {
       fetches.push(
         apiFetch<Household[]>("/households")
-          .then(setAllHouseholds)
-          .catch(() => {})
+          .then((rows) => {
+            if (requestId !== generation.current) return;
+            setAllHouseholds(rows);
+          })
+          .catch(() => {
+            if (requestId !== generation.current) return;
+            setAllHouseholds([]);
+          })
       );
     }
-    Promise.all(fetches).finally(() => setLoading(false));
+    void Promise.all(fetches).finally(() => {
+      if (requestId === generation.current) setLoading(false);
+    });
   }, [householdId, isAdmin]);
 
   if (isLoading || loading) return <LoadingSpinner label="Loading…" />;
@@ -56,6 +73,7 @@ export default function HouseholdPage() {
 
       {household ? (
         <HouseholdSettingsEditor
+          key={household.id}
           household={household}
           isAdmin={isAdmin}
           allHouseholds={allHouseholds}
