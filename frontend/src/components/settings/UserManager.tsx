@@ -103,11 +103,26 @@ function AdminUserManager({
       };
       if (editState.password) body.password = editState.password;
 
-      const updated = await apiFetch<{ token?: string }>(`/users/${userId}`, {
+      const updated = await apiFetch<{
+        token?: string;
+        id: string;
+        username: string;
+        email: string;
+        householdId: string;
+        isAdmin: boolean;
+      }>(`/users/${userId}`, {
         method: "PATCH",
         body: JSON.stringify(body),
       });
-      if (updated.token) replaceToken(updated.token);
+      if (updated.token) {
+        replaceToken(updated.token, {
+          id: updated.id,
+          username: updated.username,
+          email: updated.email,
+          householdId: updated.householdId,
+          isAdmin: updated.isAdmin,
+        });
+      }
       flash("User updated.");
       cancelEdit();
       await loadUsers();
@@ -407,11 +422,26 @@ function MyProfileEditor({ me }: { me: User }) {
         body.currentPassword = currentPassword;
       }
 
-      const updated = await apiFetch<{ token?: string }>("/users/me", {
+      const updated = await apiFetch<{
+        token?: string;
+        id: string;
+        username: string;
+        email: string;
+        householdId: string;
+        isAdmin: boolean;
+      }>("/users/me", {
         method: "PATCH",
         body: JSON.stringify(body),
       });
-      if (updated.token) replaceToken(updated.token);
+      if (updated.token) {
+        replaceToken(updated.token, {
+          id: updated.id,
+          username: updated.username,
+          email: updated.email,
+          householdId: updated.householdId,
+          isAdmin: updated.isAdmin,
+        });
+      }
       setPassword("");
       setCurrentPassword("");
       setMessage("Profile updated.");

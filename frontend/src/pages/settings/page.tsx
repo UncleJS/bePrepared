@@ -13,8 +13,7 @@ const settingsSections = [
     to: "/settings/users",
     icon: Users,
     label: "Users",
-    description: "Manage user accounts and personal profiles.",
-    adminOnly: true,
+    description: "Manage user accounts and your personal profile.",
   },
   {
     to: "/settings/policies",
@@ -68,8 +67,14 @@ export default function SettingsPage() {
           >
             <Icon size={18} className="text-primary mt-0.5 shrink-0" />
             <div>
-              <p className="font-semibold text-sm">{label}</p>
-              <p className="text-xs text-foreground mt-0.5">{description}</p>
+              <p className="font-semibold text-sm">
+                {to === "/settings/users" && !isAdmin ? "My profile" : label}
+              </p>
+              <p className="text-xs text-foreground mt-0.5">
+                {to === "/settings/users" && !isAdmin
+                  ? "Update your username, email, and password."
+                  : description}
+              </p>
             </div>
           </Link>
         ))}

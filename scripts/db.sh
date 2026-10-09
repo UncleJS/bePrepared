@@ -78,6 +78,10 @@ if [[ -z "$SUBCOMMAND" ]]; then
   exit 1
 fi
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+ENV_FILE="$PROJECT_ROOT/.env"
+
 echo "==> bePrepared db.sh: $SUBCOMMAND"
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -90,7 +94,18 @@ run_in_api_container() {
 
 run_migrate() {
   echo "==> Running migrations..."
-  run_in_api_container db:migrate
+  # Prefer the running API container. update.sh stops it first so the new
+  # image can migrate before either service accepts traffic.
+  if podman inspect -f '{{.State.Running}}' beprepared-api 2>/dev/null | grep -qx true; then
+    run_in_api_container db:migrate
+  else
+    if [[ ! -f "$ENV_FILE" ]]; then
+      echo "ERROR: API container is stopped and $ENV_FILE is missing."
+      exit 1
+    fi
+    podman run --rm --pod beprepared --env-file "$ENV_FILE" \
+      localhost/beprepared-api:latest bun run db:migrate
+  fi
   echo "==> Migrations complete."
 }
 

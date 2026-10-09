@@ -13,6 +13,8 @@ export function useInventoryData() {
     const requestId = ++generation.current;
     setLoading(true);
     setError(null);
+    setItems([]);
+    setCategories([]);
     try {
       const [itemRows, categoryRows] = await Promise.all([
         apiFetch<InventoryItem[]>(`/inventory/${householdId}/items`),
@@ -23,6 +25,8 @@ export function useInventoryData() {
       setCategories(categoryRows);
     } catch (e) {
       if (requestId !== generation.current) return;
+      setItems([]);
+      setCategories([]);
       setError(e instanceof Error ? e.message : "Failed to load inventory.");
     } finally {
       if (requestId === generation.current) setLoading(false);

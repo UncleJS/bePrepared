@@ -25,13 +25,14 @@
 #   worker     Rebuild deploy/Containerfile.worker → beprepared-worker:latest
 #   frontend   Rebuild deploy/Containerfile.frontend → beprepared-frontend:latest
 #   (none)     Rebuild all three
+#   --no-restart  Build images without restarting units (used by update.sh)
 #   -h, --help Print this help and exit
 #
 #   (no env vars — image names and Containerfile paths are derived from service
 #   names using a fixed convention)
 #
 # USAGE
-#   ./scripts/rebuild.sh [api] [worker] [frontend]
+#   ./scripts/rebuild.sh [--no-restart] [api] [worker] [frontend]
 #
 # EXAMPLES
 #   ./scripts/rebuild.sh              # rebuild all three images
@@ -54,26 +55,30 @@ VALID_SERVICES=(api worker frontend)
 # so typos don't silently skip the intended service.
 
 TARGETS=()
+NO_RESTART=false
 for arg in "$@"; do
   case "$arg" in
     api|worker|frontend) TARGETS+=("$arg") ;;
+    --no-restart) NO_RESTART=true ;;
     -h|--help)
-      echo "Usage: ./scripts/rebuild.sh [api] [worker] [frontend]"
+      echo "Usage: ./scripts/rebuild.sh [--no-restart] [api] [worker] [frontend]"
       echo ""
       echo "Arguments:"
       echo "  api        Rebuild the API image and restart beprepared-api"
       echo "  worker     Rebuild the worker image and restart beprepared-worker"
       echo "  frontend   Rebuild the frontend image and restart beprepared-frontend"
+      echo "  --no-restart  Build images only; do not restart units"
       echo ""
-      echo "  No arguments rebuilds all three services."
+      echo "  No service arguments rebuilds all three services."
       echo ""
       echo "Examples:"
       echo "  ./scripts/rebuild.sh              # rebuild all"
       echo "  ./scripts/rebuild.sh api          # rebuild API only"
+      echo "  ./scripts/rebuild.sh --no-restart # build all, leave units running"
       echo "  ./scripts/rebuild.sh api worker   # rebuild API and worker"
       exit 0
       ;;
-    *) echo "Unknown argument: $arg (valid: api, worker, frontend)"; exit 1 ;;
+    *) echo "Unknown argument: $arg (valid: api, worker, frontend, --no-restart)"; exit 1 ;;
   esac
 done
 
@@ -114,9 +119,13 @@ for svc in "${TARGETS[@]}"; do
   fi
   echo "==> Image built: beprepared-${svc}:latest"
 
-  echo "==> Restarting service: beprepared-${svc}..."
-  systemctl --user restart "beprepared-${svc}"
-  echo "==> Restarted: beprepared-${svc}"
+  if [[ "$NO_RESTART" == "true" ]]; then
+    echo "==> Skipping restart (--no-restart)."
+  else
+    echo "==> Restarting service: beprepared-${svc}..."
+    systemctl --user restart "beprepared-${svc}"
+    echo "==> Restarted: beprepared-${svc}"
+  fi
   echo ""
 done
 

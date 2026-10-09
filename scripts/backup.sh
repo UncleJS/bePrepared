@@ -23,6 +23,12 @@ STAMP="$(date +%Y%m%d-%H%M%S)"
 OUT_FILE="$OUT_DIR/backup-${STAMP}.sql.gz"
 
 podman exec beprepared-db mariadb-dump \
+  --single-transaction --quick \
   -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" | gzip > "$OUT_FILE"
+
+if [[ ! -s "$OUT_FILE" ]]; then
+  echo "ERROR: Backup file is empty: $OUT_FILE"
+  exit 1
+fi
 
 echo "Wrote $OUT_FILE"

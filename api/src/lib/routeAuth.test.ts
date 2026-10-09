@@ -40,9 +40,9 @@ describe("routeAuth", () => {
     expect(set.status).toBeUndefined();
   });
 
-  it("enforces household scope for non-admin users", () => {
+  it("enforces household scope for non-admin users", async () => {
     const set: { status?: number | string } = {};
-    const claims = requireHouseholdScope(
+    const claims = await requireHouseholdScope(
       makeRequest(makeClaims({ householdId: "household-a" })),
       set,
       "household-b"
@@ -52,9 +52,9 @@ describe("routeAuth", () => {
     expect(set.status).toBe(403);
   });
 
-  it("allows admins for household-scoped routes", () => {
+  it("allows admins for household-scoped routes", async () => {
     const set: { status?: number | string } = {};
-    const claims = requireHouseholdScope(
+    const claims = await requireHouseholdScope(
       makeRequest(makeClaims({ isAdmin: true })),
       set,
       "household-b"

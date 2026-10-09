@@ -7,7 +7,7 @@ import { assertAcceptableAuthSecret } from "./lib/authSecret";
 import { setRequestClaims } from "./lib/authContext";
 import { db } from "./db/client";
 import { users, modules } from "./db/schema";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 
 import { authRoute } from "./routes/auth";
 import { usersRoute } from "./routes/users";
@@ -65,6 +65,7 @@ function isPublicPath(pathname: string): boolean {
   return (
     pathname === "/" ||
     pathname === "/health" ||
+    pathname === "/live" ||
     pathname === "/auth/login" ||
     (!IS_PRODUCTION && pathname.startsWith("/docs"))
   );
@@ -177,6 +178,16 @@ export function createApp() {
       () => new Response(null, { status: 307, headers: { location: "/docs/json" } })
     )
     .get("/", () => ({ status: "ok", name: "bePrepared API", version: "0.1.0" }))
+    .get("/live", async ({ set }) => {
+      try {
+        await db.execute(sql`SELECT 1`);
+        return { status: "ok", ts: new Date().toISOString() };
+      } catch (err) {
+        logger.error("Liveness probe DB check failed", { err: String(err) });
+        set.status = 503;
+        return { status: "error", ts: new Date().toISOString() };
+      }
+    })
     .get("/health", async ({ set }) => {
       try {
         // Query an actual application table — not just SELECT 1 — so the probe

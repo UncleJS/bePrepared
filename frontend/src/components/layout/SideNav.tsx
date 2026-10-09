@@ -31,7 +31,7 @@ const mainNavItems = [
 const settingsSubLinks = [
   { href: "/settings", label: "Overview", icon: Settings, exact: true },
   { href: "/settings/household", label: "Household", icon: Home },
-  { href: "/settings/users", label: "Users", icon: Users, adminOnly: true },
+  { href: "/settings/users", label: "Users", icon: Users },
   { href: "/settings/policies", label: "Policies", icon: SlidersHorizontal },
   { href: "/settings/modules", label: "Module Content", icon: BookOpen, adminOnly: true },
   {
@@ -130,7 +130,7 @@ export function SideNav({
                 )}
               >
                 <Icon size={13} />
-                {label}
+                {href === "/settings/users" && !isAdmin ? "My profile" : label}
               </Link>
             );
           })}

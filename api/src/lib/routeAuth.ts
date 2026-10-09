@@ -18,16 +18,33 @@ export function requireAuth(request: Request, set: MutableSet): ApiTokenClaims |
   return auth;
 }
 
-export function requireHouseholdScope(
+async function householdArchivedForMember(householdId: string): Promise<boolean> {
+  const { db } = await import("../db/client");
+  const { households } = await import("../db/schema");
+  const { eq } = await import("drizzle-orm");
+  const row = await db.query.households.findFirst({
+    where: eq(households.id, householdId),
+    columns: { archivedAtUTC: true },
+  });
+  return !row || row.archivedAtUTC != null;
+}
+
+export async function requireHouseholdScope(
   request: Request,
   set: MutableSet,
   householdId: string
-): ApiTokenClaims | null {
+): Promise<ApiTokenClaims | null> {
   const claims = requireAuth(request, set);
   if (!claims) return null;
-  if (claims.isAdmin || claims.householdId === householdId) return claims;
-  set.status = 403;
-  return null;
+  if (!claims.isAdmin && claims.householdId !== householdId) {
+    set.status = 403;
+    return null;
+  }
+  if (!claims.isAdmin && (await householdArchivedForMember(householdId))) {
+    set.status = 403;
+    return null;
+  }
+  return claims;
 }
 
 export function requireAdmin(request: Request, set: MutableSet): ApiTokenClaims | null {

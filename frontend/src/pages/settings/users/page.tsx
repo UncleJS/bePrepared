@@ -2,7 +2,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { UserManager } from "@/components/settings/UserManager";
 import { Link } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
-import { AdminAccessNotice } from "@/components/settings/AdminAccessNotice";
 
 export default function UsersPage() {
   const { state } = useAuth();
@@ -17,11 +16,15 @@ export default function UsersPage() {
         >
           <ChevronLeft size={14} /> Settings
         </Link>
-        <h1 className="text-2xl font-bold">Users</h1>
-        <p className="text-sm text-foreground mt-1">Manage user accounts and personal profiles.</p>
+        <h1 className="text-2xl font-bold">{isAdmin ? "Users" : "My profile"}</h1>
+        <p className="text-sm text-foreground mt-1">
+          {isAdmin
+            ? "Manage user accounts and your personal profile."
+            : "Update your username, email, and password."}
+        </p>
       </div>
 
-      {isAdmin ? <UserManager /> : <AdminAccessNotice section="Users" />}
+      <UserManager />
     </div>
   );
 }

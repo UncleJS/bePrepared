@@ -201,6 +201,20 @@ export const usersRoute = new Elysia({ prefix: "/users", tags: ["users"] })
         updates.credentialsVersion = existing.credentialsVersion + 1;
       }
       if (body.householdId !== undefined) updates.householdId = body.householdId;
+      if (body.isAdmin === false && existing.isAdmin) {
+        const otherAdmins = await db.query.users.findMany({
+          where: and(
+            eq(users.isAdmin, true),
+            isNull(users.archivedAtUTC),
+            ne(users.id, existing.id)
+          ),
+          limit: 1,
+        });
+        if (otherAdmins.length === 0) {
+          set.status = 409;
+          return { error: "Cannot remove the last admin" };
+        }
+      }
       if (body.isAdmin !== undefined) updates.isAdmin = body.isAdmin;
 
       if (Object.keys(updates).length === 0) {

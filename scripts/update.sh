@@ -98,8 +98,8 @@ if [[ "$SKIP_PULL" == "false" ]]; then
 fi
 
 # ── Rebuild ───────────────────────────────────────────────────────────────────
-# Rebuild all three prod images and restart each service as it is built.
-# rebuild.sh handles the podman build + systemctl restart loop.
+# Rebuild all three prod images without restarting. Migrations run before
+# the new API and worker accept traffic.
 
 echo "==> Syncing Quadlet units..."
 mkdir -p "$QUADLET_DIR"
@@ -110,9 +110,22 @@ done
 systemctl --user daemon-reload
 echo ""
 
-echo "==> Rebuilding all container images..."
-"$SCRIPT_DIR/rebuild.sh"
+echo "==> Rebuilding all container images (no restart yet)..."
+"$SCRIPT_DIR/rebuild.sh" --no-restart
 echo ""
+
+# ── Migrate before traffic ────────────────────────────────────────────────────
+# Stop API and worker so the new images are not serving against the old schema.
+# db.sh migrate uses a one-shot of the new API image when the API unit is down,
+# then the pod restart brings API, worker, and frontend up together.
+
+if [[ "$SKIP_MIGRATE" == "false" ]]; then
+  echo "==> Stopping API and worker before migrations..."
+  systemctl --user stop beprepared-api beprepared-worker
+  echo "==> Running DB migrations..."
+  "$SCRIPT_DIR/db.sh" migrate
+  echo ""
+fi
 
 # ── Restart ───────────────────────────────────────────────────────────────────
 # Perform a full pod restart to ensure all services are running the freshly
@@ -121,16 +134,6 @@ echo ""
 echo "==> Restarting full pod..."
 "$SCRIPT_DIR/restart.sh"
 echo ""
-
-# ── Migrate ───────────────────────────────────────────────────────────────────
-# Apply any pending Drizzle migrations against the live database. Idempotent —
-# already-applied migrations are detected by the migration table and skipped.
-
-if [[ "$SKIP_MIGRATE" == "false" ]]; then
-  echo "==> Running DB migrations..."
-  "$SCRIPT_DIR/db.sh" migrate
-  echo ""
-fi
 
 # ── Verify ────────────────────────────────────────────────────────────────────
 # Run a quick health check to confirm all services are up and responding after

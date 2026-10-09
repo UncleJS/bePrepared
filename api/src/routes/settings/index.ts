@@ -1,7 +1,7 @@
 import { Elysia, t } from "elysia";
 import { db } from "../../db/client";
 import { policyDefaults, householdPolicies, scenarioPolicies, auditLog } from "../../db/schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, desc } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { requireAuth, requireHouseholdScope } from "../../lib/routeAuth";
 import { DEFAULT_LIST_LIMIT } from "../../lib/listLimits";
@@ -26,7 +26,7 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
   .get(
     "/:householdId/policies",
     async ({ request, set, params }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       return db.query.householdPolicies.findMany({
@@ -42,7 +42,7 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
   .put(
     "/:householdId/policies/:key",
     async ({ request, set, params, body }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       const id = await db.transaction(async (tx) => {
@@ -104,7 +104,7 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
   .delete(
     "/:householdId/policies/:key",
     async ({ request, set, params }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       await db
@@ -126,7 +126,7 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
   .get(
     "/:householdId/scenario/:scenario",
     async ({ request, set, params }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       return db.query.scenarioPolicies.findMany({
@@ -149,7 +149,7 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
   .put(
     "/:householdId/scenario/:scenario/:key",
     async ({ request, set, params, body }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       const id = await db.transaction(async (tx) => {
@@ -207,7 +207,7 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
   .delete(
     "/:householdId/scenario/:scenario/:key",
     async ({ request, set, params }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       await db
@@ -239,12 +239,12 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
   .get(
     "/:householdId/audit",
     async ({ request, set, params }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       return db.query.auditLog.findMany({
         where: eq(auditLog.householdId, params.householdId),
-        orderBy: auditLog.createdAtUTC,
+        orderBy: desc(auditLog.createdAtUTC),
         limit: DEFAULT_LIST_LIMIT,
       });
     },

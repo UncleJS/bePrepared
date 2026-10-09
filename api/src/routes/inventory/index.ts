@@ -1,7 +1,7 @@
 import { Elysia, t } from "elysia";
 import { db } from "../../db/client";
 import { inventoryItems, inventoryLots, inventoryCategories } from "../../db/schema";
-import { eq, isNull, and, lte, gte } from "drizzle-orm";
+import { eq, isNull, and, lte, gte, inArray } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { requireAuth, requireHouseholdScope } from "../../lib/routeAuth";
 import {
@@ -36,7 +36,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
   .get(
     "/:householdId/categories",
     async ({ request, set, params }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       return db.query.inventoryCategories
@@ -64,7 +64,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
   .post(
     "/:householdId/categories",
     async ({ request, set, params, body }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       const id = randomUUID();
@@ -91,7 +91,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
   .patch(
     "/:householdId/categories/:categoryId",
     async ({ request, set, params, body }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       const cat = await db.query.inventoryCategories.findFirst({
@@ -124,7 +124,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
   .delete(
     "/:householdId/categories/:categoryId",
     async ({ request, set, params, query }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       const cat = await db.query.inventoryCategories.findFirst({
@@ -214,7 +214,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
   .get(
     "/:householdId/items",
     async ({ request, set, params }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       const items = await db.query.inventoryItems.findMany({
@@ -225,13 +225,17 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
         limit: DEFAULT_LIST_LIMIT,
       });
 
-      const lots = await db.query.inventoryLots.findMany({
-        where: and(
-          eq(inventoryLots.householdId, params.householdId),
-          isNull(inventoryLots.archivedAtUTC)
-        ),
-        limit: DEFAULT_LIST_LIMIT,
-      });
+      const itemIds = items.map((item) => item.id);
+      const lots =
+        itemIds.length === 0
+          ? []
+          : await db.query.inventoryLots.findMany({
+              where: and(
+                eq(inventoryLots.householdId, params.householdId),
+                isNull(inventoryLots.archivedAtUTC),
+                inArray(inventoryLots.itemId, itemIds)
+              ),
+            });
 
       return items.map((item) => ({
         ...item,
@@ -244,7 +248,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
   .post(
     "/:householdId/items",
     async ({ request, set, params, body }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       if (body.categoryId) {
@@ -294,7 +298,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
   .patch(
     "/:householdId/items/:itemId",
     async ({ request, set, params, body }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       if (body.categoryId) {
@@ -358,19 +362,32 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
   .delete(
     "/:householdId/items/:itemId",
     async ({ request, set, params }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
-      await db
-        .update(inventoryItems)
-        .set({ archivedAtUTC: new Date() })
-        .where(
-          and(
-            eq(inventoryItems.id, params.itemId),
-            eq(inventoryItems.householdId, params.householdId),
-            isNull(inventoryItems.archivedAtUTC)
-          )
-        );
+      const archivedAt = new Date();
+      await db.transaction(async (tx) => {
+        await tx
+          .update(inventoryItems)
+          .set({ archivedAtUTC: archivedAt })
+          .where(
+            and(
+              eq(inventoryItems.id, params.itemId),
+              eq(inventoryItems.householdId, params.householdId),
+              isNull(inventoryItems.archivedAtUTC)
+            )
+          );
+        await tx
+          .update(inventoryLots)
+          .set({ archivedAtUTC: archivedAt })
+          .where(
+            and(
+              eq(inventoryLots.itemId, params.itemId),
+              eq(inventoryLots.householdId, params.householdId),
+              isNull(inventoryLots.archivedAtUTC)
+            )
+          );
+      });
       return { archived: true };
     },
     { detail: { summary: "Archive an inventory item" } }
@@ -380,7 +397,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
   .post(
     "/:householdId/items/:itemId/lots",
     async ({ request, set, params, body }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       // Validate date strings before any DB work
@@ -442,7 +459,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
   .delete(
     "/:householdId/items/:itemId/lots/:lotId",
     async ({ request, set, params }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       await db
@@ -464,7 +481,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
   .patch(
     "/:householdId/items/:itemId/lots/:lotId",
     async ({ request, set, params, body }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       // Validate date strings before any DB work
@@ -536,7 +553,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
   .get(
     "/:householdId/expiring",
     async ({ request, set, params, query }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       const days = Number(query.days ?? 30);

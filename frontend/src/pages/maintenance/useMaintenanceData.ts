@@ -14,6 +14,9 @@ export function useMaintenanceData() {
     const requestId = ++generation.current;
     setLoading(true);
     setError(null);
+    setSchedules([]);
+    setEquipment([]);
+    setTemplates([]);
     try {
       const [scheduleRows, equipmentRows, templateRows] = await Promise.all([
         apiFetch<Schedule[]>(`/maintenance/${householdId}/schedules`),
@@ -26,6 +29,9 @@ export function useMaintenanceData() {
       setTemplates(templateRows);
     } catch (err) {
       if (requestId !== generation.current) return;
+      setSchedules([]);
+      setEquipment([]);
+      setTemplates([]);
       setError(err instanceof Error ? err.message : "Failed to load maintenance data.");
     } finally {
       if (requestId === generation.current) setLoading(false);
@@ -33,7 +39,9 @@ export function useMaintenanceData() {
   }, []);
 
   const loadSchedules = useCallback(async (householdId: string) => {
+    const requestId = generation.current;
     const rows = await apiFetch<Schedule[]>(`/maintenance/${householdId}/schedules`);
+    if (requestId !== generation.current) return;
     setSchedules(rows);
   }, []);
 

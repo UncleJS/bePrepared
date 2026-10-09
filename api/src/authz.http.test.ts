@@ -21,7 +21,10 @@ type UserRow = {
 let user: UserRow | null = null;
 let profile: { id: string; householdId: string } | null = null;
 let item: { id: string } | null = null;
+let householdArchivedAt: Date | null = null;
+let otherAdmins: UserRow[] = [];
 const updates: Record<string, unknown>[] = [];
+const queries: { alerts?: unknown; audit?: unknown; lots?: unknown } = {};
 
 const db = {
   select: () => ({
@@ -40,14 +43,43 @@ const db = {
   insert: () => ({
     values: async () => undefined,
   }),
+  transaction: async (fn: (tx: object) => Promise<void>) => fn(db),
   query: {
-    users: { findFirst: async () => user },
+    users: {
+      findFirst: async () => user,
+      findMany: async () => otherAdmins,
+    },
     households: {
-      findFirst: async () => ({ id: "household-1", name: "Home", archivedAtUTC: null }),
+      findFirst: async () => ({
+        id: "household-1",
+        name: "Home",
+        archivedAtUTC: householdArchivedAt,
+      }),
     },
     householdPeopleProfiles: { findFirst: async () => profile },
-    inventoryItems: { findFirst: async () => item },
-    inventoryLots: { findFirst: async () => ({ id: "lot-1" }) },
+    inventoryItems: {
+      findFirst: async () => item,
+      findMany: async () => [],
+    },
+    inventoryLots: {
+      findFirst: async () => ({ id: "lot-1" }),
+      findMany: async (query: unknown) => {
+        queries.lots = query;
+        return [];
+      },
+    },
+    alerts: {
+      findMany: async (query: unknown) => {
+        queries.alerts = query;
+        return [{ id: "alert-1", isResolved: true, isRead: true }];
+      },
+    },
+    auditLog: {
+      findMany: async (query: unknown) => {
+        queries.audit = query;
+        return [];
+      },
+    },
   },
 };
 
@@ -82,7 +114,12 @@ beforeEach(() => {
   clearLoginAttempts();
   profile = null;
   item = null;
+  householdArchivedAt = null;
+  otherAdmins = [];
   updates.length = 0;
+  queries.alerts = undefined;
+  queries.audit = undefined;
+  queries.lots = undefined;
   user = null;
 });
 
@@ -253,5 +290,137 @@ describe("authz over HTTP", () => {
       })
     );
     expect(limited.status).toBe(429);
+  });
+
+  it("filters alerts in the query instead of after the row cap", async () => {
+    user = {
+      id: "user-1",
+      username: "member",
+      householdId: HOUSEHOLD,
+      isAdmin: false,
+      passwordHash: "x",
+      credentialsVersion: 1,
+      email: null,
+      archivedAtUTC: null,
+    };
+
+    const res = await app.handle(
+      new Request(`http://localhost/alerts/${HOUSEHOLD}?status=active`, {
+        headers: { authorization: `Bearer ${bearerFor(user)}` },
+      })
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as Array<{ isResolved: boolean }>;
+    expect(body).toHaveLength(1);
+    const query = queries.alerts as { limit?: number; where?: unknown };
+    expect(query.limit).toBe(500);
+    expect(query.where).toBeDefined();
+  });
+
+  it("returns the audit log newest first", async () => {
+    user = {
+      id: "user-1",
+      username: "member",
+      householdId: HOUSEHOLD,
+      isAdmin: false,
+      passwordHash: "x",
+      credentialsVersion: 1,
+      email: null,
+      archivedAtUTC: null,
+    };
+
+    const res = await app.handle(
+      new Request(`http://localhost/settings/${HOUSEHOLD}/audit`, {
+        headers: { authorization: `Bearer ${bearerFor(user)}` },
+      })
+    );
+    expect(res.status).toBe(200);
+    const query = queries.audit as {
+      limit?: number;
+      orderBy?: { queryChunks?: Array<{ value?: string[] }> };
+    };
+    expect(query.limit).toBe(500);
+    const direction = query.orderBy?.queryChunks
+      ?.map((chunk) => chunk.value?.join("") ?? "")
+      .join("");
+    expect(direction?.toLowerCase()).toContain("desc");
+  });
+
+  it("blocks a member from an archived household and still allows an admin", async () => {
+    householdArchivedAt = new Date("2026-01-01T00:00:00.000Z");
+    user = {
+      id: "user-1",
+      username: "member",
+      householdId: HOUSEHOLD,
+      isAdmin: false,
+      passwordHash: "x",
+      credentialsVersion: 1,
+      email: null,
+      archivedAtUTC: null,
+    };
+
+    const denied = await app.handle(
+      new Request(`http://localhost/inventory/${HOUSEHOLD}/items`, {
+        headers: { authorization: `Bearer ${bearerFor(user)}` },
+      })
+    );
+    expect(denied.status).toBe(403);
+
+    user.isAdmin = true;
+    const allowed = await app.handle(
+      new Request(`http://localhost/inventory/${HOUSEHOLD}/items`, {
+        headers: { authorization: `Bearer ${bearerFor(user)}` },
+      })
+    );
+    expect(allowed.status).toBe(200);
+  });
+
+  it("refuses to demote the last admin", async () => {
+    user = {
+      id: "user-1",
+      username: "admin",
+      householdId: HOUSEHOLD,
+      isAdmin: true,
+      passwordHash: "x",
+      credentialsVersion: 1,
+      email: null,
+      archivedAtUTC: null,
+    };
+    otherAdmins = [];
+
+    const res = await app.handle(
+      new Request("http://localhost/users/user-1", {
+        method: "PATCH",
+        headers: {
+          authorization: `Bearer ${bearerFor(user)}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ isAdmin: false }),
+      })
+    );
+    expect(res.status).toBe(409);
+  });
+
+  it("archives an item's lots in the same transaction", async () => {
+    user = {
+      id: "user-1",
+      username: "member",
+      householdId: HOUSEHOLD,
+      isAdmin: false,
+      passwordHash: "x",
+      credentialsVersion: 1,
+      email: null,
+      archivedAtUTC: null,
+    };
+
+    const res = await app.handle(
+      new Request(`http://localhost/inventory/${HOUSEHOLD}/items/${ITEM}`, {
+        method: "DELETE",
+        headers: { authorization: `Bearer ${bearerFor(user)}` },
+      })
+    );
+    expect(res.status).toBe(200);
+    const archived = updates.filter((row) => "archivedAtUTC" in row);
+    expect(archived).toHaveLength(2);
   });
 });

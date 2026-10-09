@@ -45,7 +45,7 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
   .get(
     "/:id",
     async ({ request, set, params }) => {
-      const claims = requireHouseholdScope(request, set, params.id);
+      const claims = await requireHouseholdScope(request, set, params.id);
       if (!claims) return { error: "Forbidden" };
 
       const row = await db.query.households.findFirst({
@@ -63,7 +63,7 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
   .patch(
     "/:id",
     async ({ request, set, params, body }) => {
-      const claims = requireHouseholdScope(request, set, params.id);
+      const claims = await requireHouseholdScope(request, set, params.id);
       if (!claims) return { error: "Forbidden" };
 
       if (body.activeProfileId) {
@@ -125,7 +125,7 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
   .get(
     "/:id/profiles",
     async ({ request, set, params }) => {
-      const claims = requireHouseholdScope(request, set, params.id);
+      const claims = await requireHouseholdScope(request, set, params.id);
       if (!claims) return { error: "Forbidden" };
 
       return db.query.householdPeopleProfiles.findMany({
@@ -141,7 +141,7 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
   .post(
     "/:id/profiles",
     async ({ request, set, params, body }) => {
-      const claims = requireHouseholdScope(request, set, params.id);
+      const claims = await requireHouseholdScope(request, set, params.id);
       if (!claims) return { error: "Forbidden" };
 
       const id = randomUUID();
@@ -171,7 +171,7 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
   .patch(
     "/:id/profiles/:profileId",
     async ({ request, set, params, body }) => {
-      const claims = requireHouseholdScope(request, set, params.id);
+      const claims = await requireHouseholdScope(request, set, params.id);
       if (!claims) return { error: "Forbidden" };
 
       await db
@@ -209,7 +209,7 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
   .delete(
     "/:id/profiles/:profileId",
     async ({ request, set, params }) => {
-      const claims = requireHouseholdScope(request, set, params.id);
+      const claims = await requireHouseholdScope(request, set, params.id);
       if (!claims) return { error: "Forbidden" };
 
       await db

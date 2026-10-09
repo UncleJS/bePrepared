@@ -243,9 +243,9 @@ fi
 
 # ── Images ────────────────────────────────────────────────────────────────────
 # Container images are large and can be rebuilt from source, so they are
-# removed only when --remove-images is passed or the user confirms interactively.
+# removed only when --remove-images is set. --yes does not imply image removal.
 
-if [[ "$REMOVE_IMAGES" == "true" ]] || confirm "==> Remove local bePrepared container images?"; then
+if [[ "$REMOVE_IMAGES" == "true" ]]; then
   echo "==> Removing container images..."
   for img in "${PROJECT_IMAGES[@]}"; do
     podman rmi "$img" 2>/dev/null && echo "    removed: $img" || echo "    (not found: $img)"

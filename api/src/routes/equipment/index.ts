@@ -76,7 +76,7 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
   .get(
     "/:householdId/categories",
     async ({ request, set, params }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       const systemRows = await db.query.equipmentCategories.findMany({
@@ -102,7 +102,7 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
   .post(
     "/:householdId/categories",
     async ({ request, set, params, body }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       const id = randomUUID();
@@ -129,7 +129,7 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
   .patch(
     "/:householdId/categories/:categoryId",
     async ({ request, set, params, body }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       const row = await db.query.equipmentCategories.findFirst({
@@ -162,7 +162,7 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
   .delete(
     "/:householdId/categories/:categoryId",
     async ({ request, set, params, query }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       const row = await db.query.equipmentCategories.findFirst({
@@ -255,7 +255,7 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
   .get(
     "/:householdId",
     async ({ request, set, params, query }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       const archivedFilter = query.archived
@@ -277,7 +277,7 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
   .post(
     "/:householdId/:itemId/restore",
     async ({ request, set, params }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       const item = await db.query.equipmentItems.findFirst({
@@ -309,7 +309,7 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
   .post(
     "/:householdId",
     async ({ request, set, params, body }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       if (body.categoryId) {
@@ -371,7 +371,7 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
   .patch(
     "/:householdId/:itemId",
     async ({ request, set, params, body }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       if (body.categoryId) {
@@ -445,7 +445,7 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
   .delete(
     "/:householdId/:itemId",
     async ({ request, set, params }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       await db

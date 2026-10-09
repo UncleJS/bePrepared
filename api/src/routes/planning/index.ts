@@ -6,7 +6,7 @@ import { requireHouseholdScope } from "../../lib/routeAuth";
 export const planningRoute = new Elysia({ prefix: "/planning", tags: ["planning"] }).get(
   "/:householdId/:scenario",
   async ({ request, set, params, query }) => {
-    const claims = requireHouseholdScope(request, set, params.householdId);
+    const claims = await requireHouseholdScope(request, set, params.householdId);
     if (!claims) return { error: "Forbidden" };
 
     const manualPeople = query.people;

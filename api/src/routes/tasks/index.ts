@@ -327,7 +327,7 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
   .get(
     "/:householdId/progress",
     async ({ request, set, params }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       return db.query.taskProgress.findMany({
@@ -343,7 +343,7 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
   .post(
     "/:householdId/progress",
     async ({ request, set, params, body }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       // Validate date strings before any DB work
@@ -459,7 +459,7 @@ export const tasksRoute = new Elysia({ prefix: "/tasks", tags: ["tasks"] })
   .patch(
     "/:householdId/progress/:id",
     async ({ request, set, params, body }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       // Validate date strings before any DB work

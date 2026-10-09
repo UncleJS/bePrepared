@@ -24,7 +24,7 @@ type AuthContextValue = {
   state: AuthState;
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
-  replaceToken: (token: string) => void;
+  replaceToken: (token: string, user?: Partial<AuthUser>) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -119,9 +119,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState({ status: "authenticated", user, token: data.token });
   }
 
-  function replaceToken(token: string) {
+  function replaceToken(token: string, user?: Partial<AuthUser>) {
     localStorage.setItem(TOKEN_KEY, token);
-    setState((prev) => (prev.status === "authenticated" ? { ...prev, token } : prev));
+    setState((prev) => {
+      if (prev.status !== "authenticated") return prev;
+      const nextUser = user ? { ...prev.user, ...user } : prev.user;
+      localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
+      return { status: "authenticated", user: nextUser, token };
+    });
   }
 
   function logout() {

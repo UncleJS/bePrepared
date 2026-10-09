@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { apiFetch } from "@/lib/api";
+import { createLoadGates } from "./loadGates";
 import type { Equipment, EquipmentCategory } from "./types";
 
 export function useEquipmentData() {
@@ -8,39 +9,51 @@ export function useEquipmentData() {
   const [categories, setCategories] = useState<EquipmentCategory[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const generation = useRef(0);
+  const gates = useRef(createLoadGates()).current;
 
-  const loadData = useCallback(async (householdId: string) => {
-    const requestId = ++generation.current;
-    setLoading(true);
-    setError(null);
-    try {
-      const [items, cats] = await Promise.all([
-        apiFetch<Equipment[]>(`/equipment/${householdId}`),
-        apiFetch<EquipmentCategory[]>(`/equipment/${householdId}/categories`),
-      ]);
-      if (requestId !== generation.current) return;
-      setEquipment(items);
-      setCategories(cats);
-    } catch (e) {
-      if (requestId !== generation.current) return;
-      setError(e instanceof Error ? e.message : "Failed to load equipment.");
-    } finally {
-      if (requestId === generation.current) setLoading(false);
-    }
-  }, []);
+  const loadData = useCallback(
+    async (householdId: string) => {
+      const requestId = gates.beginList();
+      setLoading(true);
+      setError(null);
+      setEquipment([]);
+      setCategories([]);
+      try {
+        const [items, cats] = await Promise.all([
+          apiFetch<Equipment[]>(`/equipment/${householdId}`),
+          apiFetch<EquipmentCategory[]>(`/equipment/${householdId}/categories`),
+        ]);
+        if (!gates.isCurrentList(requestId)) return;
+        setEquipment(items);
+        setCategories(cats);
+      } catch (e) {
+        if (!gates.isCurrentList(requestId)) return;
+        setEquipment([]);
+        setCategories([]);
+        setError(e instanceof Error ? e.message : "Failed to load equipment.");
+      } finally {
+        if (gates.isCurrentList(requestId)) setLoading(false);
+      }
+    },
+    [gates]
+  );
 
-  const loadArchived = useCallback(async (householdId: string) => {
-    const requestId = ++generation.current;
-    try {
-      const items = await apiFetch<Equipment[]>(`/equipment/${householdId}?archived=true`);
-      if (requestId !== generation.current) return;
-      setArchivedEquipment(items);
-    } catch (e) {
-      if (requestId !== generation.current) return;
-      setError(e instanceof Error ? e.message : "Failed to load archived equipment.");
-    }
-  }, []);
+  const loadArchived = useCallback(
+    async (householdId: string) => {
+      const requestId = gates.beginArchived();
+      setArchivedEquipment([]);
+      try {
+        const items = await apiFetch<Equipment[]>(`/equipment/${householdId}?archived=true`);
+        if (!gates.isCurrentArchived(requestId)) return;
+        setArchivedEquipment(items);
+      } catch (e) {
+        if (!gates.isCurrentArchived(requestId)) return;
+        setArchivedEquipment([]);
+        setError(e instanceof Error ? e.message : "Failed to load archived equipment.");
+      }
+    },
+    [gates]
+  );
 
   return {
     equipment,

@@ -1,7 +1,7 @@
 import { Elysia, t } from "elysia";
 import { db } from "../../db/client";
 import { alerts } from "../../db/schema";
-import { eq, isNull, and } from "drizzle-orm";
+import { eq, isNull, and, desc } from "drizzle-orm";
 import { requireHouseholdScope, requireAdmin } from "../../lib/routeAuth";
 import { runAllJobs } from "../../lib/alertJobs";
 import { DEFAULT_LIST_LIMIT } from "../../lib/listLimits";
@@ -11,19 +11,22 @@ export const alertsRoute = new Elysia({ prefix: "/alerts", tags: ["alerts"] })
   .get(
     "/:householdId",
     async ({ request, set, params, query }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
-      const rows = await db.query.alerts.findMany({
-        where: and(eq(alerts.householdId, params.householdId), isNull(alerts.archivedAtUTC)),
-        orderBy: alerts.dueAtUTC,
+      const filters = [eq(alerts.householdId, params.householdId), isNull(alerts.archivedAtUTC)];
+      if (query.status === "active" || query.unresolved === "true") {
+        filters.push(eq(alerts.isResolved, false));
+      } else if (query.status === "resolved") {
+        filters.push(eq(alerts.isResolved, true));
+      }
+      if (query.unread === "true") filters.push(eq(alerts.isRead, false));
+
+      return db.query.alerts.findMany({
+        where: and(...filters),
+        orderBy: [alerts.dueAtUTC, desc(alerts.id)],
         limit: DEFAULT_LIST_LIMIT,
       });
-      if (query.status === "active") return rows.filter((r) => !r.isResolved);
-      if (query.status === "resolved") return rows.filter((r) => r.isResolved);
-      if (query.unread === "true") return rows.filter((r) => !r.isRead);
-      if (query.unresolved === "true") return rows.filter((r) => !r.isResolved);
-      return rows;
     },
     {
       query: t.Object({
@@ -38,7 +41,7 @@ export const alertsRoute = new Elysia({ prefix: "/alerts", tags: ["alerts"] })
   .patch(
     "/:householdId/:alertId/read",
     async ({ request, set, params }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       await db
@@ -53,7 +56,7 @@ export const alertsRoute = new Elysia({ prefix: "/alerts", tags: ["alerts"] })
   .patch(
     "/:householdId/:alertId/resolve",
     async ({ request, set, params }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       await db
@@ -68,7 +71,7 @@ export const alertsRoute = new Elysia({ prefix: "/alerts", tags: ["alerts"] })
   .delete(
     "/:householdId/:alertId",
     async ({ request, set, params }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       await db

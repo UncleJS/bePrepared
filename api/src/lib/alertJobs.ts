@@ -2,8 +2,7 @@
  * api/src/lib/alertJobs.ts
  *
  * Alert job logic extracted from the worker so the API can:
- *  1. Trigger a fire-and-forget run on user login
- *  2. Expose POST /admin/alerts/run-job for admin-triggered runs
+ *  1. Expose POST /alerts/run-job for admin-triggered runs
  *
  * Uses the API's existing DB client (api/src/db/client.ts).
  */
@@ -70,7 +69,9 @@ type AlertPolicyForHousehold = {
  *
  * Falls back to hardcoded defaults if neither layer has a value.
  */
-async function getAlertPolicyForHousehold(householdId: string): Promise<AlertPolicyForHousehold> {
+export async function getAlertPolicyForHousehold(
+  householdId: string
+): Promise<AlertPolicyForHousehold> {
   const KEYS = ["alert_upcoming_days", "alert_grace_days"] as const;
 
   const [hhRows, defaultRows] = await Promise.all([
@@ -99,11 +100,11 @@ async function getAlertPolicyForHousehold(householdId: string): Promise<AlertPol
 
   return {
     upcomingDays: resolve("alert_upcoming_days", 14),
-    graceDays: resolve("alert_grace_days", 0),
+    graceDays: resolve("alert_grace_days", 3),
   };
 }
 
-async function upsertAlert(data: {
+export async function upsertAlert(data: {
   householdId: string;
   severity: AlertSeverity;
   category: AlertCategory;
@@ -155,6 +156,7 @@ async function upsertAlert(data: {
           severity: data.severity,
           title: data.title,
           detail: data.detail,
+          dueAtUTC: data.dueAtUTC,
           updatedAtUTC: new Date(),
         })
         .where(eq(alerts.id, existing.id));
@@ -163,7 +165,12 @@ async function upsertAlert(data: {
 
     await db
       .update(alerts)
-      .set({ title: data.title, detail: data.detail, updatedAtUTC: new Date() })
+      .set({
+        title: data.title,
+        detail: data.detail,
+        dueAtUTC: data.dueAtUTC,
+        updatedAtUTC: new Date(),
+      })
       .where(eq(alerts.id, existing.id));
     return decision;
   }
@@ -215,14 +222,18 @@ async function processInventoryExpiry(metrics: JobCounters) {
         metrics.skipped += 1;
         continue;
       }
+      const item = itemMap.get(lot.itemId);
+      if (!item) {
+        metrics.skipped += 1;
+        continue;
+      }
       try {
         const expStr = new Date(lot.expiresAt).toISOString().slice(0, 10);
         const severity = computeAlertSeverity(new Date(lot.expiresAt), today, graceDays);
-        const item = itemMap.get(lot.itemId);
-        const itemName = item?.name ?? lot.batchRef ?? lot.id;
+        const itemName = item.name;
         const parts: string[] = [`Expires: ${expStr}`];
-        if (item?.location) parts.push(`Location: ${item.location}`);
-        if (lot.qty != null) parts.push(`Qty: ${lot.qty}${item?.unit ? " " + item.unit : ""}`);
+        if (item.location) parts.push(`Location: ${item.location}`);
+        if (lot.qty != null) parts.push(`Qty: ${lot.qty}${item.unit ? " " + item.unit : ""}`);
         if (lot.batchRef) parts.push(`Batch: ${lot.batchRef}`);
         const result = await upsertAlert({
           householdId: hh.id,
@@ -277,14 +288,18 @@ async function processInventoryReplacement(metrics: JobCounters) {
         metrics.skipped += 1;
         continue;
       }
+      const item = itemMap.get(lot.itemId);
+      if (!item) {
+        metrics.skipped += 1;
+        continue;
+      }
       try {
         const repStr = new Date(lot.nextReplaceAt).toISOString().slice(0, 10);
         const severity = computeAlertSeverity(new Date(lot.nextReplaceAt), today, graceDays);
-        const item = itemMap.get(lot.itemId);
-        const itemName = item?.name ?? lot.batchRef ?? lot.id;
+        const itemName = item.name;
         const parts: string[] = [`Replace by: ${repStr}`];
-        if (item?.location) parts.push(`Location: ${item.location}`);
-        if (lot.qty != null) parts.push(`Qty: ${lot.qty}${item?.unit ? " " + item.unit : ""}`);
+        if (item.location) parts.push(`Location: ${item.location}`);
+        if (lot.qty != null) parts.push(`Qty: ${lot.qty}${item.unit ? " " + item.unit : ""}`);
         if (lot.batchRef) parts.push(`Batch: ${lot.batchRef}`);
         const result = await upsertAlert({
           householdId: hh.id,

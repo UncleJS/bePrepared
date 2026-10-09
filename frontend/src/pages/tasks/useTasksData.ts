@@ -12,11 +12,20 @@ export function useTasksData(householdId: string | null) {
   const generation = useRef(0);
 
   const loadData = useCallback(async () => {
-    if (!householdId) return;
+    if (!householdId) {
+      setTasks([]);
+      setModules([]);
+      setProgress({});
+      setLoading(false);
+      return;
+    }
 
     const requestId = ++generation.current;
     setLoading(true);
     setError(null);
+    setTasks([]);
+    setModules([]);
+    setProgress({});
     try {
       const [taskRows, progressRows, moduleRows] = await Promise.all([
         apiFetch<Task[]>("/tasks"),
@@ -41,6 +50,9 @@ export function useTasksData(householdId: string | null) {
       setModules(moduleRows);
     } catch (err) {
       if (requestId !== generation.current) return;
+      setTasks([]);
+      setModules([]);
+      setProgress({});
       setError(err instanceof Error ? err.message : "Failed to load tasks.");
     } finally {
       if (requestId === generation.current) setLoading(false);

@@ -40,9 +40,11 @@ export default function DashboardTasks({ householdId }: { householdId: string })
       </div>
 
       <div className="mt-4">
-        {error ? <ErrorBanner message={error} retry={() => void loadData()} /> : null}
-        {loading ? <LoadingSpinner label="Loading tasks…" className="py-6" /> : null}
-        {!loading && !error && nextTasks.length === 0 ? (
+        {error ? (
+          <ErrorBanner message={error} retry={() => void loadData()} />
+        ) : loading ? (
+          <LoadingSpinner label="Loading tasks…" className="py-6" />
+        ) : nextTasks.length === 0 ? (
           <EmptyState
             title="No pending tasks"
             description="Current tasks are complete for the active household."

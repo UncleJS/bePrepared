@@ -19,6 +19,7 @@
 8. [Notes](#notes)
 9. [G) Post-Review Session 2 Improvements](#g-post-review-session-2-improvements)
 10. [H) Production A+ hardening (2026-10-09)](#h-production-a-hardening-2026-10-09)
+11. [I) Production gap fixes (2026-10-09)](#i-production-gap-fixes-2026-10-09)
 
 > Persistent checklist from the full-repo review. Keep this file as the working index for future deep dives.
 
@@ -186,6 +187,22 @@ Applied as a full codebase sweep on 2026-03-06. All 20 API tests continued passi
 - [x] List routes for alerts, inventory, and the policy audit log cap at 500 rows (`DEFAULT_LIST_LIMIT`).
 - [x] Reference seed is separate from the demo household. Re-running the demo seed does not reset the admin password or admin flag.
 - [x] LAN exposure still needs an external TLS proxy. See `docs/11-operations-podman.md`.
+
+---
+
+## I) Production gap fixes (2026-10-09)
+
+[↑ TOC](#table-of-contents)
+
+- [x] Localhost production installs set `ALLOW_LOCALHOST_CORS_IN_PRODUCTION=true`. Pod ports bind to `127.0.0.1`.
+- [x] `update.sh` builds images, stops API and worker, migrates, then restarts the pod.
+- [x] `GET /live` is liveness (DB ping). `GET /health` stays seeded-module readiness. Quadlet kills on `/live` only.
+- [x] `uninstall.sh --yes` keeps images. `backup.sh` uses `--single-transaction` and rejects an empty file.
+- [x] Prod images use `oven/bun:1.3.8-alpine`, matching CI.
+- [x] Alert status filters and inventory lots are applied before the row cap. Audit log is newest-first.
+- [x] Archiving an item archives its lots. Alert upserts refresh `dueAtUTC`. Grace fallback is 3 days.
+- [x] Non-admins cannot use an archived household. The last admin cannot be demoted. Login no longer runs alert jobs.
+- [x] Equipment archived loads cannot leave the list spinner up. Failed household loads clear the previous household. Every signed-in user can edit their profile.
 
 ---
 

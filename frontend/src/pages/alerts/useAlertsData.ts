@@ -18,12 +18,14 @@ export function useAlertsData(householdId: string | null) {
     const requestId = ++generation.current;
     setLoading(true);
     setError(null);
+    setAlerts([]);
     try {
       const rows = await apiFetch<Alert[]>(`/alerts/${householdId}`);
       if (requestId !== generation.current) return;
       setAlerts(rows);
     } catch (err) {
       if (requestId !== generation.current) return;
+      setAlerts([]);
       setError(err instanceof Error ? err.message : "Failed to load alerts.");
     } finally {
       if (requestId === generation.current) setLoading(false);

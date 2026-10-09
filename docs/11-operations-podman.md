@@ -70,9 +70,12 @@ podman build -f deploy/Containerfile.api      -t beprepared-api:latest .
 podman build -f deploy/Containerfile.worker   -t beprepared-worker:latest .
 podman build -f deploy/Containerfile.frontend -t beprepared-frontend:latest .
 
-# Install Quadlet units
-cp deploy/quadlet/*.container ~/.config/containers/systemd/
-cp deploy/quadlet/*.pod       ~/.config/containers/systemd/
+# Install Quadlet units (substitute this checkout for %%REPO_DIR%%)
+REPO_DIR="$(pwd)"
+mkdir -p ~/.config/containers/systemd
+for f in deploy/quadlet/*.container deploy/quadlet/*.pod deploy/quadlet/*.volume; do
+  sed "s|%%REPO_DIR%%|${REPO_DIR}|g" "$f" > ~/.config/containers/systemd/"$(basename "$f")"
+done
 
 # Reload systemd and start the pod
 systemctl --user daemon-reload
@@ -96,7 +99,7 @@ All unit files live in `deploy/quadlet/`. After copying to `~/.config/containers
 ```ini
 [Pod]
 PodName=beprepared
-PublishPort=9999:9999
+PublishPort=127.0.0.1:9999:9999
 
 [Install]
 WantedBy=default.target
@@ -113,8 +116,8 @@ After=beprepared-pod.service
 Image=docker.io/library/mariadb:11
 Pod=beprepared.pod
 ContainerName=beprepared-db
-EnvironmentFile=%h/0_opencode/bePrepared/.env
-Volume=%h/0_opencode/bePrepared/data/mariadb:/var/lib/mysql:Z
+EnvironmentFile=%h/bePrepared/.env
+Volume=beprepared-db.volume:/var/lib/mysql:Z
 Environment=MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
 Environment=MARIADB_DATABASE=${DB_NAME}
 Environment=MARIADB_USER=${DB_USER}
@@ -366,11 +369,19 @@ Prod Quadlets publish the API and frontend as plain HTTP for a localhost househo
 
 ### Backup (MariaDB dump)
 
-`./scripts/backup.sh` writes a gzipped dump under `backups/` using `DB_USER`, `DB_PASSWORD`, and `DB_NAME` from the repo `.env`. The manual equivalent:
+`./scripts/backup.sh` writes a gzipped logical dump under `backups/` using `DB_USER`, `DB_PASSWORD`, and `DB_NAME` from the repo `.env`. That script is the supported backup. The database files themselves live in the named volume `beprepared-db.volume` (typically `systemd-beprepared-db` under the user Podman volume store), not in a bind mount under the repo.
+
+```bash
+./scripts/backup.sh
+podman volume inspect systemd-beprepared-db
+```
+
+The manual equivalent of the script:
 
 ```bash
 # Full dump
 podman exec beprepared-db mariadb-dump \
+  --single-transaction --quick \
   -u $DB_USER -p$DB_PASSWORD $DB_NAME \
   > backup-$(date +%Y%m%d-%H%M%S).sql
 
@@ -395,7 +406,7 @@ systemctl --user start beprepared-api beprepared-worker
 
 ### Data volume location
 
-MariaDB data is stored in `~/0_opencode/bePrepared/data/mariadb/`. This directory persists across container restarts and rebuilds. Back up this directory for a raw data backup (stop DB first).
+MariaDB data is the named volume `beprepared-db.volume`, which Quadlet exposes as `systemd-beprepared-db`. It persists across container restarts and rebuilds. Use `./scripts/backup.sh` for a logical backup. To copy the raw volume, stop the database first and run `podman volume export systemd-beprepared-db`.
 
 ### Restore drill cadence (recommended)
 
@@ -446,7 +457,7 @@ Copy `.env.example` to `.env` and fill in values.
 | `PORT`                               | no       | `9995`                  | API listen port (internal)                               |
 | `VITE_API_URL`                       | yes      | `http://localhost:9995` | Browser API base URL (used by the Vite SPA at runtime)   |
 | `CORS_ORIGINS`                       | yes      | `http://localhost:9999` | Comma-separated allowed browser origins                  |
-| `ALLOW_LOCALHOST_CORS_IN_PRODUCTION` | no       | `false`                 | Production guard override for localhost origins          |
+| `ALLOW_LOCALHOST_CORS_IN_PRODUCTION` | no       | `true`                  | Localhost install default; set false for a public origin |
 | `AUTH_SECRET`                        | yes      | —                       | Random secret for JWT signing; `openssl rand -base64 32` |
 | `AUTH_ENABLED`                       | no       | `true`                  | Set `false` only for local dev (never in production)     |
 | `WORKER_INTERVAL_MS`                 | no       | `900000`                | Alert worker run interval in ms (default = 15 minutes)   |

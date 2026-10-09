@@ -102,7 +102,7 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
   .get(
     "/:householdId/schedules",
     async ({ request, set, params }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       const rows = await db
@@ -125,7 +125,7 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
   .post(
     "/:householdId/:equipmentItemId/schedules",
     async ({ request, set, params, body }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       const equipment = await db.query.equipmentItems.findFirst({
@@ -185,7 +185,7 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
   .patch(
     "/:householdId/schedules/:scheduleId",
     async ({ request, set, params, body }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       const found = await scheduleForHousehold(params.householdId, params.scheduleId);
@@ -238,7 +238,7 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
   .delete(
     "/:householdId/schedules/:scheduleId",
     async ({ request, set, params }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       const found = await scheduleForHousehold(params.householdId, params.scheduleId);
@@ -260,7 +260,7 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
   .post(
     "/:householdId/schedules/:scheduleId/events",
     async ({ request, set, params, body }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       const found = await scheduleForHousehold(params.householdId, params.scheduleId);
@@ -328,7 +328,7 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
   .get(
     "/:householdId/schedules/:scheduleId/events",
     async ({ request, set, params }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       const found = await scheduleForHousehold(params.householdId, params.scheduleId);
@@ -350,7 +350,7 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
   .get(
     "/:householdId/due",
     async ({ request, set, params, query }) => {
-      const claims = requireHouseholdScope(request, set, params.householdId);
+      const claims = await requireHouseholdScope(request, set, params.householdId);
       if (!claims) return { error: "Forbidden" };
 
       const days = Number(query.days ?? 14);
