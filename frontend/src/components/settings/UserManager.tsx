@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 type User = {
   id: string;
@@ -34,6 +35,7 @@ function AdminUserManager({
   currentUserId: string;
   households: Household[];
 }) {
+  const { replaceToken } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editState, setEditState] = useState<EditState | null>(null);
@@ -101,10 +103,11 @@ function AdminUserManager({
       };
       if (editState.password) body.password = editState.password;
 
-      await apiFetch(`/users/${userId}`, {
+      const updated = await apiFetch<{ token?: string }>(`/users/${userId}`, {
         method: "PATCH",
         body: JSON.stringify(body),
       });
+      if (updated.token) replaceToken(updated.token);
       flash("User updated.");
       cancelEdit();
       await loadUsers();
@@ -375,8 +378,10 @@ function AdminUserManager({
 // ── Self-service / profile view ───────────────────────────────────────────────
 
 function MyProfileEditor({ me }: { me: User }) {
+  const { replaceToken } = useAuth();
   const [email, setEmail] = useState(me.email ?? "");
   const [username, setUsername] = useState(me.username);
+  const [currentPassword, setCurrentPassword] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -388,18 +393,27 @@ function MyProfileEditor({ me }: { me: User }) {
       setError("Password must be at least 8 characters.");
       return;
     }
+    if (password && !currentPassword) {
+      setError("Current password is required to set a new password.");
+      return;
+    }
     try {
       const body: Record<string, unknown> = {
         email: email.trim() || undefined,
         username: username.trim(),
       };
-      if (password) body.password = password;
+      if (password) {
+        body.password = password;
+        body.currentPassword = currentPassword;
+      }
 
-      await apiFetch("/users/me", {
+      const updated = await apiFetch<{ token?: string }>("/users/me", {
         method: "PATCH",
         body: JSON.stringify(body),
       });
+      if (updated.token) replaceToken(updated.token);
       setPassword("");
+      setCurrentPassword("");
       setMessage("Profile updated.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to update profile.");
@@ -428,6 +442,19 @@ function MyProfileEditor({ me }: { me: User }) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="optional"
+            className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
+          />
+        </label>
+        <label className="space-y-1">
+          <span className="block text-xs font-bold uppercase tracking-wide text-primary">
+            Current Password
+          </span>
+          <input
+            type="password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            autoComplete="current-password"
+            placeholder="required when changing password"
             className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
           />
         </label>

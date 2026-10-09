@@ -27,18 +27,25 @@ setInterval(() => {
   }
 }, LOGIN_CLEANUP_INTERVAL_MS).unref();
 
-function resolveClientIp(request: Request): string {
+function resolveTrustedClientIp(request: Request): string | null {
+  if (process.env.TRUST_PROXY !== "true") return null;
   const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded) {
     const first = forwarded.split(",")[0]?.trim();
     if (first) return first;
   }
   const realIp = request.headers.get("x-real-ip")?.trim();
-  return realIp || "unknown";
+  return realIp || null;
 }
 
 function loginAttemptKey(request: Request, username: string): string {
-  return `${resolveClientIp(request)}:${username.trim().toLowerCase()}`;
+  const user = username.trim().toLowerCase();
+  const ip = resolveTrustedClientIp(request);
+  return ip ? `${ip}:${user}` : user;
+}
+
+export function clearLoginAttempts(): void {
+  loginAttempts.clear();
 }
 
 function isRateLimited(key: string): boolean {
@@ -115,6 +122,7 @@ export const authRoute = new Elysia({ prefix: "/auth", tags: ["auth"] }).post(
         username: user.username,
         householdId: user.householdId,
         isAdmin: user.isAdmin,
+        credentialsVersion: user.credentialsVersion,
       },
       secret,
       60 * 60 * 12

@@ -360,7 +360,13 @@ Images are tagged `:latest` locally — no registry required.
 
 [↑ TOC](#table-of-contents)
 
+### TLS
+
+Prod Quadlets publish the API and frontend as plain HTTP for a localhost household install. Do not expose ports 9995 or 9999 on a LAN or the internet without an external TLS reverse proxy. This repository does not terminate TLS.
+
 ### Backup (MariaDB dump)
+
+`./scripts/backup.sh` writes a gzipped dump under `backups/` using `DB_USER`, `DB_PASSWORD`, and `DB_NAME` from the repo `.env`. The manual equivalent:
 
 ```bash
 # Full dump

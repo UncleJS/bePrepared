@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { setActiveHouseholdId } from "@/lib/api";
+import { clearActiveHouseholdCookie, setActiveHouseholdId } from "@/lib/api";
 import { API_BASE } from "@/lib/apiBase";
 
 const ACTIVE_HOUSEHOLD_COOKIE = "bp_active_household_id";
@@ -24,6 +24,7 @@ type AuthContextValue = {
   state: AuthState;
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
+  replaceToken: (token: string) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -44,15 +45,46 @@ export function getStoredUser(): AuthUser | null {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({ status: "loading" });
 
-  // Rehydrate from localStorage on mount
   useEffect(() => {
-    const token = getStoredToken();
-    const user = getStoredUser();
-    if (token && user) {
-      setState({ status: "authenticated", user, token });
-    } else {
-      setState({ status: "unauthenticated" });
+    let cancelled = false;
+
+    async function bootstrap() {
+      const token = getStoredToken();
+      if (!token) {
+        if (!cancelled) setState({ status: "unauthenticated" });
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/users/me`, {
+          headers: { authorization: `Bearer ${token}` },
+          cache: "no-store",
+        });
+        if (!res.ok) throw new Error("session");
+        const data = (await res.json()) as AuthUser;
+        if (cancelled) return;
+        const user: AuthUser = {
+          id: data.id,
+          username: data.username,
+          email: data.email,
+          householdId: data.householdId,
+          isAdmin: data.isAdmin,
+        };
+        if (!user.isAdmin) clearActiveHouseholdCookie();
+        localStorage.setItem(USER_KEY, JSON.stringify(user));
+        setState({ status: "authenticated", user, token });
+      } catch {
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(USER_KEY);
+        clearActiveHouseholdCookie();
+        if (!cancelled) setState({ status: "unauthenticated" });
+      }
     }
+
+    void bootstrap();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   async function login(username: string, password: string): Promise<void> {
@@ -82,8 +114,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     localStorage.setItem(TOKEN_KEY, data.token);
     localStorage.setItem(USER_KEY, JSON.stringify(user));
-    setActiveHouseholdId(user.householdId);
+    if (user.isAdmin) setActiveHouseholdId(user.householdId);
+    else clearActiveHouseholdCookie();
     setState({ status: "authenticated", user, token: data.token });
+  }
+
+  function replaceToken(token: string) {
+    localStorage.setItem(TOKEN_KEY, token);
+    setState((prev) => (prev.status === "authenticated" ? { ...prev, token } : prev));
   }
 
   function logout() {
@@ -93,7 +131,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState({ status: "unauthenticated" });
   }
 
-  return <AuthContext.Provider value={{ state, login, logout }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ state, login, logout, replaceToken }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth(): AuthContextValue {

@@ -1,5 +1,6 @@
 import { Elysia, t } from "elysia";
-import { resolvePlanningTotals } from "../../lib/policyEngine";
+import { logger } from "@beprepared/shared/logger";
+import { PlanningNotFoundError, resolvePlanningTotals } from "../../lib/policyEngine";
 import { requireHouseholdScope } from "../../lib/routeAuth";
 
 export const planningRoute = new Elysia({ prefix: "/planning", tags: ["planning"] }).get(
@@ -12,9 +13,13 @@ export const planningRoute = new Elysia({ prefix: "/planning", tags: ["planning"
     try {
       return await resolvePlanningTotals(params.householdId, params.scenario, manualPeople);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Internal error";
-      set.status = msg.toLowerCase().includes("not found") ? 404 : 500;
-      return { error: msg };
+      if (err instanceof PlanningNotFoundError) {
+        set.status = 404;
+        return { error: "Not found" };
+      }
+      logger.error("Planning totals failed", { err: String(err) });
+      set.status = 500;
+      return { error: "Internal error" };
     }
   },
   {

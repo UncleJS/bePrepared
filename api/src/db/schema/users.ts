@@ -1,5 +1,5 @@
 // schema/users.ts
-import { mysqlTable, varchar, timestamp, boolean } from "drizzle-orm/mysql-core";
+import { mysqlTable, varchar, timestamp, boolean, int } from "drizzle-orm/mysql-core";
 
 export const users = mysqlTable("users", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -8,6 +8,7 @@ export const users = mysqlTable("users", {
   email: varchar("email", { length: 255 }),
   passwordHash: varchar("password_hash", { length: 255 }).notNull(),
   isAdmin: boolean("is_admin").notNull().default(false),
+  credentialsVersion: int("credentials_version").notNull().default(1),
   createdAtUTC: timestamp("created_at_UTC").notNull().defaultNow(),
   updatedAtUTC: timestamp("updated_at_UTC").notNull().defaultNow().onUpdateNow(),
   archivedAtUTC: timestamp("archived_at_UTC"),

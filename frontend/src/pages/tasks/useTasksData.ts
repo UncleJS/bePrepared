@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { LEVEL_ORDER } from "./constants";
 import type { Module, Progress, Task } from "./types";
@@ -9,10 +9,12 @@ export function useTasksData(householdId: string | null) {
   const [progress, setProgress] = useState<Record<string, Progress>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const generation = useRef(0);
 
   const loadData = useCallback(async () => {
     if (!householdId) return;
 
+    const requestId = ++generation.current;
     setLoading(true);
     setError(null);
     try {
@@ -21,6 +23,7 @@ export function useTasksData(householdId: string | null) {
         apiFetch<Progress[]>(`/tasks/${householdId}/progress`),
         apiFetch<Module[]>("/modules"),
       ]);
+      if (requestId !== generation.current) return;
 
       const deduped = new Map<string, Task>();
       for (const task of taskRows) {
@@ -37,9 +40,10 @@ export function useTasksData(householdId: string | null) {
 
       setModules(moduleRows);
     } catch (err) {
+      if (requestId !== generation.current) return;
       setError(err instanceof Error ? err.message : "Failed to load tasks.");
     } finally {
-      setLoading(false);
+      if (requestId === generation.current) setLoading(false);
     }
   }, [householdId]);
 

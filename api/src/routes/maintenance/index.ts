@@ -9,6 +9,12 @@ import {
 import { eq, isNull, and, lte } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { requireAdmin, requireAuth, requireHouseholdScope } from "../../lib/routeAuth";
+import { parseISODate } from "../_shared/dates";
+
+function optionalISODate(value: string | undefined, field: string): Date | undefined {
+  if (!value) return undefined;
+  return parseISODate(value, field);
+}
 
 async function scheduleForHousehold(householdId: string, scheduleId: string) {
   const rows = await db
@@ -134,6 +140,16 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
         return { error: "Equipment item not found" };
       }
 
+      let lastDoneAt: Date | undefined;
+      let nextDueAt: Date | undefined;
+      try {
+        lastDoneAt = optionalISODate(body.lastDoneAt, "lastDoneAt");
+        nextDueAt = optionalISODate(body.nextDueAt, "nextDueAt");
+      } catch (err) {
+        set.status = 400;
+        return { error: err instanceof Error ? err.message : "Invalid date" };
+      }
+
       const id = randomUUID();
       await db.insert(maintenanceSchedules).values({
         id,
@@ -144,8 +160,8 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
         usageMeterUnit: body.usageMeterUnit,
         usageInterval: body.usageInterval != null ? String(body.usageInterval) : undefined,
         graceDays: body.graceDays,
-        lastDoneAt: body.lastDoneAt ? new Date(body.lastDoneAt) : undefined,
-        nextDueAt: body.nextDueAt ? new Date(body.nextDueAt) : undefined,
+        lastDoneAt,
+        nextDueAt,
       });
       return db.query.maintenanceSchedules.findFirst({
         where: eq(maintenanceSchedules.id, id),
@@ -178,14 +194,24 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
         return { error: "Schedule not found" };
       }
 
+      let lastDoneAt: Date | undefined;
+      let nextDueAt: Date | undefined;
+      try {
+        lastDoneAt = optionalISODate(body.lastDoneAt, "lastDoneAt");
+        nextDueAt = optionalISODate(body.nextDueAt, "nextDueAt");
+      } catch (err) {
+        set.status = 400;
+        return { error: err instanceof Error ? err.message : "Invalid date" };
+      }
+
       await db
         .update(maintenanceSchedules)
         .set({
           name: body.name,
           calDays: body.calDays,
           graceDays: body.graceDays,
-          lastDoneAt: body.lastDoneAt ? new Date(body.lastDoneAt) : undefined,
-          nextDueAt: body.nextDueAt ? new Date(body.nextDueAt) : undefined,
+          lastDoneAt,
+          nextDueAt,
           isActive: body.isActive,
         })
         .where(eq(maintenanceSchedules.id, params.scheduleId));
@@ -243,8 +269,17 @@ export const maintenanceRoute = new Elysia({ prefix: "/maintenance", tags: ["mai
         return { error: "Schedule not found" };
       }
 
+      let performedDate: Date;
+      try {
+        performedDate = body.performedAtUTC
+          ? parseISODate(body.performedAtUTC, "performedAtUTC")
+          : new Date();
+      } catch (err) {
+        set.status = 400;
+        return { error: err instanceof Error ? err.message : "Invalid date" };
+      }
+
       const id = randomUUID();
-      const performedDate = new Date(body.performedAtUTC ?? new Date());
       let nextDueDate: Date | undefined;
       if (found.schedule.calDays) {
         nextDueDate = new Date(performedDate);

@@ -4,6 +4,11 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 describe("settings category pages", () => {
   it("wires inventory categories page to shared CategoryManager", async () => {
+    mock.module("@/contexts/AuthContext", () => ({
+      useAuth: () => ({
+        state: { status: "authenticated", user: { isAdmin: true }, token: "t" },
+      }),
+    }));
     mock.module("@/components/settings/CategoryManager", () => ({
       CategoryManager: (props) =>
         createElement(
@@ -22,6 +27,11 @@ describe("settings category pages", () => {
   });
 
   it("wires equipment categories page to shared CategoryManager", async () => {
+    mock.module("@/contexts/AuthContext", () => ({
+      useAuth: () => ({
+        state: { status: "authenticated", user: { isAdmin: true }, token: "t" },
+      }),
+    }));
     mock.module("@/components/settings/CategoryManager", () => ({
       CategoryManager: (props) =>
         createElement(

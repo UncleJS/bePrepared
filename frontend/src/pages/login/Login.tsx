@@ -1,20 +1,25 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ShieldCheck, LogIn } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { safeCallbackUrl } from "@/lib/safeCallbackUrl";
 
 export default function LoginPage() {
   const { login, state } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
+  const callbackUrl = safeCallbackUrl(searchParams.get("callbackUrl"));
 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Already authenticated → go to destination
+  useEffect(() => {
+    if (state.status === "authenticated") {
+      navigate(callbackUrl, { replace: true });
+    }
+  }, [state.status, callbackUrl, navigate]);
+
   if (state.status === "authenticated") {
-    navigate(callbackUrl, { replace: true });
     return null;
   }
 
@@ -29,7 +34,7 @@ export default function LoginPage() {
     try {
       await login(username, password);
       navigate(callbackUrl, { replace: true });
-    } catch (err) {
+    } catch {
       setError("Invalid username or password.");
     } finally {
       setLoading(false);

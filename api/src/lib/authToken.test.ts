@@ -1,3 +1,4 @@
+import { createHmac } from "crypto";
 import { describe, expect, it } from "bun:test";
 import { bearerFromHeader, issueApiToken, verifyApiToken } from "./authToken";
 
@@ -9,6 +10,7 @@ describe("authToken", () => {
         username: "admin",
         householdId: "household-1",
         isAdmin: true,
+        credentialsVersion: 1,
       },
       "secret-1",
       60
@@ -18,6 +20,29 @@ describe("authToken", () => {
     expect(claims).not.toBeNull();
     expect(claims?.sub).toBe("user-1");
     expect(claims?.isAdmin).toBe(true);
+    expect(claims?.credentialsVersion).toBe(1);
+  });
+
+  it("rejects tokens that omit credentialsVersion", () => {
+    const token = issueApiToken(
+      {
+        sub: "user-1",
+        username: "admin",
+        householdId: "household-1",
+        isAdmin: false,
+        credentialsVersion: 1,
+      },
+      "secret-1",
+      60
+    );
+    const payload = JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString("utf8"));
+    delete payload.credentialsVersion;
+    const header = token.split(".")[0];
+    const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
+    const signature = createHmac("sha256", "secret-1")
+      .update(`${header}.${body}`)
+      .digest("base64url");
+    expect(verifyApiToken(`${header}.${body}.${signature}`, "secret-1")).toBeNull();
   });
 
   it("rejects tampered token signatures", () => {
@@ -27,6 +52,7 @@ describe("authToken", () => {
         username: "admin",
         householdId: "household-1",
         isAdmin: false,
+        credentialsVersion: 1,
       },
       "secret-1",
       60
@@ -43,6 +69,7 @@ describe("authToken", () => {
         username: "admin",
         householdId: "household-1",
         isAdmin: false,
+        credentialsVersion: 1,
       },
       "secret-1",
       -1

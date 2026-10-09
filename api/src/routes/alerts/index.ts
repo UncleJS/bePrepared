@@ -4,6 +4,7 @@ import { alerts } from "../../db/schema";
 import { eq, isNull, and } from "drizzle-orm";
 import { requireHouseholdScope, requireAdmin } from "../../lib/routeAuth";
 import { runAllJobs } from "../../lib/alertJobs";
+import { DEFAULT_LIST_LIMIT } from "../../lib/listLimits";
 
 export const alertsRoute = new Elysia({ prefix: "/alerts", tags: ["alerts"] })
 
@@ -16,6 +17,7 @@ export const alertsRoute = new Elysia({ prefix: "/alerts", tags: ["alerts"] })
       const rows = await db.query.alerts.findMany({
         where: and(eq(alerts.householdId, params.householdId), isNull(alerts.archivedAtUTC)),
         orderBy: alerts.dueAtUTC,
+        limit: DEFAULT_LIST_LIMIT,
       });
       if (query.status === "active") return rows.filter((r) => !r.isResolved);
       if (query.status === "resolved") return rows.filter((r) => r.isResolved);

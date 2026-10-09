@@ -47,6 +47,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+QUADLET_DIR="$HOME/.config/containers/systemd"
+DEPLOY_DIR="$PROJECT_ROOT/deploy"
 SKIP_PULL=false
 SKIP_MIGRATE=false
 
@@ -97,6 +100,15 @@ fi
 # ── Rebuild ───────────────────────────────────────────────────────────────────
 # Rebuild all three prod images and restart each service as it is built.
 # rebuild.sh handles the podman build + systemctl restart loop.
+
+echo "==> Syncing Quadlet units..."
+mkdir -p "$QUADLET_DIR"
+for f in "$DEPLOY_DIR/quadlet/"*.container "$DEPLOY_DIR/quadlet/"*.volume "$DEPLOY_DIR/quadlet/"*.pod; do
+  dest="${QUADLET_DIR}/$(basename "${f}")"
+  sed "s|%%REPO_DIR%%|${PROJECT_ROOT}|g" "${f}" > "${dest}"
+done
+systemctl --user daemon-reload
+echo ""
 
 echo "==> Rebuilding all container images..."
 "$SCRIPT_DIR/rebuild.sh"

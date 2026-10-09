@@ -18,6 +18,7 @@
 7. [F) Post Deep-Dive Implementation Queue](#f-post-deep-dive-implementation-queue)
 8. [Notes](#notes)
 9. [G) Post-Review Session 2 Improvements](#g-post-review-session-2-improvements)
+10. [H) Production A+ hardening (2026-10-09)](#h-production-a-hardening-2026-10-09)
 
 > Persistent checklist from the full-repo review. Keep this file as the working index for future deep dives.
 
@@ -169,6 +170,22 @@ Applied as a full codebase sweep on 2026-03-06. All 20 API tests continued passi
 - [x] **`SELECT 1` DB health probe** in `api/src/index.ts`: `/health` now executes a live DB check and returns HTTP 503 on failure instead of always returning 200.
 - [x] **Remove weak DB credential defaults** in `api/src/db/client.ts`: `user`, `password`, and `database` no longer fall back to the hardcoded string `"beprepared"`; the process will fail fast if env vars are unset.
 - [x] **`setInterval` stale-entry cleanup** in `api/src/routes/auth/index.ts`: the `loginAttempts` Map is now swept every 5 minutes via `.unref()`'d interval to prevent unbounded memory growth.
+
+---
+
+## H) Production A+ hardening (2026-10-09)
+
+[↑ TOC](#table-of-contents)
+
+- [x] Alert active key includes category so expiry and replacement can both exist for one lot.
+- [x] Worker heartbeat is skipped when alert jobs throw or record errors, and ticks do not overlap.
+- [x] Household archive is admin-only. `activeProfileId` must belong to the household. Lots require an in-household item.
+- [x] Password change requires the current password and bumps `credentialsVersion`, which invalidates older bearer tokens.
+- [x] Startup rejects short and placeholder auth secrets outside test. Login rate limit keys on username and ignores `X-Forwarded-For` unless `TRUST_PROXY=true`.
+- [x] Prod Quadlet `EnvironmentFile` is templated with `%%REPO_DIR%%` and substituted at install.
+- [x] List routes for alerts, inventory, and the policy audit log cap at 500 rows (`DEFAULT_LIST_LIMIT`).
+- [x] Reference seed is separate from the demo household. Re-running the demo seed does not reset the admin password or admin flag.
+- [x] LAN exposure still needs an external TLS proxy. See `docs/11-operations-podman.md`.
 
 ---
 

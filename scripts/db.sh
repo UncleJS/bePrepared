@@ -22,14 +22,16 @@
 #
 # FLAGS / ENV VARS
 #   migrate        Run Drizzle migrations via `bun run db:migrate` (idempotent)
-#   seed           Run seed data via `bun run db:seed` (idempotent)
-#   migrate+seed   Run migrate then seed in sequence
+#   seed             Run reference + demo seed via `bun run db:seed` (idempotent)
+#   seed-reference   Run reference seed only (modules, categories, policies)
+#   seed-demo        Run demo household and admin user only
+#   migrate+seed     Run migrate then full seed in sequence
 #   -h, --help     Print this help and exit
 #
 #   (no env vars — container name beprepared-api is hard-coded)
 #
 # USAGE
-#   ./scripts/db.sh <migrate|seed|migrate+seed>
+#   ./scripts/db.sh <migrate|seed|seed-reference|seed-demo|migrate+seed>
 #
 # EXAMPLES
 #   ./scripts/db.sh migrate          # apply any pending schema changes
@@ -47,14 +49,16 @@ set -euo pipefail
 SUBCOMMAND=""
 for arg in "$@"; do
   case "$arg" in
-    migrate|seed|migrate+seed) SUBCOMMAND="$arg" ;;
+    migrate|seed|seed-reference|seed-demo|migrate+seed) SUBCOMMAND="$arg" ;;
     -h|--help)
-      echo "Usage: ./scripts/db.sh <migrate|seed|migrate+seed>"
+      echo "Usage: ./scripts/db.sh <migrate|seed|seed-reference|seed-demo|migrate+seed>"
       echo ""
       echo "Subcommands:"
-      echo "  migrate        Run Drizzle migrations (db:migrate)"
-      echo "  seed           Run seed data (db:seed) — idempotent"
-      echo "  migrate+seed   Run migrations then seed in sequence"
+      echo "  migrate          Run Drizzle migrations (db:migrate)"
+      echo "  seed             Run reference + demo seed (db:seed) — idempotent"
+      echo "  seed-reference   Run reference data only (modules, categories, policies)"
+      echo "  seed-demo        Run demo household and admin user only"
+      echo "  migrate+seed     Run migrations then full seed in sequence"
       echo ""
       echo "  All commands execute inside the running beprepared-api container."
       echo ""
@@ -64,12 +68,12 @@ for arg in "$@"; do
       echo "  ./scripts/db.sh migrate+seed"
       exit 0
       ;;
-    *) echo "Unknown subcommand: $arg (valid: migrate, seed, migrate+seed)"; exit 1 ;;
+    *) echo "Unknown subcommand: $arg (valid: migrate, seed, seed-reference, seed-demo, migrate+seed)"; exit 1 ;;
   esac
 done
 
 if [[ -z "$SUBCOMMAND" ]]; then
-  echo "Usage: ./scripts/db.sh <migrate|seed|migrate+seed>"
+  echo "Usage: ./scripts/db.sh <migrate|seed|seed-reference|seed-demo|migrate+seed>"
   echo "  Run with --help for details."
   exit 1
 fi
@@ -96,11 +100,25 @@ run_seed() {
   echo "==> Seed complete."
 }
 
+run_seed_reference() {
+  echo "==> Running reference seed..."
+  run_in_api_container db:seed:reference
+  echo "==> Reference seed complete."
+}
+
+run_seed_demo() {
+  echo "==> Running demo seed..."
+  run_in_api_container db:seed:demo
+  echo "==> Demo seed complete."
+}
+
 # ── Dispatch ──────────────────────────────────────────────────────────────────
 # Route the parsed subcommand to the corresponding helper(s).
 
 case "$SUBCOMMAND" in
-  migrate)       run_migrate ;;
-  seed)          run_seed ;;
-  migrate+seed)  run_migrate && run_seed ;;
+  migrate)         run_migrate ;;
+  seed)            run_seed ;;
+  seed-reference)  run_seed_reference ;;
+  seed-demo)       run_seed_demo ;;
+  migrate+seed)    run_migrate && run_seed ;;
 esac

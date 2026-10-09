@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { apiFetch, daysUntil } from "@/lib/api";
 import type { EquipmentItem, Schedule, Template } from "./types";
 
@@ -8,8 +8,10 @@ export function useMaintenanceData() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const generation = useRef(0);
 
   const loadData = useCallback(async (householdId: string) => {
+    const requestId = ++generation.current;
     setLoading(true);
     setError(null);
     try {
@@ -18,13 +20,15 @@ export function useMaintenanceData() {
         apiFetch<EquipmentItem[]>(`/equipment/${householdId}`),
         apiFetch<Template[]>(`/maintenance/templates`),
       ]);
+      if (requestId !== generation.current) return;
       setSchedules(scheduleRows);
       setEquipment(equipmentRows);
       setTemplates(templateRows);
     } catch (err) {
+      if (requestId !== generation.current) return;
       setError(err instanceof Error ? err.message : "Failed to load maintenance data.");
     } finally {
-      setLoading(false);
+      if (requestId === generation.current) setLoading(false);
     }
   }, []);
 

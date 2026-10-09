@@ -4,6 +4,7 @@ import { policyDefaults, householdPolicies, scenarioPolicies, auditLog } from ".
 import { eq, and, isNull } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { requireAuth, requireHouseholdScope } from "../../lib/routeAuth";
+import { DEFAULT_LIST_LIMIT } from "../../lib/listLimits";
 
 const scenarioParamSchema = t.Union([t.Literal("shelter_in_place"), t.Literal("evacuation")]);
 
@@ -70,6 +71,7 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
             entity: "household_policies",
             entityId: existing.id,
             action: "update",
+            changedBy: claims.sub,
             oldValue: String(existing.valueDecimal ?? existing.valueInt),
             newValue: String(body.valueDecimal ?? body.valueInt),
           });
@@ -243,6 +245,7 @@ export const settingsRoute = new Elysia({ prefix: "/settings", tags: ["settings"
       return db.query.auditLog.findMany({
         where: eq(auditLog.householdId, params.householdId),
         orderBy: auditLog.createdAtUTC,
+        limit: DEFAULT_LIST_LIMIT,
       });
     },
     { detail: { summary: "Get policy change audit log for a household" } }

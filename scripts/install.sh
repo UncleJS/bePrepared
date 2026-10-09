@@ -35,7 +35,8 @@
 #  10. Verify        — delegate to status.sh
 #
 # FLAGS / ENV VARS
-#   --skip-seed    Build, start, and migrate but skip db:seed
+#   --skip-seed    Build, start, and migrate but skip seeding
+#   --with-demo    Also load the demo household and admin user
 #   -h, --help     Print this help and exit
 #
 #   DB_USER        Read from .env — used to verify app-level DB connectivity
@@ -43,7 +44,7 @@
 #   DB_NAME        Read from .env — used to verify app-level DB connectivity
 #
 # USAGE
-#   ./scripts/install.sh [--skip-seed]
+#   ./scripts/install.sh [--skip-seed] [--with-demo]
 #
 # EXAMPLES
 #   ./scripts/install.sh              # full install including seed data
@@ -59,6 +60,7 @@ DEPLOY_DIR="$PROJECT_ROOT/deploy"
 QUADLET_DIR="$HOME/.config/containers/systemd"
 ENV_FILE="$PROJECT_ROOT/.env"
 SKIP_SEED=false
+WITH_DEMO=false
 
 # ── Args ──────────────────────────────────────────────────────────────────────
 # Parse flags before doing any work so --help exits cleanly without side effects.
@@ -66,11 +68,13 @@ SKIP_SEED=false
 for arg in "$@"; do
   case "$arg" in
     --skip-seed) SKIP_SEED=true ;;
+    --with-demo) WITH_DEMO=true ;;
     -h|--help)
-      echo "Usage: ./scripts/install.sh [--skip-seed]"
+      echo "Usage: ./scripts/install.sh [--skip-seed] [--with-demo]"
       echo ""
       echo "Options:"
-      echo "  --skip-seed   Build and start the pod but do not run db:seed"
+      echo "  --skip-seed   Build and start the pod but do not seed the database"
+      echo "  --with-demo   Also load the demo household and admin user"
       echo "  -h, --help    Show this help message"
       exit 0
       ;;
@@ -120,14 +124,15 @@ echo "==> Images built."
 
 # ── Quadlet sync ──────────────────────────────────────────────────────────────
 # Copy Quadlet unit files from deploy/quadlet/ to the systemd user-unit dir.
-# No %%REPO_DIR%% substitution is needed here; prod units reference named
-# volumes and the image registry, not bind-mounted source paths.
+# %%REPO_DIR%% becomes this clone's absolute path so EnvironmentFile points at
+# the repo-local .env regardless of where the project is checked out.
 
 echo "==> Installing Quadlet units to $QUADLET_DIR..."
 mkdir -p "$QUADLET_DIR"
-cp "$DEPLOY_DIR/quadlet/"*.container "$QUADLET_DIR/"
-cp "$DEPLOY_DIR/quadlet/"*.volume    "$QUADLET_DIR/"
-cp "$DEPLOY_DIR/quadlet/"*.pod       "$QUADLET_DIR/"
+for f in "$DEPLOY_DIR/quadlet/"*.container "$DEPLOY_DIR/quadlet/"*.volume "$DEPLOY_DIR/quadlet/"*.pod; do
+  dest="${QUADLET_DIR}/$(basename "${f}")"
+  sed "s|%%REPO_DIR%%|${PROJECT_ROOT}|g" "${f}" > "${dest}"
+done
 echo "==> Units installed."
 
 # ── systemd reload ────────────────────────────────────────────────────────────
@@ -180,8 +185,12 @@ echo "==> Running DB migrations..."
 # The seed script itself must be idempotent (INSERT IGNORE / upserts).
 
 if [[ "$SKIP_SEED" == "false" ]]; then
-  echo "==> Running DB seed..."
-  "$SCRIPT_DIR/db.sh" seed
+  echo "==> Running reference seed..."
+  "$SCRIPT_DIR/db.sh" seed-reference
+  if [[ "$WITH_DEMO" == "true" ]]; then
+    echo "==> Running demo seed..."
+    "$SCRIPT_DIR/db.sh" seed-demo
+  fi
 else
   echo "==> Skipping DB seed (--skip-seed)."
 fi

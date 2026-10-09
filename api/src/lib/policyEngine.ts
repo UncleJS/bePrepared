@@ -14,6 +14,13 @@
  */
 
 import { db } from "../db/client";
+
+export class PlanningNotFoundError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PlanningNotFoundError";
+  }
+}
 import {
   policyDefaults,
   householdPolicies,
@@ -154,7 +161,7 @@ export async function resolveEffectivePeople(
   const household = await db.query.households.findFirst({
     where: and(eq(households.id, householdId), isNull(households.archivedAtUTC)),
   });
-  if (!household) throw new Error(`Household ${householdId} not found`);
+  if (!household) throw new PlanningNotFoundError(`Household ${householdId} not found`);
 
   // 2. Scenario-bound profile (auto-switch)
   const scenarioProfile = await db.query.householdPeopleProfiles.findFirst({
@@ -177,6 +184,7 @@ export async function resolveEffectivePeople(
     const activeProfile = await db.query.householdPeopleProfiles.findFirst({
       where: and(
         eq(householdPeopleProfiles.id, household.activeProfileId),
+        eq(householdPeopleProfiles.householdId, householdId),
         isNull(householdPeopleProfiles.archivedAtUTC)
       ),
     });

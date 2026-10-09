@@ -10,6 +10,7 @@ import {
   type PlanningResult,
 } from "@/lib/planning";
 import { Droplets, Flame, Users } from "lucide-react";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
 
 function PlanningSection({ label, planning }: { label: string; planning: PlanningResult }) {
   return (
@@ -63,14 +64,22 @@ export default function DashboardPlanning({ householdId }: { householdId: string
   const [sip, setSip] = useState<PlanningResult | null>(null);
   const [evac, setEvac] = useState<PlanningResult | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(() => {
+    setLoading(true);
+    setError(null);
     Promise.allSettled([
       apiFetch<PlanningResult | PlanningApiResult>(`/planning/${householdId}/shelter_in_place`),
       apiFetch<PlanningResult | PlanningApiResult>(`/planning/${householdId}/evacuation`),
     ]).then(([sipRes, evacRes]) => {
       if (sipRes.status === "fulfilled") setSip(normalizePlanning(sipRes.value));
+      else setSip(null);
       if (evacRes.status === "fulfilled") setEvac(normalizePlanning(evacRes.value));
+      else setEvac(null);
+      if (sipRes.status === "rejected" || evacRes.status === "rejected") {
+        setError("Unable to load planning targets.");
+      }
       setLoading(false);
     });
   }, [householdId]);
@@ -94,8 +103,12 @@ export default function DashboardPlanning({ householdId }: { householdId: string
 
   return (
     <div className="space-y-6">
+      {error ? <ErrorBanner message={error} retry={load} /> : null}
       {sip && <PlanningSection label="Shelter in Place" planning={sip} />}
       {evac && <PlanningSection label="Evacuation" planning={evac} />}
+      {!error && !sip && !evac ? (
+        <p className="text-sm text-foreground">No planning targets are available yet.</p>
+      ) : null}
     </div>
   );
 }

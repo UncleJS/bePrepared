@@ -8,6 +8,20 @@ import { join } from "node:path";
 const PORT = Number(process.env.PORT ?? 9999);
 const DIST = join(import.meta.dir, "dist");
 
+const SECURITY_HEADERS: Record<string, string> = {
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "no-referrer",
+  "X-Frame-Options": "DENY",
+  "Content-Security-Policy":
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' http: https:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
+};
+
+function withSecurity(body: BodyInit | null, status = 200, extra?: HeadersInit): Response {
+  const headers = new Headers(extra);
+  for (const [key, value] of Object.entries(SECURITY_HEADERS)) headers.set(key, value);
+  return new Response(body, { status, headers });
+}
+
 const server = Bun.serve({
   port: PORT,
   hostname: "0.0.0.0",
@@ -16,11 +30,10 @@ const server = Bun.serve({
     const file = Bun.file(join(DIST, pathname));
 
     if (await file.exists()) {
-      return new Response(file);
+      return withSecurity(file);
     }
 
-    // SPA fallback — let React Router handle the route
-    return new Response(Bun.file(join(DIST, "index.html")));
+    return withSecurity(Bun.file(join(DIST, "index.html")));
   },
 });
 

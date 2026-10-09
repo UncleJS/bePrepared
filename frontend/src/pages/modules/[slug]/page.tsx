@@ -4,6 +4,7 @@ import { apiFetch } from "@/lib/api";
 import { BookOpen, ChevronRight, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { isHttpsUrl } from "@/lib/safeCallbackUrl";
 
 // ---------------------------------------------------------------------------
 // Types — mirror the API response shape from GET /modules/:slug
@@ -134,7 +135,7 @@ export default function ModuleDetailPage() {
                         {badges.length > 0 && (
                           <div className="flex flex-wrap gap-2">
                             {badges.map((b, i) =>
-                              b.url ? (
+                              b.url && isHttpsUrl(b.url) ? (
                                 <a key={i} href={b.url} target="_blank" rel="noopener noreferrer">
                                   <img
                                     src={badgeUrl(b)}

@@ -1,3 +1,4 @@
+import { useId } from "react";
 import type { EquipmentItem, Template } from "./types";
 import { DateOnlyInput } from "@/components/ui/date-only-input";
 
@@ -33,14 +34,19 @@ export function MaintenanceFormFields<T extends MaintenanceFormValue>({
   showActive?: boolean;
   onTemplateChange?: (templateId: string) => void;
 }) {
+  const fieldId = useId();
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       {showEquipment ? (
         <div className="space-y-1">
-          <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+          <label
+            htmlFor={`${fieldId}-equipment`}
+            className="block text-xs font-bold uppercase tracking-wide text-primary"
+          >
             Equipment Item
           </label>
           <select
+            id={`${fieldId}-equipment`}
             value={form.equipmentItemId ?? ""}
             onChange={(e) =>
               setForm((current) => ({ ...current, equipmentItemId: e.target.value }))
@@ -59,10 +65,14 @@ export function MaintenanceFormFields<T extends MaintenanceFormValue>({
 
       {showTemplate ? (
         <div className="space-y-1">
-          <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+          <label
+            htmlFor={`${fieldId}-template`}
+            className="block text-xs font-bold uppercase tracking-wide text-primary"
+          >
             Maintenance Template
           </label>
           <select
+            id={`${fieldId}-template`}
             value={form.templateId ?? ""}
             onChange={(e) => onTemplateChange?.(e.target.value)}
             className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
@@ -78,10 +88,14 @@ export function MaintenanceFormFields<T extends MaintenanceFormValue>({
       ) : null}
 
       <div className="space-y-1">
-        <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+        <label
+          htmlFor={`${fieldId}-name`}
+          className="block text-xs font-bold uppercase tracking-wide text-primary"
+        >
           Schedule Name
         </label>
         <input
+          id={`${fieldId}-name`}
           value={form.name}
           onChange={(e) => setForm((current) => ({ ...current, name: e.target.value }))}
           className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
@@ -90,10 +104,14 @@ export function MaintenanceFormFields<T extends MaintenanceFormValue>({
       </div>
 
       <div className="space-y-1">
-        <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+        <label
+          htmlFor={`${fieldId}-interval`}
+          className="block text-xs font-bold uppercase tracking-wide text-primary"
+        >
           Interval (days)
         </label>
         <input
+          id={`${fieldId}-interval`}
           value={form.calDays}
           onChange={(e) => setForm((current) => ({ ...current, calDays: e.target.value }))}
           className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
@@ -102,10 +120,14 @@ export function MaintenanceFormFields<T extends MaintenanceFormValue>({
       </div>
 
       <div className="space-y-1">
-        <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+        <label
+          htmlFor={`${fieldId}-grace`}
+          className="block text-xs font-bold uppercase tracking-wide text-primary"
+        >
           Grace Period (days)
         </label>
         <input
+          id={`${fieldId}-grace`}
           value={form.graceDays}
           onChange={(e) => setForm((current) => ({ ...current, graceDays: e.target.value }))}
           className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
@@ -115,10 +137,14 @@ export function MaintenanceFormFields<T extends MaintenanceFormValue>({
 
       {showLastDone ? (
         <div className="space-y-1">
-          <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+          <label
+            htmlFor={`${fieldId}-last`}
+            className="block text-xs font-bold uppercase tracking-wide text-primary"
+          >
             Last Done Date
           </label>
           <DateOnlyInput
+            id={`${fieldId}-last`}
             value={form.lastDoneAt ?? ""}
             onChange={(v) => setForm((current) => ({ ...current, lastDoneAt: v }))}
           />
@@ -126,10 +152,14 @@ export function MaintenanceFormFields<T extends MaintenanceFormValue>({
       ) : null}
 
       <div className="space-y-1">
-        <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+        <label
+          htmlFor={`${fieldId}-due`}
+          className="block text-xs font-bold uppercase tracking-wide text-primary"
+        >
           Next Due Date
         </label>
         <DateOnlyInput
+          id={`${fieldId}-due`}
           value={form.nextDueAt}
           onChange={(v) => setForm((current) => ({ ...current, nextDueAt: v }))}
         />

@@ -3,6 +3,7 @@ import { swagger } from "@elysiajs/swagger";
 import { cors } from "@elysiajs/cors";
 import { logger } from "@beprepared/shared/logger";
 import { bearerFromHeader, verifyApiToken } from "./lib/authToken";
+import { assertAcceptableAuthSecret } from "./lib/authSecret";
 import { setRequestClaims } from "./lib/authContext";
 import { db } from "./db/client";
 import { users, modules } from "./db/schema";
@@ -33,8 +34,10 @@ const CORS_ORIGINS = (process.env.CORS_ORIGINS ?? "http://localhost:9997")
   .map((s) => s.trim())
   .filter(Boolean);
 
-if (AUTH_ENABLED && !API_AUTH_SECRET) {
-  throw new Error("API auth is enabled but API_AUTH_SECRET/AUTH_SECRET is not set.");
+const MAX_BODY_BYTES = 1_000_000;
+
+if (AUTH_ENABLED) {
+  assertAcceptableAuthSecret(API_AUTH_SECRET, NODE_ENV);
 }
 
 if (NODE_ENV === "production" && !AUTH_ENABLED) {
@@ -67,110 +70,149 @@ function isPublicPath(pathname: string): boolean {
   );
 }
 
-const app = new Elysia()
-  .derive(({ request }) => {
-    if (!AUTH_ENABLED || !API_AUTH_SECRET) return { auth: null };
-    const token = bearerFromHeader(request.headers.get("authorization"));
-    if (!token) return { auth: null };
-    return { auth: verifyApiToken(token, API_AUTH_SECRET) };
-  })
-  .onBeforeHandle(async ({ request, set, auth }) => {
-    if (!AUTH_ENABLED) return;
-    const pathname = new URL(request.url).pathname;
-    if (isPublicPath(pathname)) return;
-    if (!auth) {
-      setRequestClaims(request, null);
-      set.status = 401;
-      return { error: "Unauthorized" };
-    }
+function applySecurityHeaders(set: { headers: Record<string, string | number> }, pathname: string) {
+  set.headers["x-content-type-options"] = "nosniff";
+  set.headers["referrer-policy"] = "no-referrer";
+  set.headers["x-frame-options"] = "DENY";
+  if (!pathname.startsWith("/docs")) {
+    set.headers["content-security-policy"] = "default-src 'none'; frame-ancestors 'none'";
+  }
+}
 
-    const dbUser = await db.query.users.findFirst({
-      where: and(eq(users.id, auth.sub), isNull(users.archivedAtUTC)),
-    });
-    if (!dbUser) {
-      setRequestClaims(request, null);
-      set.status = 401;
-      return { error: "Unauthorized" };
-    }
+function isDuplicateKey(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const mysqlError = error as Error & { code?: string; errno?: number };
+  return mysqlError.code === "ER_DUP_ENTRY" || mysqlError.errno === 1062;
+}
 
-    setRequestClaims(request, {
-      sub: dbUser.id,
-      username: dbUser.username,
-      householdId: dbUser.householdId,
-      isAdmin: dbUser.isAdmin,
-      iat: auth.iat,
-      exp: auth.exp,
-    });
-  })
-  .use(cors({ origin: CORS_ORIGINS, credentials: true }))
-  .use(
-    swagger({
-      documentation: {
-        info: {
-          title: "bePrepared API",
-          version: "0.1.0",
-          description: "Disaster preparedness system — household readiness API",
-          license: {
-            name: "CC BY-NC-SA 4.0",
-            url: "https://creativecommons.org/licenses/by-nc-sa/4.0/",
-          },
-        },
-        tags: [
-          { name: "auth", description: "Authentication" },
-          { name: "users", description: "User management" },
-          { name: "households", description: "Household management" },
-          { name: "modules", description: "Preparedness modules and guidance" },
-          { name: "tasks", description: "Ticksheets and task progression" },
-          { name: "inventory", description: "Inventory items and lots" },
-          { name: "equipment", description: "Equipment items and battery profiles" },
-          { name: "maintenance", description: "Maintenance schedules and events" },
-          { name: "alerts", description: "Alert queue management" },
-          { name: "settings", description: "Household policies and people profiles" },
-          { name: "planning", description: "Effective totals and planning calculations" },
-        ],
-      },
-      path: "/docs",
-      swaggerOptions: { tryItOutEnabled: !IS_PRODUCTION },
+export function createApp() {
+  return new Elysia()
+    .derive(({ request }) => {
+      if (!AUTH_ENABLED || !API_AUTH_SECRET) return { auth: null };
+      const token = bearerFromHeader(request.headers.get("authorization"));
+      if (!token) return { auth: null };
+      return { auth: verifyApiToken(token, API_AUTH_SECRET) };
     })
-  )
-  .get(
-    "/openapi.json",
-    () => new Response(null, { status: 307, headers: { location: "/docs/json" } })
-  )
-  .get("/", () => ({ status: "ok", name: "bePrepared API", version: "0.1.0" }))
-  .get("/health", async ({ set }) => {
-    try {
-      // Query an actual application table — not just SELECT 1 — so the probe
-      // verifies: (1) DB connection is alive, (2) migrations have been applied
-      // (table exists), and (3) seed data is present (app is ready for users).
-      const rows = await db.select({ id: modules.id }).from(modules).limit(1);
-      if (rows.length === 0) {
-        logger.error("Health probe: modules table is empty — seed data missing");
-        set.status = 503;
-        return { status: "error", detail: "db_not_seeded", ts: new Date().toISOString() };
+    .onBeforeHandle(async ({ request, set, auth }) => {
+      const pathname = new URL(request.url).pathname;
+      const contentLength = Number(request.headers.get("content-length") ?? "0");
+      if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
+        set.status = 413;
+        return { error: "Payload too large" };
       }
-      return { status: "ok", ts: new Date().toISOString() };
-    } catch (err) {
-      logger.error("Health probe DB check failed", { err: String(err) });
-      set.status = 503;
-      return { status: "error", ts: new Date().toISOString() };
-    }
-  })
-  .use(authRoute)
-  .use(usersRoute)
-  .use(householdsRoute)
-  .use(modulesRoute)
-  .use(moduleCategoriesRoute)
-  .use(tasksRoute)
-  .use(inventoryRoute)
-  .use(equipmentRoute)
-  .use(maintenanceRoute)
-  .use(alertsRoute)
-  .use(adminAlertsRoute)
-  .use(settingsRoute)
-  .use(planningRoute)
-  .listen(PORT);
 
-logger.info("bePrepared API running", { url: `http://localhost:${PORT}` });
-logger.info("Swagger UI", { url: `http://localhost:${PORT}/docs` });
-logger.info("OpenAPI JSON", { url: `http://localhost:${PORT}/openapi.json` });
+      if (!AUTH_ENABLED) return;
+      if (isPublicPath(pathname)) return;
+      if (!auth) {
+        setRequestClaims(request, null);
+        set.status = 401;
+        return { error: "Unauthorized" };
+      }
+
+      const dbUser = await db.query.users.findFirst({
+        where: and(eq(users.id, auth.sub), isNull(users.archivedAtUTC)),
+      });
+      if (!dbUser || dbUser.credentialsVersion !== auth.credentialsVersion) {
+        setRequestClaims(request, null);
+        set.status = 401;
+        return { error: "Unauthorized" };
+      }
+
+      setRequestClaims(request, {
+        sub: dbUser.id,
+        username: dbUser.username,
+        householdId: dbUser.householdId,
+        isAdmin: dbUser.isAdmin,
+        credentialsVersion: dbUser.credentialsVersion,
+        iat: auth.iat,
+        exp: auth.exp,
+      });
+    })
+    .onAfterHandle(({ request, set }) => {
+      applySecurityHeaders(set, new URL(request.url).pathname);
+    })
+    .onError(({ code, error, set }) => {
+      if (isDuplicateKey(error)) {
+        set.status = 409;
+        return { error: "Conflict" };
+      }
+      if (code === "VALIDATION" || code === "PARSE" || code === "NOT_FOUND") return;
+      logger.error("Unhandled API error", { err: String(error) });
+      set.status = 500;
+      return { error: "Internal error" };
+    })
+    .use(cors({ origin: CORS_ORIGINS, credentials: true }))
+    .use(
+      swagger({
+        documentation: {
+          info: {
+            title: "bePrepared API",
+            version: "0.1.0",
+            description: "Disaster preparedness system — household readiness API",
+            license: {
+              name: "CC BY-NC-SA 4.0",
+              url: "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+            },
+          },
+          tags: [
+            { name: "auth", description: "Authentication" },
+            { name: "users", description: "User management" },
+            { name: "households", description: "Household management" },
+            { name: "modules", description: "Preparedness modules and guidance" },
+            { name: "tasks", description: "Ticksheets and task progression" },
+            { name: "inventory", description: "Inventory items and lots" },
+            { name: "equipment", description: "Equipment items and battery profiles" },
+            { name: "maintenance", description: "Maintenance schedules and events" },
+            { name: "alerts", description: "Alert queue management" },
+            { name: "settings", description: "Household policies and people profiles" },
+            { name: "planning", description: "Effective totals and planning calculations" },
+          ],
+        },
+        path: "/docs",
+        swaggerOptions: { tryItOutEnabled: !IS_PRODUCTION },
+      })
+    )
+    .get(
+      "/openapi.json",
+      () => new Response(null, { status: 307, headers: { location: "/docs/json" } })
+    )
+    .get("/", () => ({ status: "ok", name: "bePrepared API", version: "0.1.0" }))
+    .get("/health", async ({ set }) => {
+      try {
+        // Query an actual application table — not just SELECT 1 — so the probe
+        // verifies: (1) DB connection is alive, (2) migrations have been applied
+        // (table exists), and (3) seed data is present (app is ready for users).
+        const rows = await db.select({ id: modules.id }).from(modules).limit(1);
+        if (rows.length === 0) {
+          logger.error("Health probe: modules table is empty — seed data missing");
+          set.status = 503;
+          return { status: "error", detail: "db_not_seeded", ts: new Date().toISOString() };
+        }
+        return { status: "ok", ts: new Date().toISOString() };
+      } catch (err) {
+        logger.error("Health probe DB check failed", { err: String(err) });
+        set.status = 503;
+        return { status: "error", ts: new Date().toISOString() };
+      }
+    })
+    .use(authRoute)
+    .use(usersRoute)
+    .use(householdsRoute)
+    .use(modulesRoute)
+    .use(moduleCategoriesRoute)
+    .use(tasksRoute)
+    .use(inventoryRoute)
+    .use(equipmentRoute)
+    .use(maintenanceRoute)
+    .use(alertsRoute)
+    .use(adminAlertsRoute)
+    .use(settingsRoute)
+    .use(planningRoute);
+}
+
+if (import.meta.main) {
+  createApp().listen(PORT);
+  logger.info("bePrepared API running", { url: `http://localhost:${PORT}` });
+  logger.info("Swagger UI", { url: `http://localhost:${PORT}/docs` });
+  logger.info("OpenAPI JSON", { url: `http://localhost:${PORT}/openapi.json` });
+}

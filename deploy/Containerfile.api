@@ -16,7 +16,7 @@ COPY shared/src ./shared/src
 COPY shared/tsconfig.json ./shared/
 
 # Install all workspace deps
-RUN bun install
+RUN bun install --frozen-lockfile
 
 # Build the API bundle
 WORKDIR /app/api
@@ -27,15 +27,17 @@ FROM docker.io/oven/bun:1.2-alpine
 
 WORKDIR /app/api
 
-COPY --from=builder /app/api/dist ./dist
-COPY --from=builder /app/api/package.json ./package.json
-COPY --from=builder /app/api/src/db/migrations ./src/db/migrations
+COPY --from=builder --chown=bun:bun /app/api/dist ./dist
+COPY --from=builder --chown=bun:bun /app/api/package.json ./package.json
+COPY --from=builder --chown=bun:bun /app/api/src/db/migrations ./src/db/migrations
 # Need the full src for seed / migrate scripts
-COPY --from=builder /app/api/src ./src
-COPY --from=builder /app/node_modules /app/node_modules
+COPY --from=builder --chown=bun:bun /app/api/src ./src
+COPY --from=builder --chown=bun:bun /app/node_modules /app/node_modules
 
 ENV NODE_ENV=production
 ENV PORT=9995
+ENV HOME=/tmp
+USER bun
 
 EXPOSE 9995
 

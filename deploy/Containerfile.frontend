@@ -21,7 +21,7 @@ COPY frontend/serve.ts            ./frontend/
 COPY frontend/src                 ./frontend/src
 
 # Install all workspace deps (uses root lockfile)
-RUN bun install
+RUN bun install --frozen-lockfile
 
 # Inject build-time API URL (browser-visible — must be set at image build time)
 ARG VITE_API_URL=http://localhost:9995
@@ -37,11 +37,13 @@ FROM docker.io/oven/bun:1.2-alpine
 
 WORKDIR /app/frontend
 
-COPY --from=builder /app/frontend/dist     ./dist
-COPY --from=builder /app/frontend/serve.ts ./serve.ts
+COPY --from=builder --chown=bun:bun /app/frontend/dist     ./dist
+COPY --from=builder --chown=bun:bun /app/frontend/serve.ts ./serve.ts
 
 ENV NODE_ENV=production
 ENV PORT=9999
+ENV HOME=/tmp
+USER bun
 
 EXPOSE 9999
 

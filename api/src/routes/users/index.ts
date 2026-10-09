@@ -4,11 +4,37 @@ import { users } from "../../db/schema";
 import { eq, isNull, and, ne } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { requireAdmin, requireAuth } from "../../lib/routeAuth";
+import { issueApiToken } from "../../lib/authToken";
 
-/** Strip passwordHash before returning a user record */
+/** Strip secrets before returning a user record */
 function safeUser(user: typeof users.$inferSelect) {
-  const { passwordHash: _omit, ...safe } = user;
+  const { passwordHash: _omit, credentialsVersion: _version, ...safe } = user;
   return safe;
+}
+
+function signingSecret(): string | null {
+  return process.env.API_AUTH_SECRET ?? process.env.AUTH_SECRET ?? null;
+}
+
+function issueTokenFor(user: typeof users.$inferSelect): string | null {
+  const secret = signingSecret();
+  if (!secret) return null;
+  return issueApiToken(
+    {
+      sub: user.id,
+      username: user.username,
+      householdId: user.householdId,
+      isAdmin: user.isAdmin,
+      credentialsVersion: user.credentialsVersion,
+    },
+    secret,
+    60 * 60 * 12
+  );
+}
+
+async function verifyPassword(plain: string, hash: string): Promise<boolean> {
+  const { compare } = (await import("bcryptjs")) as typeof import("bcryptjs");
+  return compare(plain, hash);
 }
 
 async function hashPassword(plain: string): Promise<string> {
@@ -59,10 +85,30 @@ export const usersRoute = new Elysia({ prefix: "/users", tags: ["users"] })
       const claims = requireAuth(request, set);
       if (!claims) return { error: "Unauthorized" };
 
+      const existing = await db.query.users.findFirst({
+        where: and(eq(users.id, claims.sub), isNull(users.archivedAtUTC)),
+      });
+      if (!existing) {
+        set.status = 404;
+        return { error: "User not found" };
+      }
+
       const updates: Partial<typeof users.$inferInsert> = {};
       if (body.email !== undefined) updates.email = body.email;
       if (body.username !== undefined) updates.username = body.username;
-      if (body.password) updates.passwordHash = await hashPassword(body.password);
+      if (body.password) {
+        if (!body.currentPassword) {
+          set.status = 400;
+          return { error: "Current password is required" };
+        }
+        const matches = await verifyPassword(body.currentPassword, existing.passwordHash);
+        if (!matches) {
+          set.status = 401;
+          return { error: "Invalid current password" };
+        }
+        updates.passwordHash = await hashPassword(body.password);
+        updates.credentialsVersion = existing.credentialsVersion + 1;
+      }
 
       if (Object.keys(updates).length === 0) {
         set.status = 400;
@@ -78,7 +124,8 @@ export const usersRoute = new Elysia({ prefix: "/users", tags: ["users"] })
         set.status = 404;
         return { error: "User not found" };
       }
-      return safeUser(updated);
+      const token = body.password ? issueTokenFor(updated) : null;
+      return token ? { ...safeUser(updated), token } : safeUser(updated);
     },
     {
       body: t.Partial(
@@ -86,6 +133,7 @@ export const usersRoute = new Elysia({ prefix: "/users", tags: ["users"] })
           email: t.String({ maxLength: 255 }),
           username: t.String({ minLength: 1, maxLength: 100 }),
           password: t.String({ minLength: 8, maxLength: 255 }),
+          currentPassword: t.String({ minLength: 1, maxLength: 255 }),
         })
       ),
       detail: { summary: "Update own profile (email, username, password)" },
@@ -148,7 +196,10 @@ export const usersRoute = new Elysia({ prefix: "/users", tags: ["users"] })
       const updates: Partial<typeof users.$inferInsert> = {};
       if (body.email !== undefined) updates.email = body.email;
       if (body.username !== undefined) updates.username = body.username;
-      if (body.password) updates.passwordHash = await hashPassword(body.password);
+      if (body.password) {
+        updates.passwordHash = await hashPassword(body.password);
+        updates.credentialsVersion = existing.credentialsVersion + 1;
+      }
       if (body.householdId !== undefined) updates.householdId = body.householdId;
       if (body.isAdmin !== undefined) updates.isAdmin = body.isAdmin;
 
@@ -166,7 +217,8 @@ export const usersRoute = new Elysia({ prefix: "/users", tags: ["users"] })
         set.status = 404;
         return { error: "User not found" };
       }
-      return safeUser(updated);
+      const token = body.password && updated.id === claims.sub ? issueTokenFor(updated) : null;
+      return token ? { ...safeUser(updated), token } : safeUser(updated);
     },
     {
       body: t.Partial(

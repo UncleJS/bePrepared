@@ -10,6 +10,8 @@ import { toForm, toPayload } from "./formUtils";
 import { TaskFormFields } from "./TaskFormFields";
 import type { TaskForm } from "./types";
 import { useTasksData } from "./useTasksData";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 export default function TasksPage() {
   const { householdId, isLoading, user } = useActiveHouseholdId();
@@ -97,13 +99,13 @@ export default function TasksPage() {
   }
 
   if (isLoading) {
-    return <p className="text-sm text-foreground">Loading session...</p>;
+    return <LoadingSpinner label="Loading session…" />;
   }
   if (!householdId) {
     return <p className="text-sm text-foreground">No household in session.</p>;
   }
   if (loading) {
-    return <p className="text-sm text-foreground">Loading ticksheets...</p>;
+    return <LoadingSpinner label="Loading ticksheets…" />;
   }
 
   return (
@@ -115,11 +117,7 @@ export default function TasksPage() {
         </p>
       </div>
 
-      {error && (
-        <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error}
-        </p>
-      )}
+      {error && <ErrorBanner message={error} retry={() => void loadData()} />}
 
       {isAdmin && (
         <section className="space-y-4 rounded-lg border border-border bg-card p-4">

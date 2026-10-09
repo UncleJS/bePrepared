@@ -66,6 +66,20 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
       const claims = requireHouseholdScope(request, set, params.id);
       if (!claims) return { error: "Forbidden" };
 
+      if (body.activeProfileId) {
+        const profile = await db.query.householdPeopleProfiles.findFirst({
+          where: and(
+            eq(householdPeopleProfiles.id, body.activeProfileId),
+            eq(householdPeopleProfiles.householdId, params.id),
+            isNull(householdPeopleProfiles.archivedAtUTC)
+          ),
+        });
+        if (!profile) {
+          set.status = 400;
+          return { error: "activeProfileId does not belong to this household" };
+        }
+      }
+
       await db
         .update(households)
         .set(body)
@@ -95,8 +109,8 @@ export const householdsRoute = new Elysia({ prefix: "/households", tags: ["house
   .delete(
     "/:id",
     async ({ request, set, params }) => {
-      const claims = requireHouseholdScope(request, set, params.id);
-      if (!claims) return { error: "Forbidden" };
+      const claims = requireAdmin(request, set);
+      if (!claims) return { error: "Admin access required" };
 
       await db
         .update(households)

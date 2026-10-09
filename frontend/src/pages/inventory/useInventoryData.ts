@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import type { InventoryCategory, InventoryItem } from "./types";
 
@@ -7,20 +7,25 @@ export function useInventoryData() {
   const [categories, setCategories] = useState<InventoryCategory[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const generation = useRef(0);
 
   const loadData = useCallback(async (householdId: string) => {
+    const requestId = ++generation.current;
     setLoading(true);
+    setError(null);
     try {
       const [itemRows, categoryRows] = await Promise.all([
         apiFetch<InventoryItem[]>(`/inventory/${householdId}/items`),
         apiFetch<InventoryCategory[]>(`/inventory/${householdId}/categories`),
       ]);
+      if (requestId !== generation.current) return;
       setItems(itemRows);
       setCategories(categoryRows);
     } catch (e) {
+      if (requestId !== generation.current) return;
       setError(e instanceof Error ? e.message : "Failed to load inventory.");
     } finally {
-      setLoading(false);
+      if (requestId === generation.current) setLoading(false);
     }
   }, []);
 

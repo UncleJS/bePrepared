@@ -19,6 +19,10 @@ import { logger } from "@beprepared/shared/logger";
 import * as schema from "../db/schema";
 import { eq, isNull, and, lte, isNotNull, inArray } from "drizzle-orm";
 import { randomUUID } from "crypto";
+import { assertRunSucceeded, type JobCounters, type RunMetrics } from "./alertJobStatus";
+
+export { AlertJobsFailedError, assertRunSucceeded, countJobErrors } from "./alertJobStatus";
+export type { JobCounters, RunMetrics } from "./alertJobStatus";
 
 const {
   inventoryLots,
@@ -37,19 +41,6 @@ type AlertCategory = "expiry" | "replacement" | "maintenance" | "low_stock" | "t
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-
-export type JobCounters = {
-  inserted: number;
-  escalated: number;
-  skipped: number;
-  errors: number;
-};
-
-export type RunMetrics = {
-  expiry: JobCounters;
-  replacement: JobCounters;
-  maintenance: JobCounters;
-};
 
 function emptyCounters(): JobCounters {
   return { inserted: 0, escalated: 0, skipped: 0, errors: 0 };
@@ -147,6 +138,7 @@ async function upsertAlert(data: {
     const existing = await db.query.alerts.findFirst({
       where: and(
         eq(alerts.householdId, data.householdId),
+        eq(alerts.category, data.category),
         eq(alerts.entityType, data.entityType),
         eq(alerts.entityId, data.entityId),
         eq(alerts.isResolved, false),
@@ -398,9 +390,11 @@ export async function runAllJobs(): Promise<RunMetrics> {
     await processInventoryReplacement(metrics.replacement);
     await processMaintenanceSchedules(metrics.maintenance);
     logger.info("[alertJobs] Run metrics", { metrics });
+    assertRunSucceeded(metrics);
     logger.info("[alertJobs] Run complete", { ms: Date.now() - start });
   } catch (err) {
     logger.error("[alertJobs] Error during job run", { err: String(err) });
+    throw err;
   }
   return metrics;
 }

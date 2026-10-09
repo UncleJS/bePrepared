@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
 import { useEffect } from "react";
 import { LEVEL_LABELS, LEVEL_ORDER } from "@/pages/tasks/constants";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useTasksData } from "@/pages/tasks/useTasksData";
 
 export default function DashboardReadinessCard({ householdId }: { householdId: string }) {
-  const { tasks, progress, loading, loadData } = useTasksData(householdId);
+  const { tasks, progress, loading, error, loadData } = useTasksData(householdId);
 
   useEffect(() => {
     void loadData();
@@ -26,6 +27,12 @@ export default function DashboardReadinessCard({ householdId }: { householdId: s
           Open tasks →
         </Link>
       </div>
+
+      {error ? (
+        <div className="mt-4">
+          <ErrorBanner message={error} retry={() => void loadData()} />
+        </div>
+      ) : null}
 
       <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-center">
         <div className="flex justify-center lg:w-48">

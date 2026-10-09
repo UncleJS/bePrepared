@@ -13,8 +13,7 @@ import { seedTasksAndDependencies } from "./tasks";
 import { seedHousehold } from "./household";
 import { seedUsers } from "./users";
 
-async function main() {
-  console.log("🌱 Starting seed...");
+export async function seedReference() {
   await seedPolicyDefaults();
   await seedModules();
   await seedGuidanceDocs();
@@ -23,8 +22,25 @@ async function main() {
   await seedInventoryCategories();
   await seedEquipmentCategories();
   await seedTasksAndDependencies();
+}
+
+export async function seedDemo() {
   await seedHousehold();
   await seedUsers();
+}
+
+async function main() {
+  const referenceOnly = process.argv.includes("--reference-only");
+  const demoOnly = process.argv.includes("--demo-only");
+  console.log("🌱 Starting seed...");
+  if (!demoOnly) {
+    console.log("  Reference data (modules, categories, policies)...");
+    await seedReference();
+  }
+  if (!referenceOnly) {
+    console.log("  Demo household and admin user...");
+    await seedDemo();
+  }
   console.log("✅ Seed complete.");
   process.exit(0);
 }

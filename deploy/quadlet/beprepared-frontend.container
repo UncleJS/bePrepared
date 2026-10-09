@@ -12,7 +12,7 @@ Image=localhost/beprepared-frontend:latest
 Pod=beprepared.pod
 ContainerName=beprepared-frontend
 
-EnvironmentFile=%h/0_opencode/bePrepared/.env
+EnvironmentFile=%%REPO_DIR%%/.env
 Environment=PORT=9999
 # Bind the Vite preview server to all interfaces so the health probe
 # can reach it via 127.0.0.1 inside the shared Podman pod network namespace.
@@ -21,6 +21,7 @@ PodmanArgs=--read-only
 PodmanArgs=--tmpfs=/tmp:rw,nosuid,nodev,noexec,size=64m
 PodmanArgs=--security-opt=no-new-privileges
 PodmanArgs=--cap-drop=all
+PodmanArgs=--memory=256m
 
 # Functional healthcheck: fetch / (SPA index.html) to confirm
 # Vite preview server is up. HealthOnFailure=kill lets systemd own the restart so

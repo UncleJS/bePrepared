@@ -46,9 +46,6 @@ export async function seedUsers() {
     .onDuplicateKeyUpdate({
       set: {
         email: "admin@localhost",
-        isAdmin: true,
-        passwordHash,
-        householdId,
       },
     });
 

@@ -11,6 +11,7 @@ function makeClaims(
     username: partial?.username ?? "user",
     householdId: partial?.householdId ?? "household-a",
     isAdmin: partial?.isAdmin ?? false,
+    credentialsVersion: 1,
     iat: 1,
     exp: 9999999999,
   };

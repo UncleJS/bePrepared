@@ -1,4 +1,5 @@
 // schema/alerts.ts
+import { sql } from "drizzle-orm";
 import { mysqlTable, varchar, text, boolean, timestamp, mysqlEnum } from "drizzle-orm/mysql-core";
 
 export const alerts = mysqlTable("alerts", {
@@ -24,4 +25,8 @@ export const alerts = mysqlTable("alerts", {
   createdAtUTC: timestamp("created_at_UTC").notNull().defaultNow(),
   updatedAtUTC: timestamp("updated_at_UTC").notNull().defaultNow().onUpdateNow(),
   archivedAtUTC: timestamp("archived_at_UTC"),
+  activeAlertKey: varchar("active_alert_key", { length: 320 }).generatedAlwaysAs(
+    sql`CASE WHEN \`is_resolved\` = 0 AND \`archived_at_UTC\` IS NULL THEN CONCAT(\`household_id\`, ':', \`category\`, ':', \`entity_type\`, ':', \`entity_id\`) ELSE CONCAT(\`household_id\`, ':', \`category\`, ':', \`entity_type\`, ':', \`entity_id\`, ':', \`id\`) END`,
+    { mode: "stored" }
+  ),
 });

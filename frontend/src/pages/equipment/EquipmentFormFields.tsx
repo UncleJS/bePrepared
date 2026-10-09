@@ -1,4 +1,4 @@
-import type { Dispatch, SetStateAction } from "react";
+import { useId, type Dispatch, type SetStateAction } from "react";
 import type { EquipmentCategory, EquipmentForm } from "./types";
 import { DateOnlyInput } from "@/components/ui/date-only-input";
 
@@ -11,13 +11,18 @@ export function EquipmentFormFields({
   setForm: Dispatch<SetStateAction<EquipmentForm>>;
   categories: EquipmentCategory[];
 }) {
+  const fieldId = useId();
   return (
     <>
       <div className="space-y-1">
-        <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+        <label
+          htmlFor={`${fieldId}-name`}
+          className="block text-xs font-bold uppercase tracking-wide text-primary"
+        >
           Equipment Name *
         </label>
         <input
+          id={`${fieldId}-name`}
           className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
           value={form.name}
           onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
@@ -25,10 +30,14 @@ export function EquipmentFormFields({
       </div>
 
       <div className="space-y-1">
-        <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+        <label
+          htmlFor={`${fieldId}-category`}
+          className="block text-xs font-bold uppercase tracking-wide text-primary"
+        >
           Equipment Category
         </label>
         <select
+          id={`${fieldId}-category`}
           className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
           value={form.categoryId}
           onChange={(e) => setForm((prev) => ({ ...prev, categoryId: e.target.value }))}
@@ -43,10 +52,14 @@ export function EquipmentFormFields({
       </div>
 
       <div className="space-y-1">
-        <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+        <label
+          htmlFor={`${fieldId}-model`}
+          className="block text-xs font-bold uppercase tracking-wide text-primary"
+        >
           Model
         </label>
         <input
+          id={`${fieldId}-model`}
           className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
           value={form.model}
           onChange={(e) => setForm((prev) => ({ ...prev, model: e.target.value }))}
@@ -54,10 +67,14 @@ export function EquipmentFormFields({
       </div>
 
       <div className="space-y-1">
-        <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+        <label
+          htmlFor={`${fieldId}-serial`}
+          className="block text-xs font-bold uppercase tracking-wide text-primary"
+        >
           Serial Number
         </label>
         <input
+          id={`${fieldId}-serial`}
           className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
           value={form.serialNo}
           onChange={(e) => setForm((prev) => ({ ...prev, serialNo: e.target.value }))}
@@ -65,10 +82,14 @@ export function EquipmentFormFields({
       </div>
 
       <div className="space-y-1">
-        <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+        <label
+          htmlFor={`${fieldId}-location`}
+          className="block text-xs font-bold uppercase tracking-wide text-primary"
+        >
           Storage Location
         </label>
         <input
+          id={`${fieldId}-location`}
           className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
           value={form.location}
           onChange={(e) => setForm((prev) => ({ ...prev, location: e.target.value }))}
@@ -76,10 +97,14 @@ export function EquipmentFormFields({
       </div>
 
       <div className="space-y-1">
-        <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+        <label
+          htmlFor={`${fieldId}-status`}
+          className="block text-xs font-bold uppercase tracking-wide text-primary"
+        >
           Operational Status
         </label>
         <select
+          id={`${fieldId}-status`}
           className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm"
           value={form.status}
           onChange={(e) =>
@@ -94,10 +119,14 @@ export function EquipmentFormFields({
       </div>
 
       <div className="space-y-1">
-        <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+        <label
+          htmlFor={`${fieldId}-acquired`}
+          className="block text-xs font-bold uppercase tracking-wide text-primary"
+        >
           Acquired Date
         </label>
         <DateOnlyInput
+          id={`${fieldId}-acquired`}
           value={form.acquiredAt}
           onChange={(v) => setForm((prev) => ({ ...prev, acquiredAt: v }))}
         />

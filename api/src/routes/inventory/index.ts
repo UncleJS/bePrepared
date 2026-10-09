@@ -11,6 +11,7 @@ import {
   validateCategoryReplacementInput,
 } from "../_shared/categoryHelpers";
 import { parseISODate } from "../_shared/dates";
+import { DEFAULT_LIST_LIMIT } from "../../lib/listLimits";
 
 export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["inventory"] })
 
@@ -221,6 +222,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
           eq(inventoryItems.householdId, params.householdId),
           isNull(inventoryItems.archivedAtUTC)
         ),
+        limit: DEFAULT_LIST_LIMIT,
       });
 
       const lots = await db.query.inventoryLots.findMany({
@@ -228,6 +230,7 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
           eq(inventoryLots.householdId, params.householdId),
           isNull(inventoryLots.archivedAtUTC)
         ),
+        limit: DEFAULT_LIST_LIMIT,
       });
 
       return items.map((item) => ({
@@ -389,6 +392,18 @@ export const inventoryRoute = new Elysia({ prefix: "/inventory", tags: ["invento
       } catch (err: any) {
         set.status = 400;
         return { error: err.message };
+      }
+
+      const item = await db.query.inventoryItems.findFirst({
+        where: and(
+          eq(inventoryItems.id, params.itemId),
+          eq(inventoryItems.householdId, params.householdId),
+          isNull(inventoryItems.archivedAtUTC)
+        ),
+      });
+      if (!item) {
+        set.status = 404;
+        return { error: "Inventory item not found" };
       }
 
       const id = randomUUID();

@@ -10,6 +10,12 @@ import {
   requireCustomCategoryForHousehold,
   validateCategoryReplacementInput,
 } from "../_shared/categoryHelpers";
+import { parseISODate } from "../_shared/dates";
+
+function optionalISODate(value: string | undefined, field: string): Date | undefined {
+  if (!value) return undefined;
+  return parseISODate(value, field);
+}
 
 export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipment"] })
 
@@ -315,6 +321,14 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
         }
       }
 
+      let acquiredAt: Date | undefined;
+      try {
+        acquiredAt = optionalISODate(body.acquiredAt, "acquiredAt");
+      } catch (err) {
+        set.status = 400;
+        return { error: err instanceof Error ? err.message : "Invalid date" };
+      }
+
       const id = randomUUID();
       await db.insert(equipmentItems).values({
         id,
@@ -326,7 +340,7 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
         serialNo: body.serialNo,
         location: body.location,
         status: body.status ?? "operational",
-        acquiredAt: body.acquiredAt ? new Date(body.acquiredAt) : undefined,
+        acquiredAt,
         notes: body.notes,
       });
       return db.query.equipmentItems.findFirst({ where: eq(equipmentItems.id, id) });
@@ -369,6 +383,14 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
         }
       }
 
+      let acquiredAt: Date | undefined;
+      try {
+        acquiredAt = optionalISODate(body.acquiredAt, "acquiredAt");
+      } catch (err) {
+        set.status = 400;
+        return { error: err instanceof Error ? err.message : "Invalid date" };
+      }
+
       await db
         .update(equipmentItems)
         .set({
@@ -379,7 +401,7 @@ export const equipmentRoute = new Elysia({ prefix: "/equipment", tags: ["equipme
           serialNo: body.serialNo,
           location: body.location,
           status: body.status,
-          acquiredAt: body.acquiredAt ? new Date(body.acquiredAt) : undefined,
+          acquiredAt,
           notes: body.notes,
         })
         .where(

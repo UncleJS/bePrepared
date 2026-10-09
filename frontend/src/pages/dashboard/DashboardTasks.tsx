@@ -2,10 +2,12 @@ import { Link } from "react-router-dom";
 import { useEffect, useMemo } from "react";
 import { LEVEL_LABELS, LEVEL_ORDER } from "@/pages/tasks/constants";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { useTasksData } from "@/pages/tasks/useTasksData";
 
 export default function DashboardTasks({ householdId }: { householdId: string }) {
-  const { tasks, progress, moduleById, loadData, loading } = useTasksData(householdId);
+  const { tasks, progress, moduleById, loadData, loading, error } = useTasksData(householdId);
 
   useEffect(() => {
     void loadData();
@@ -38,7 +40,9 @@ export default function DashboardTasks({ householdId }: { householdId: string })
       </div>
 
       <div className="mt-4">
-        {!loading && nextTasks.length === 0 ? (
+        {error ? <ErrorBanner message={error} retry={() => void loadData()} /> : null}
+        {loading ? <LoadingSpinner label="Loading tasks…" className="py-6" /> : null}
+        {!loading && !error && nextTasks.length === 0 ? (
           <EmptyState
             title="No pending tasks"
             description="Current tasks are complete for the active household."

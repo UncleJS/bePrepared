@@ -5,6 +5,7 @@ export type ApiTokenClaims = {
   username: string;
   householdId: string;
   isAdmin: boolean;
+  credentialsVersion: number;
   iat: number;
   exp: number;
 };
@@ -25,7 +26,10 @@ function signRaw(data: string, secret: string): string {
 }
 
 export function issueApiToken(
-  payload: Pick<ApiTokenClaims, "sub" | "username" | "householdId" | "isAdmin">,
+  payload: Pick<
+    ApiTokenClaims,
+    "sub" | "username" | "householdId" | "isAdmin" | "credentialsVersion"
+  >,
   secret: string,
   ttlSeconds: number
 ): string {
@@ -54,6 +58,12 @@ export function verifyApiToken(token: string, secret: string): ApiTokenClaims | 
   try {
     const parsed = JSON.parse(b64urlDecode(p)) as ApiTokenClaims;
     if (!parsed.sub || !parsed.householdId || typeof parsed.isAdmin !== "boolean") return null;
+    if (
+      typeof parsed.credentialsVersion !== "number" ||
+      !Number.isInteger(parsed.credentialsVersion)
+    ) {
+      return null;
+    }
     if (typeof parsed.exp !== "number" || parsed.exp < Math.floor(Date.now() / 1000)) return null;
     return parsed;
   } catch {

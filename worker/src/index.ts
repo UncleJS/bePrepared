@@ -15,9 +15,11 @@
 
 import { logger } from "@beprepared/shared/logger";
 import { runAllJobs } from "@beprepared/api/lib/alertJobs";
+import { createTickGate } from "./tickGate";
 
 const INTERVAL_MS = Number(process.env.WORKER_INTERVAL_MS ?? 900000); // 15 minutes
 const HEARTBEAT_FILE = "/tmp/worker.ready";
+const tickGate = createTickGate();
 
 /**
  * Write the heartbeat file so the Podman HEALTHCHECK probe sees a healthy
@@ -29,6 +31,11 @@ async function touchHeartbeat(): Promise<void> {
 }
 
 async function tick(): Promise<void> {
+  if (!tickGate.tryEnter()) {
+    logger.warn("[worker] Tick skipped — previous run still in flight");
+    return;
+  }
+
   try {
     await runAllJobs();
     await touchHeartbeat();
@@ -42,6 +49,8 @@ async function tick(): Promise<void> {
     logger.error("[worker] Tick failed — heartbeat NOT written", {
       err: String(err),
     });
+  } finally {
+    tickGate.leave();
   }
 }
 

@@ -12,11 +12,12 @@ Image=localhost/beprepared-worker:latest
 Pod=beprepared.pod
 ContainerName=beprepared-worker
 
-EnvironmentFile=%h/0_opencode/bePrepared/.env
+EnvironmentFile=%%REPO_DIR%%/.env
 PodmanArgs=--read-only
 PodmanArgs=--tmpfs=/tmp:rw,nosuid,nodev,noexec,size=64m
 PodmanArgs=--security-opt=no-new-privileges
 PodmanArgs=--cap-drop=all
+PodmanArgs=--memory=512m
 
 # Functional healthcheck: /tmp/worker.ready must exist and be ≤30 min old
 # (2× the 15-min run interval). Stale = worker silently stopped scheduling.
